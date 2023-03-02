@@ -1,0 +1,71 @@
+
+syntax = "proto3";
+package evm_messages;
+
+import "evm/messages/block_message.proto";
+import "evm/messages/token_block_message.proto";
+
+//  protoc -I=. --go_out=. --go_opt=paths=source_relative ./evm/messages/block_message.proto ./evm/messages/parsed_abi_block_message.proto ./evm/messages/token_block_message.proto ./evm/messages/dex_block_message.proto
+option go_package = "github.com/bitquery/streaming_processor/evm/messages;evm_messages";
+
+message DexInfo {
+  bytes SmartContract = 1;
+  bool  Delegated = 2;
+  bytes DelegatedTo = 3;
+
+  bytes OwnerAddress = 4;
+  bytes FeeRecipient = 5;
+
+  string ProtocolName = 6;
+  string ProtocolFamily = 7;
+  string ProtocolVersion = 8;
+
+  TokenInfo Pair  = 9;
+  repeated TokenInfo Currencies = 10;
+  repeated TokenInfo UnderlyingCurrencies = 11;
+}
+
+message TradeAsset {
+  TokenInfo Currency = 1;
+  bytes Amount = 2;
+  bytes Id = 3;
+  string URI = 4;
+  bytes Data = 5;
+}
+
+message TradeSide {
+  bytes Seller = 1;
+  bytes Buyer = 2;
+  bytes OrderId = 3;
+  repeated TradeAsset Assets = 4;
+}
+
+message TradeFee {
+  TokenInfo Currency = 1;
+  bytes Amount = 2;
+  bytes Id = 3;
+  bytes Payer = 4;
+  bytes Recipient = 5;
+}
+
+message DexTrade {
+
+  uint64 TransactionIndex = 1;
+  uint64 CallIndex = 2;
+  uint64 LogIndex = 3;
+  bool   HasLog = 4;
+
+  DexInfo Dex = 5;
+
+  TradeSide Buy = 6;
+  TradeSide Sell = 7;
+  bytes Sender = 8;
+  bool Success = 9;
+  repeated TradeFee Fees = 10;
+}
+
+message DexBlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  repeated DexTrade Trades = 5;
+}

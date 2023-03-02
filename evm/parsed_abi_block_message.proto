@@ -1,0 +1,172 @@
+
+syntax = "proto3";
+package evm_messages;
+
+import "evm/messages/block_message.proto";
+
+//  protoc -I=. --go_out=. --go_opt=paths=source_relative ./evm/messages/block_message.proto ./evm/messages/parsed_abi_block_message.proto
+option go_package = "github.com/bitquery/streaming_processor/evm/messages;evm_messages";
+
+
+message ArgumentValue {
+  string Type = 1;
+  bool IsHashed = 2;
+  oneof Value {
+    string String = 3;
+    bytes Bytes = 4;
+    uint64 UInt = 5;
+    int64 Int = 6;
+    bool   Bool = 7;
+    ArgumentArray Array = 10;
+    ArgumentTuple Tuple = 11;
+  }
+}
+
+message ArgumentArray {
+  repeated ArgumentValue Elements = 1;
+}
+
+message ArgumentTuple {
+  string Name = 1;
+  repeated ArgumentValue Elements = 2;
+}
+
+message ParsedAbiSignature {
+  bool    Parsed = 1;
+  string  Name = 2;
+  string  Signature = 3;
+  string  Abi = 4;
+  bytes   SignatureHash = 5;
+  enum SignatureType  {
+    FUNCTION = 0;
+    CONSTRUCTOR = 1;
+    FALLBACK = 2;
+    RECEIVE = 3;
+    LOG = 4;
+  }
+  SignatureType  Type = 6;
+}
+
+
+message ParsedArgument {
+  string Name = 1;
+  bool  Indexed = 2;
+  ArgumentValue  Value = 3;
+}
+
+message ParsedAbiLogHeader {
+  uint32 Index = 1;
+  uint32 EnterIndex = 2;
+  uint32 ExitIndex = 3;
+  uint32 LogAfterCallIndex = 4;
+  uint64 Pc = 5;
+  bytes SmartContract = 6;
+  ParsedAbiSignature Signature = 7;
+}
+
+message ParsedAbiLog {
+  LogHeader Header = 1;
+  repeated Topic Topics = 2;
+  ParsedAbiLogHeader Parsed = 3;
+  repeated ParsedArgument Arguments = 4;
+}
+
+message ParsedStateChange {
+
+  uint32 EnterIndex = 1;
+  uint32 ExitIndex = 2;
+  uint32 ChangeAfterCallIndex = 3;
+
+  uint64 Pc = 4;
+
+  bytes Address = 5;
+  bytes Location = 6;
+  bytes Value = 7;
+}
+
+message ParsedAbiCallHeader {
+  uint32 Index = 1;
+  uint32 Depth = 2;
+  uint32 EnterIndex = 3;
+  uint32 ExitIndex = 4;
+  int32 CallerIndex = 5;
+
+  uint32 InternalCalls = 6;
+  repeated uint32 CallPath = 7;
+
+  bytes From = 8;
+  bytes To = 9;
+  bool Create = 10;
+  bytes Input = 11;
+
+  uint64 Gas = 12;
+  bytes Value = 13;
+
+  bytes Output = 14;
+  uint64 GasUsed = 15;
+  string Error = 16;
+
+  Opcode Opcode = 17;
+
+  bool SelfDestruct = 18;
+  bool Delegated = 19;
+  bool Success = 20;
+  bool Reverted = 21;
+
+  ParsedAbiSignature Signature = 22;
+}
+
+message ParsedAbiCall {
+
+  ParsedAbiCallHeader Header = 1;
+
+  repeated ParsedArgument Arguments = 2;
+  repeated ParsedArgument ReturnValues = 3;
+  repeated ParsedAbiLog Logs = 4;
+  repeated ParsedStateChange StateChanges = 5;
+}
+
+message TransactionFee {
+  bytes SenderFee = 1;
+  bytes PriorityFeePerGas = 2;
+  bytes EffectiveGasPrice = 3;
+  uint64 GasRefund = 4;
+  bytes Burnt = 5;
+  bytes Savings = 6;
+  bytes MinerReward = 7;
+}
+
+message ParsedAbiTransactionStatus {
+  bool Success = 1;
+  string EndError = 2;
+  string FaultError = 3;
+}
+
+message ParsedAbiTransaction {
+  TransactionHeader TransactionHeader = 1;
+  ReceiptHeader ReceiptHeader = 2;
+  TransactionFee TransactionFee = 3;
+  ParsedAbiTransactionStatus TransactionStatus = 4;
+  repeated ParsedAbiCall Calls = 5;
+  uint64 Time = 6;
+}
+
+message MinerReward {
+  bytes Total = 1;
+  bytes Static = 2;
+  bytes Dynamic = 3;
+  bytes TxFees = 4;
+  bytes BurntFees = 5;
+  bytes Uncle = 6;
+}
+
+
+message ParsedAbiBlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  repeated BlockHeader Uncles = 3;
+  MinerReward Reward = 4;
+  repeated MinerReward UncleRewards = 5;
+  repeated ParsedAbiTransaction Transactions = 6;
+}
+

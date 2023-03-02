@@ -1,0 +1,117 @@
+syntax = "proto3";
+package solana_messages;
+// protoc -I=. --go_out=./ --go_opt="paths=source_relative" --go_opt="Msolana_messages/block_message.proto=github.com/bitquery/streaming_processor_solana/solana_messages" ./solana_messages/block_message.proto
+option go_package = "streaming_processor_solana/solana";
+
+
+message Account {
+  string Address = 1;
+  bool IsSigner = 2;
+  bool IsWritable = 3;
+};
+
+message TokenAccount {
+  string Address = 1;
+  string Mint = 2;
+  string Owner = 3;
+  uint64 Decimals = 4;
+};
+
+message BalanceUpdate {
+  uint64 PreBalance = 1;
+  uint64 PostBalance = 2;
+  uint64 AccountIndex = 3;
+};
+
+message TokenBalanceUpdate {
+  TokenAccount Token = 1;
+  uint64 PreBalance = 2;
+  uint64 PostBalance = 3;
+};
+
+message Program {
+  string Address = 1;
+};
+
+message Instruction {
+  Program Program = 1;
+  uint64 CallerIndex = 2;
+  uint64 InnerIndex = 3;
+  uint64 NestingLevel = 4;
+  string Data = 5;
+  repeated Account Accounts = 6;
+  repeated BalanceUpdate BalanceUpdates = 7;
+  repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
+};
+
+message TransactionHeader {
+  uint64 Fee = 1;
+  string FeePayer = 2;
+  string RecentBlockhash = 3;
+  // `Signer` is always first in `Accounts` and his signature is first in `Signatures`
+  string Signer = 4; 
+  repeated string Signatures = 5;
+  repeated Account Accounts = 6;
+};
+
+enum RewardType {
+  RewardTypeUnknown = 0;
+  Fee = 1;
+  Rent = 2;
+  Staking = 3;
+  Voting = 4;
+};
+
+message Reward {
+  string Address = 1;
+  int64 Amount = 2;
+  uint64 PostBalance = 3;
+  RewardType RewardType = 4;
+  uint64 Commission = 5;
+};
+
+message TransactionStatus {
+  bool Success = 1;
+  string ErrorMessage = 2;
+};
+
+message Transaction {
+  string Signature = 1;
+  TransactionStatus Status = 2;
+  TransactionHeader Header = 3;
+  repeated BalanceUpdate TotalBalanceUpdates = 4;
+  repeated TokenBalanceUpdate TotalTokenBalanceUpdates = 5;
+  repeated Reward Rewards = 6;
+  repeated Instruction Instructions = 7;
+  repeated string Logs = 8;
+};
+
+message BlockHeader {
+  uint64 Slot = 1;
+  string Hash = 2;
+  // string ParentHash = 3;
+  uint64 ParentSlot = 4;
+  uint64 Height = 5;
+  int64 Timestamp = 6;
+};
+
+message BlockMessage {
+  BlockHeader Header = 1;
+  repeated Reward Rewards = 2;
+  repeated Transaction Transactions = 3;
+};
+
+message BlockDescritor {
+  // string ID = 1;
+  string ChainId = 2;
+  string BlockHash = 3;
+  uint64 BlockSlot = 4;
+  uint64 ParentSlot = 5;
+  int64 Timestamp = 6;
+};
+
+
+message BlockNotifyRequestBody {
+  BlockDescritor Descriptor = 1;
+  string path = 2;
+};

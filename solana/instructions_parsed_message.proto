@@ -1,0 +1,33 @@
+syntax = "proto3";
+package solana_messages;
+
+import "solana/block_message.proto";
+// protoc -I=. --go_out=./ --go_opt="paths=source_relative" --go_opt="Msolana_messages/block_message.proto=github.com/bitquery/streaming_processor_solana/solana_messages" ./solana_messages/instructions_parsed_message.proto
+option go_package = "github.com/bitquery/streaming_processor_solana/solana";
+
+
+message InstructionsParsedBlockMessage {
+  BlockHeader Header = 1;
+  repeated Reward Rewards = 2;
+  repeated ParsedTransaction Transactions = 3;
+}
+
+message ParsedTransaction {
+  string Signature = 1;
+  TransactionStatus Status = 2;
+  TransactionHeader Header = 3;
+  repeated ParsedInstruction Instructions = 4;
+}
+
+message ParsedInstruction {
+  Instruction Instruction = 1;
+  InstructionParsedInfo Parsed = 2; // optional
+}
+
+message InstructionParsedInfo {
+  string ProgramIdlJson = 1;
+  string ProgramName = 2;
+
+  string ParsedDataJson = 3;
+  repeated string AccountNames = 4;
+}

@@ -1,0 +1,46 @@
+
+syntax = "proto3";
+package evm_messages;
+
+import "evm/messages/block_message.proto";
+
+//  protoc -I=. --go_out=. --go_opt=paths=source_relative ./evm/messages/block_message.proto ./evm/messages/parsed_abi_block_message.proto ./evm/messages/token_block_message.proto
+option go_package = "github.com/bitquery/streaming_processor/evm/messages;evm_messages";
+
+message TokenInfo {
+  bytes SmartContract = 1;
+  bool  Delegated = 2;
+  bytes DelegatedTo = 3;
+  string ProtocolName = 4;
+  string Name = 5;
+  string Symbol = 6;
+  int32  Decimals = 7;
+  bool   HasURI = 8;
+  bool   Fungible = 9;
+}
+
+message TokenTransfer {
+  uint64 TransactionIndex = 1;
+  uint64 CallIndex = 2;
+  uint64 LogIndex = 3;
+
+  bytes  Sender = 4;
+  bytes  Receiver = 5;
+
+  bytes  Amount = 6;
+  bytes  Id = 7;
+  string URI = 8;
+
+  TokenInfo Currency = 9;
+  bool Success = 10;
+  bytes Data = 12;
+}
+
+
+message TokenBlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  repeated TokenTransfer Transfers = 5;
+}
+
+
