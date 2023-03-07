@@ -1,7 +1,5 @@
 syntax = "proto3";
 package solana_messages;
-// protoc -I=. --go_out=./ --go_opt="paths=source_relative" --go_opt="Msolana_messages/block_message.proto=github.com/bitquery/streaming_processor_solana/solana_messages" ./solana_messages/block_message.proto
-option go_package = "streaming_processor_solana/solana";
 
 
 message Account {
@@ -49,7 +47,7 @@ message TransactionHeader {
   string FeePayer = 2;
   string RecentBlockhash = 3;
   // `Signer` is always first in `Accounts` and his signature is first in `Signatures`
-  string Signer = 4; 
+  string Signer = 4;
   repeated string Signatures = 5;
   repeated Account Accounts = 6;
 };

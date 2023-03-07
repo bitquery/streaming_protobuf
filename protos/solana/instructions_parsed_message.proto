@@ -2,9 +2,6 @@ syntax = "proto3";
 package solana_messages;
 
 import "solana/block_message.proto";
-// protoc -I=. --go_out=./ --go_opt="paths=source_relative" --go_opt="Msolana_messages/block_message.proto=github.com/bitquery/streaming_processor_solana/solana_messages" ./solana_messages/instructions_parsed_message.proto
-option go_package = "github.com/bitquery/streaming_processor_solana/solana";
-
 
 message InstructionsParsedBlockMessage {
   BlockHeader Header = 1;

@@ -1,9 +1,6 @@
 syntax = "proto3";
 package evm_messages;
 
-//  protoc -I=. --go_out=. --go_opt=paths=source_relative ./evm/messages/block_message.proto
-option go_package = "github.com/bitquery/streaming_processor/evm/messages;evm_messages";
-
 message AddressCode {
   bytes Hash = 1;
   int32 Size = 2;

@@ -1,12 +1,7 @@
-
 syntax = "proto3";
 package evm_messages;
 
-import "evm/messages/block_message.proto";
-
-//  protoc -I=. --go_out=. --go_opt=paths=source_relative ./evm/messages/block_message.proto ./evm/messages/parsed_abi_block_message.proto
-option go_package = "github.com/bitquery/streaming_processor/evm/messages;evm_messages";
-
+import "evm/block_message.proto";
 
 message ArgumentValue {
   string Type = 1;
