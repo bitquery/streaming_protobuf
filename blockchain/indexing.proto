@@ -1,0 +1,10 @@
+syntax = "proto3";
+package blockchain_messages;
+
+message Indexing {
+  bytes SegmentHash = 1;
+  int64 LogicalTime = 2;
+  int64 Time = 3;
+  bool  OnTree = 4;
+  bool  OnTrunk = 5;
+}
