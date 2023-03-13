@@ -79,7 +79,7 @@ message Transaction {
   TransactionHeader Header = 3;
   repeated BalanceUpdate TotalBalanceUpdates = 4;
   repeated TokenBalanceUpdate TotalTokenBalanceUpdates = 5;
-  repeated Reward Rewards = 6;
+//  repeated Reward Rewards = 6;
   repeated Instruction Instructions = 7;
   repeated string Logs = 8;
 };
