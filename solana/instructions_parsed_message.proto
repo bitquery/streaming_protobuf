@@ -18,7 +18,13 @@ message ParsedTransaction {
 
 message ParsedInstruction {
   Instruction Instruction = 1;
-  InstructionParsedInfo Parsed = 2; // optional
+  InstructionParsedInfo Parsed = 2;
+  int64 Index = 3;
+  int64 ParentIndex = 4;
+  repeated int64 AncestorIndexes = 5;
+  repeated TokenTransfer TokenTransfers = 10;
+  repeated BalanceUpdate BalanceUpdates = 11;
+  repeated BalanceUpdate CumulativeBalanceUpdates = 12;
 }
 
 message InstructionParsedInfo {
@@ -40,7 +46,7 @@ message TokenInfo {
   string UpdateAuthority = 13;
 }
 
- message TokenTransfer {
+message TokenTransfer {
   uint64 InstructionIndex = 1;
   uint64  Amount = 2;
   string  Sender = 4;
@@ -50,14 +56,22 @@ message TokenInfo {
   TokenInfo Currency = 9;
 }
 
- message TransfersParsedTransaction {
+message ParsedBalanceUpdate {
+  uint64 InstructionIndex = 1;
+  uint64 PreBalance = 2;
+  uint64 PostBalance = 3;
+  string Address = 4;
+  TokenInfo Currency = 5;
+}
+
+message TransfersParsedTransaction {
   string Signature = 1;
   TransactionStatus Status = 2;
   TransactionHeader Header = 3;
   repeated TokenTransfer TokenTransfers = 4;
 }
 
- message TransfersParsedBlockMessage {
+message TransfersParsedBlockMessage {
   BlockHeader Header = 1;
   repeated Reward Rewards = 2;
   repeated TransfersParsedTransaction Transactions = 3; 
