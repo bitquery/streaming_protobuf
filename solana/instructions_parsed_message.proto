@@ -1,6 +1,6 @@
 syntax = "proto3";
 package solana_messages;
-
+ 
 import "solana/block_message.proto";
 
 message ParsedBalanceUpdate {
@@ -13,7 +13,7 @@ message ParsedBalanceUpdate {
 message InstructionParsedInfo {
   string ProgramIdlJson = 1;
   string ProgramName = 2;
-
+  string MethodName = 5;
   string ParsedDataJson = 3;
   repeated string AccountNames = 4;
 }
@@ -21,11 +21,18 @@ message InstructionParsedInfo {
 message ParsedInstruction {
   Instruction Instruction = 1;
   InstructionParsedInfo Parsed = 2;
-  int64 Index = 3;
+  uint64 Index = 3;
   int64 ParentIndex = 4;
   repeated int64 AncestorIndexes = 5;
   repeated ParsedBalanceUpdate BalanceUpdates = 10;
   repeated ParsedBalanceUpdate CumulativeBalanceUpdates = 11;
+}
+
+message ParsedTransactionBalanceUpdate {
+  uint64 PreBalance = 1;
+  uint64 PostBalance = 2;
+  string Address = 3;
+  string Mint = 4;
 }
 
 message ParsedTransaction {
@@ -33,6 +40,7 @@ message ParsedTransaction {
   TransactionStatus Status = 2;
   TransactionHeader Header = 3;
   repeated ParsedInstruction Instructions = 4;
+  repeated ParsedTransactionBalanceUpdate BalanceUpdates = 5;
 }
 
 message InstructionsParsedBlockMessage {
