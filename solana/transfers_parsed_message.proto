@@ -42,7 +42,7 @@ message TokenInfo {
 message TokenTransfer {
   uint64 InstructionIndex = 1;
   uint64 Amount = 2;
-  string Sendner = 4;
+  string Sender = 4;
   string Receiver = 5;
   string SenderAuthority = 7;
   string ReceiverAuthority = 8;
