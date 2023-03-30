@@ -9,6 +9,8 @@ message ParsedBalanceUpdate {
   int64 CumulativeBalanceDiff = 3;
   string Address = 4;
   string Mint = 5;
+  uint64 PreBalance = 11;
+  uint64 PostBalance = 12;
 }
 
 message InstructionParsedInfo {
