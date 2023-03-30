@@ -42,11 +42,29 @@ message TokenInfo {
 message TokenTransfer {
   uint64 InstructionIndex = 1;
   uint64 Amount = 2;
-  string Sender = 4;
+  string Send§er = 4;
   string Receiver = 5;
   string SenderAuthority = 7;
   string ReceiverAuthority = 8;
   TokenInfo Currency = 9;
+}
+
+InstructionBalanceUpdate {
+  uint64 InstructionIndex = 1;
+  uint64 PreBalance = 2;
+  uint64 PostBalance = 3;
+  int64 BalanceDiff = 4;
+  int64 CumulativeBalanceDiff = 5;
+  string Address = 6;
+  TokenInfo Currency = 7;
+}
+
+TransactionBalanceUpdate {
+  uint64 PreBalance = 2;
+  uint64 PostBalance = 3;
+  int64 BalanceDiff = 4;
+  string Address = 6;
+  TokenInfo Currency = 7;
 }
 
 message TransfersParsedTransaction {
@@ -54,6 +72,8 @@ message TransfersParsedTransaction {
   TransactionStatus Status = 2;
   TransactionHeader Header = 3;
   repeated TokenTransfer TokenTransfers = 4;
+  repeated InstructionBalanceUpdate BalanceUpdates = 5;
+  repeated TransactionBalanceUpdate BalanceUpdates = 6;
 }
 
 message TransfersParsedBlockMessage {
