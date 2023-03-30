@@ -6,6 +6,7 @@ import "solana/block_message.proto";
 message ParsedBalanceUpdate {
   uint64 InstructionIndex = 1;
   int64 BalanceDiff = 2;
+  int64 CumulativeBalanceDiff = 3;
   string Address = 4;
   string Mint = 5;
 }
@@ -25,7 +26,6 @@ message ParsedInstruction {
   int64 ParentIndex = 4;
   repeated int64 AncestorIndexes = 5;
   repeated ParsedBalanceUpdate BalanceUpdates = 10;
-  repeated ParsedBalanceUpdate CumulativeBalanceUpdates = 11;
 }
 
 message ParsedTransactionBalanceUpdate {
