@@ -32,7 +32,7 @@ message TokenInfo {
   string UpdateAuthority = 13;
   string CollectionAddress = 14;
 
-  bool verifiedColletion = 20;
+  bool verifiedCollection = 20;
   bool primarySaleHappened = 21;
   bool isMutable = 22;
 
