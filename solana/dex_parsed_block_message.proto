@@ -1,0 +1,57 @@
+import "evm/block_message.proto";
+import "evm/token_block_message.proto";
+
+syntax = "proto3";
+package solana_messages;
+
+import "solana/transfers_parsed_block_message.proto";
+
+
+message DexInfo {
+  string ProgramAddress = 1;
+  string ProtocolName = 6;
+  string ProtocolFamily = 7;
+}
+
+message DexMarket {
+  string MarketAddress = 1;
+  TokenInfo CoinToken = 2;
+  TokenInfo PriceToken = 3;
+}
+
+enum DexEventType {
+  TRADE = 0; // synonim to consume order
+  OPEN_ORDER = 1;
+  UPDATE_ORDER = 2;
+  CLOSE_ORDER = 3;
+  MATCH_ORDER = 4;
+}
+
+message DexEvents {
+  DexEventType Type = 0;
+  uint64 InstructionIndex = 1;
+
+  DexInfo Dex = 2
+  DexMarket Market = 3;
+
+  string BuyerAccount = 10;
+  uint64 BuyAmount = 11;
+  TokenInfo BuyToken = 12;
+  
+  string SellerAccount = 20;
+  uint64 SellAmount = 21;
+  TokenInfo SellToken = 22;
+
+}
+
+message DexParsedTransaction {
+  string Signature = 1;
+  TransactionStatus Status = 2;
+  TransactionHeader Header = 3;
+  repeated DexEvents Events = 4;
+}
+
+message DexParsedBlockMessage {
+  BlockHeader Header = 1;
+  repeated DexParsedTransaction Transactions = 3;
+}
