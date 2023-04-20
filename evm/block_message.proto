@@ -231,7 +231,7 @@ message Transaction {
 
 message Chain {
   bytes ChainId = 1;
-  string  Config = 2;
+  string Config = 2;
 }
 
 message BlockMessage {
@@ -241,5 +241,5 @@ message BlockMessage {
 
   repeated BlockHeader Uncles = 4;
   repeated Transaction Transactions = 5;
-
+  optional uint64 L1BlockNumber = 6;
 }
