@@ -219,6 +219,9 @@ message TransactionHeader {
   bytes From = 15;
   AddressCode ToCode = 16;
   repeated AccessTuple AccessList = 17;
+
+  // only applicable on L2 chains
+  optional uint64 GasL1 = 18;
 }
 
 message Transaction {
