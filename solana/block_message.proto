@@ -6,6 +6,7 @@ message Account {
   string Address = 1;
   bool IsSigner = 2;
   bool IsWritable = 3;
+  string Info = 4; // json: Added in streaming_processor
 };
 
 message TokenAccount {
@@ -13,6 +14,7 @@ message TokenAccount {
   string Mint = 2;
   string Owner = 3;
   uint64 Decimals = 4;
+  string Info = 5; // json: Added in streaming_processor
 };
 
 message BalanceUpdate {
@@ -29,6 +31,7 @@ message TokenBalanceUpdate {
 
 message Program {
   string Address = 1;
+  string Name = 2; // Added in streaming_processor
 };
 
 message Instruction {
@@ -40,6 +43,7 @@ message Instruction {
   repeated Account Accounts = 6;
   repeated BalanceUpdate BalanceUpdates = 7;
   repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
+  string ParsedData = 10; // json - Added in streaming_processor
 };
 
 message TransactionHeader {
@@ -79,7 +83,6 @@ message Transaction {
   TransactionHeader Header = 3;
   repeated BalanceUpdate TotalBalanceUpdates = 4;
   repeated TokenBalanceUpdate TotalTokenBalanceUpdates = 5;
-//  repeated Reward Rewards = 6;
   repeated Instruction Instructions = 7;
   repeated string Logs = 8;
 };
@@ -87,7 +90,6 @@ message Transaction {
 message BlockHeader {
   uint64 Slot = 1;
   string Hash = 2;
-  // string ParentHash = 3;
   uint64 ParentSlot = 4;
   uint64 Height = 5;
   int64 Timestamp = 6;
@@ -100,12 +102,15 @@ message BlockMessage {
 };
 
 message BlockDescritor {
-  // string ID = 1;
   string ChainId = 2;
   string BlockHash = 3;
-  uint64 BlockSlot = 4;
-  uint64 ParentSlot = 5;
+  uint64 BlockNumber = 4;
+  uint64 ParentNumber = 5;
   int64 Timestamp = 6;
+  uint64 TransactionsCount = 7;
+  uint64 MessageSize = 8;
+  bytes Checksum = 9;
+  uint64 Height = 10;
 };
 
 
