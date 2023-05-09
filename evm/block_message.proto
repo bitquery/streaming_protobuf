@@ -219,6 +219,9 @@ message TransactionHeader {
   bytes From = 15;
   AddressCode ToCode = 16;
   repeated AccessTuple AccessList = 17;
+
+  // only applicable on L2 chains
+  optional uint64 GasL1 = 18;
 }
 
 message Transaction {
@@ -231,7 +234,16 @@ message Transaction {
 
 message Chain {
   bytes ChainId = 1;
-  string  Config = 2;
+  string Config = 2;
+}
+
+message L1MessageInfo {
+  uint32 Kind = 1;
+  bytes Poster = 2;
+  uint64 BlockNumber = 3;
+  uint64 Timestamp = 4;
+  optional bytes RequestId = 5;
+  optional bytes L1BaseFee = 6;
 }
 
 message BlockMessage {
@@ -241,5 +253,6 @@ message BlockMessage {
 
   repeated BlockHeader Uncles = 4;
   repeated Transaction Transactions = 5;
-
+  optional BlockHeader L1Header = 6;
+  optional L1MessageInfo L1MessageInfo = 7;
 }
