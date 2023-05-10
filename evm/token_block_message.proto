@@ -37,6 +37,7 @@ message TokenBlockMessage {
   Chain Chain = 1;
   BlockHeader Header = 2;
   repeated TokenTransfer Transfers = 5;
+  optional BlockHeader L1Header = 6;
 }
 
 
