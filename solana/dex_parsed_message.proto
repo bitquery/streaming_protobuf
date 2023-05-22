@@ -17,17 +17,11 @@ message DexMarket {
   TokenInfo PriceToken = 3;
 }
 
-enum DexEventType {
-  TRADE = 0;
-  OPEN_ORDER = 1;
-  UPDATE_ORDER = 2;
-  CANCEL_ORDER = 3;
-}
-
 message DexOrder {
-  bool BuySide = 1;
-  int64 LimitPrice = 2;
-  int64 LimitAmount = 3;
+  int64 OrderId = 1;
+  bool BuySide = 2;
+  int64 LimitPrice = 3;
+  int64 LimitAmount = 4;
   
   string Account = 10;
   string Owner = 11;
@@ -35,52 +29,47 @@ message DexOrder {
   string Mint = 13;
 }
 
-message DexEventCreateOrder {
-  DexOrder order = 1;
+
+enum DexOrderEventType {
+  OPEN = 0;
+  UPDATE = 1;
+  CANCEL = 2;
 }
 
-message DexEventUpdateOrder {
-  DexOrder order = 1;
-}
-
-message DexEventCancelOrder {
-  bool BuySide = 2;
-  int64 OrderId = 3;
-}
-
-message DexEventTrade {
-  int64 BuyAmount = 10;
-  string BuyToken = 11;
-  
-  int64 SellAmount = 20;
-  string SellToken = 21;
-}
-
-message DexEvent {
-  DexEventType Type = 1;
+message DexOrderEvent {
+  DexOrderEventType Type = 1;
   uint64 InstructionIndex = 2;
   DexInfo Dex = 3;
   DexMarket Market = 4;
+  DexOrder Order = 5;
+}
 
-  DexEventCreateOrder Create = 10;
-  DexEventUpdateOrder Update = 11;
-  DexEventCancelOrder Cancel = 12;
-  DexEventTrade Trade = 13;
 
-  // string BuyerAccount = 10;
-  // uint64 BuyAmount = 11;
-  // TokenInfo BuyToken = 12;
-  
-  // string SellerAccount = 20;
-  // uint64 SellAmount = 21;
-  // TokenInfo SellToken = 22;
+message DexTradeSide {
+  int64     Amount = 1;
+  TokenInfo Asset = 2;
+  string Account = 3;
+}
+
+message DexTradeEvent {
+
+  uint64 InstructionIndex = 1;
+  DexInfo Dex = 2;
+  DexMarket Market = 3;
+
+  DexOrder Order = 4;
+
+  DexTradeSide Buy = 5;
+  DexTradeSide Sell = 6;
+
 }
 
 message DexParsedTransaction {
   string Signature = 1;
   TransactionStatus Status = 2;
   TransactionHeader Header = 3;
-  repeated DexEvent Events = 4;
+  repeated DexTradeEvent Trades = 4;
+  repeated DexOrderEvent OrderEvents = 5;
 }
 
 message DexParsedBlockMessage {
