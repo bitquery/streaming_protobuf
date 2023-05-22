@@ -1,0 +1,89 @@
+syntax = "proto3";
+package solana_messages;
+
+import "solana/block_message.proto";
+import "solana/transfers_parsed_message.proto";
+
+
+message DexInfo {
+  string ProgramAddress = 1;
+  string ProtocolName = 6;
+  string ProtocolFamily = 7;
+}
+
+message DexMarket {
+  string MarketAddress = 1;
+  TokenInfo CoinToken = 2;
+  TokenInfo PriceToken = 3;
+}
+
+enum DexEventType {
+  TRADE = 0;
+  OPEN_ORDER = 1;
+  UPDATE_ORDER = 2;
+  CANCEL_ORDER = 3;
+}
+
+message DexOrder {
+  bool BuySide = 1;
+  int64 LimitPrice = 2;
+  int64 LimitAmount = 3;
+  
+  string Account = 10;
+  string Owner = 11;
+  string Payer = 12;
+  string Mint = 13;
+}
+
+message DexEventCreateOrder {
+  DexOrder order = 1;
+}
+
+message DexEventUpdateOrder {
+  DexOrder order = 1;
+}
+
+message DexEventCancelOrder {
+  bool BuySide = 2;
+  int64 OrderId = 3;
+}
+
+message DexEventTrade {
+  int64 BuyAmount = 10;
+  string BuyToken = 11;
+  
+  int64 SellAmount = 20;
+  string SellToken = 21;
+}
+
+message DexEvent {
+  DexEventType Type = 1;
+  uint64 InstructionIndex = 2;
+  DexInfo Dex = 3;
+  DexMarket Market = 4;
+
+  DexEventCreateOrder Create = 10;
+  DexEventUpdateOrder Update = 11;
+  DexEventCancelOrder Cancel = 12;
+  DexEventTrade Trade = 13;
+
+  // string BuyerAccount = 10;
+  // uint64 BuyAmount = 11;
+  // TokenInfo BuyToken = 12;
+  
+  // string SellerAccount = 20;
+  // uint64 SellAmount = 21;
+  // TokenInfo SellToken = 22;
+}
+
+message DexParsedTransaction {
+  string Signature = 1;
+  TransactionStatus Status = 2;
+  TransactionHeader Header = 3;
+  repeated DexEvent Events = 4;
+}
+
+message DexParsedBlockMessage {
+  BlockHeader Header = 1;
+  repeated DexParsedTransaction Transactions = 3;
+}

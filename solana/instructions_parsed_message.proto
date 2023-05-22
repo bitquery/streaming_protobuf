@@ -19,6 +19,7 @@ message InstructionParsedInfo {
   string MethodName = 5;
   string ParsedDataJson = 3;
   repeated string AccountNames = 4;
+  bytes IdlSignature = 6;
 }
 
 message ParsedInstruction {
@@ -28,6 +29,7 @@ message ParsedInstruction {
   int64 ParentIndex = 4;
   repeated int64 AncestorIndexes = 5;
   repeated ParsedBalanceUpdate BalanceUpdates = 10;
+  repeated string Logs = 20;
 }
 
 message ParsedTransactionBalanceUpdate {
