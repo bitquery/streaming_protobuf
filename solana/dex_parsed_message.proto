@@ -49,6 +49,7 @@ message DexTradeSide {
   int64     Amount = 1;
   TokenInfo Asset = 2;
   string Account = 3;
+  DexOrder Order = 4;
 }
 
 message DexTradeEvent {
@@ -57,10 +58,8 @@ message DexTradeEvent {
   DexInfo Dex = 2;
   DexMarket Market = 3;
 
-  DexOrder Order = 4;
-
-  DexTradeSide Buy = 5;
-  DexTradeSide Sell = 6;
+  DexTradeSide Buy = 4;
+  DexTradeSide Sell = 5;
 
 }
 
