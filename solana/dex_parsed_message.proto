@@ -63,12 +63,16 @@ message DexTradeEvent {
 
 }
 
+message DexParsedInstruction {
+  repeated DexTradeEvent Trades = 1;
+  repeated DexOrderEvent OrderEvents = 2;
+}
+
 message DexParsedTransaction {
   string Signature = 1;
   TransactionStatus Status = 2;
   TransactionHeader Header = 3;
-  repeated DexTradeEvent Trades = 4;
-  repeated DexOrderEvent OrderEvents = 5;
+  repeated DexParsedInstruction Instructions = 4;
 }
 
 message DexParsedBlockMessage {
