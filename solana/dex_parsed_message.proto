@@ -60,6 +60,7 @@ message DexTradeEvent {
 
   DexTradeSide Buy = 4;
   DexTradeSide Sell = 5;
+  uint64 TradeIndex = 6;
 
 }
 

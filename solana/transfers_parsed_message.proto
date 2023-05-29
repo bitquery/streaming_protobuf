@@ -55,16 +55,20 @@ message InstructionBalanceUpdate {
   uint64 PostBalance = 3;
   int64 BalanceDiff = 4;
   int64 CumulativeBalanceDiff = 5;
-  string Address = 6;
+  string Address = 6; // Same as OwnerAddress, deprecated
   TokenInfo Currency = 7;
+  string OwnerAddress = 8;
+  string TokenAddress = 9;
 }
 
 message TransactionBalanceUpdate {
   uint64 PreBalance = 2;
   uint64 PostBalance = 3;
   int64 BalanceDiff = 4;
-  string Address = 6;
+  string Address = 6; // Same as OwnerAddress, deprecated
   TokenInfo Currency = 7;
+  string OwnerAddress = 8;
+  string TokenAddress = 9;
 }
 
 message TransfersParsedTransaction {
