@@ -44,6 +44,7 @@ message Instruction {
   repeated BalanceUpdate BalanceUpdates = 7;
   repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
   string ParsedData = 10; // json - Added in streaming_processor
+  repeated TokenAccount TokenAccounts = 11;
 };
 
 message TransactionHeader {
@@ -51,7 +52,7 @@ message TransactionHeader {
   string FeePayer = 2;
   string RecentBlockhash = 3;
   // `Signer` is always first in `Accounts` and his signature is first in `Signatures`
-  string Signer = 4;
+  string Signer = 4; 
   repeated string Signatures = 5;
   repeated Account Accounts = 6;
 };
@@ -85,6 +86,7 @@ message Transaction {
   repeated TokenBalanceUpdate TotalTokenBalanceUpdates = 5;
   repeated Instruction Instructions = 7;
   repeated string Logs = 8;
+  uint64 Index = 9;
 };
 
 message BlockHeader {
