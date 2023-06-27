@@ -1,0 +1,14 @@
+syntax = "proto3";
+package blockchain_messages;
+
+import "google/protobuf/descriptor.proto";
+
+message RemoteSource {
+  google.protobuf.FileDescriptorProto ProtoFile = 1;
+  reserved 2 to 4; // Reserved for future: in case protosets adds fields
+  google.protobuf.DescriptorProto ProtoMessage = 5;
+  reserved 6 to 8; // Reserved for future: in case protosets adds fields
+
+  uint64 version = 9;
+  string RemoteURL = 10;
+}
