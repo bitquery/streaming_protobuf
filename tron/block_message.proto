@@ -1,0 +1,54 @@
+syntax = "proto3";
+package tron_messages;
+
+// Tx message
+message Receipt {
+  string result = 1;
+  uint64 energy_penalty_total = 2;
+  uint64 energy_fee = 3;
+  uint64 energy_usage_total = 4;
+  uint64 origin_energy_usage = 5;
+  uint64 net_usage = 6;
+}
+
+message Log {
+  string address = 1;
+  string data = 2;
+  repeated string topics = 3;
+}
+
+message Transaction {
+  string id = 1;
+  uint64 block_time_stamp = 2;
+  uint64 block_number = 3;
+  string contract_address = 4;
+  repeated string contract_result = 5;
+  Receipt receipt = 6;
+  repeated Log log = 7;
+}
+
+// Block message
+message BlockHeader {
+  string witness_signature = 1;
+  RawDataBlockHeader raw_data = 2;
+}
+
+message RawDataBlockHeader {
+  int64 number = 1;
+  string tx_trie_root = 2;
+  string witness_address = 3;
+  string parent_block_hash = 4;
+  int32 version = 5;
+  int64 timestamp = 6;
+}
+
+message Transactions {
+  string tx_id = 1;
+}
+
+message Block {
+  uint64 timestamp = 1;
+  string block_id = 2;
+  BlockHeader block_header = 3;
+  repeated Transactions transactions = 4;
+}
