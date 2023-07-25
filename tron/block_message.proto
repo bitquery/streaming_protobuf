@@ -4,11 +4,12 @@ package tron_messages;
 // Tx message
 message Receipt {
   string result = 1;
-  uint64 energy_penalty_total = 2;
-  uint64 energy_fee = 3;
-  uint64 energy_usage_total = 4;
-  uint64 origin_energy_usage = 5;
-  uint64 net_usage = 6;
+  int64 energy_penalty_total = 2;
+  int64 energy_fee = 3;
+  int64 energy_usage_total = 4;
+  int64 origin_energy_usage = 5;
+  int64 net_usage = 6;
+  int64 net_fee = 7;
 }
 
 message Log {
@@ -17,38 +18,94 @@ message Log {
   repeated string topics = 3;
 }
 
+message CallValueInfo {
+  uint64 callValue = 1;
+  uint64 tokenId = 2;
+}
+
+message InternalTransaction {
+  string callerAddress = 1;
+  string note = 2;
+  string transferToAddress = 3;
+  repeated CallValueInfo callValueInfo = 4;
+  string hash = 5;
+}
+
 message Transaction {
   string id = 1;
-  uint64 block_time_stamp = 2;
-  uint64 block_number = 3;
-  string contract_address = 4;
-  repeated string contract_result = 5;
-  Receipt receipt = 6;
-  repeated Log log = 7;
+  int64 fee = 2;
+  int64 blockTimeStamp = 3;
+  int64 blockNumber = 4;
+  string contract_address = 5;
+  repeated string contractResult = 6;
+  Receipt receipt = 7;
+  repeated Log log = 8;
+  int64 result = 9;
+  string resMessage = 10;
+  int64 withdraw_amount = 11;
+  int64 unfreeze_amount = 12;
+  repeated InternalTransaction internal_transactions = 13;
+  int64 withdraw_expire_amount = 14;
+  map<string, int64> cancel_unfreezeV2_amount = 15;
 }
 
 // Block message
 message BlockHeader {
-  string witness_signature = 1;
-  RawDataBlockHeader raw_data = 2;
+  RawData rawData = 1;
+  string witness_signature = 2;
 }
 
-message RawDataBlockHeader {
+message RawData {
   int64 number = 1;
-  string tx_trie_root = 2;
+  string txTrieRoot = 2;
   string witness_address = 3;
-  string parent_block_hash = 4;
-  int32 version = 5;
-  int64 timestamp = 6;
+  int64 witness_id = 4;
+  string parentHash = 5;
+  int32 version = 6;
+  int64 timestamp = 7;
+  string accountStateRoot = 8;
 }
 
-message Transactions {
-  string tx_id = 1;
+message Ret {
+  string contractRet = 1;
+}
+
+message Value {
+  int32 amount = 1;
+  string owner_address = 2;
+  string to_address = 3;
+}
+
+message Parameter {
+  Value value = 1;
+  string type_url = 2;
+}
+
+message Contract {
+  Parameter parameter = 1;
+  string type = 2;
+}
+
+message RawDataTransaction {
+  repeated Contract contract = 1;
+  string ref_block_bytes = 2;
+  string ref_block_hash = 3;
+  int64 expiration = 4;
+  string data = 5;
+  int64 fee_limit = 6;
+  int64 timestamp = 7;
+}
+
+message Transaction {
+  repeated Ret ret = 1;
+  repeated string signature = 2;
+  string txID = 3;
+  RawDataTransaction raw_data = 4;
+  string raw_data_hex = 5;
 }
 
 message Block {
-  uint64 timestamp = 1;
-  string block_id = 2;
-  BlockHeader block_header = 3;
-  repeated Transactions transactions = 4;
+  string blockID = 1;
+  BlockHeader block_header = 2;
+  repeated Transaction transactions = 3;
 }
