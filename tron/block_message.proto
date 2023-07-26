@@ -8,23 +8,13 @@ message TransactionHeader {
   int64 Index = 3;
 };
 
-message ContractArgumentValue {
-  string Type = 1;
+message Argument {
+  string Name = 1;
   oneof Value {
     string String = 2;
     uint64 UInt = 3;
   }
 }
-
-message ContractArgument {
-  string Name = 1;
-  ContractArgumentValue Value = 3;
-}
-
-message ContractInfo {
-  string Type = 1;
-  repeated ContractArgument ContractArguments = 2;
-};
 
 // MORE INFORMATION: https://developers.tron.network/docs/tron-protocol-transaction
 message TransactionInfo {
@@ -32,7 +22,6 @@ message TransactionInfo {
   string Data = 2;
   int64 FeeLimit = 3;
   int64 Timestamp = 4;
-  repeated ContractInfo ContractInfos = 5;
 };
 
 message TransactionResult {
@@ -53,6 +42,9 @@ message Receipt {
 message Contract {
   string Address = 1;
   repeated string ExecutionResults = 2;
+  string Type = 3;
+  string TypeUrl = 4;
+  repeated Argument Arguments = 5;
 };
 
 message Staking {
@@ -68,7 +60,7 @@ message Log {
   repeated string Topics = 3;
 };
 
-message CallValueInfo {
+message CallValue {
   uint64 CallValue = 1;
   uint64 TokenId = 2;
 };
@@ -77,7 +69,7 @@ message InternalTransaction {
   string CallerAddress = 1;
   string Note = 2;
   string TransferToAddress = 3;
-  repeated CallValueInfo CallValueInfos = 4;
+  repeated CallValue CallValues = 4;
   string Hash = 5;
 };
 
@@ -87,7 +79,7 @@ message Transaction {
   TransactionInfo Info = 2;
   TransactionResult Result = 3;
   Receipt Receipt = 4;
-  Contract Contract = 5;
+  repeated Contract Contracts = 5;
   Staking Staking = 6;
   repeated Log Logs = 7;
   repeated InternalTransaction InternalTransactions = 8;
