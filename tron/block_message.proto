@@ -2,9 +2,37 @@ syntax = "proto3";
 package tron_messages;
 
 // Tx message
-message TransactionInfo Info {
+message TransactionHeader {
   string Id = 1;
   int64 Fee = 2;
+  int64 Index = 3;
+};
+
+message ContractArgumentValue {
+  string Type = 1;
+  oneof Value {
+    string String = 2;
+    uint64 UInt = 3;
+  }
+}
+
+message ContractArgument {
+  string Name = 1;
+  ContractArgumentValue Value = 3;
+}
+
+message ContractInfo {
+  string Type = 1;
+  repeated ContractArgument ContractArguments = 2;
+};
+
+// MORE INFORMATION: https://developers.tron.network/docs/tron-protocol-transaction
+message TransactionInfo {
+  int64 Expiration = 1;
+  string Data = 2;
+  int64 FeeLimit = 3;
+  int64 Timestamp = 4;
+  repeated ContractInfo ContractInfos = 5;
 };
 
 message TransactionResult {
@@ -23,21 +51,26 @@ message Receipt {
 };
 
 message Contract {
-  repeated string ExecutionResults = 1;
-  string Address = 2;
+  string Address = 1;
+  repeated string ExecutionResults = 2;
 };
 
 message Staking {
-  int64 WithdrawAmount = 11;
-  int64 UnfreezeAmount = 12;
-  int64 WithdrawExpireAmount = 14;
-  map<string, int64> CancelUnfreezeV2Amount = 15;
+  int64 WithdrawAmount = 1;
+  int64 UnfreezeAmount = 2;
+  int64 WithdrawExpireAmount = 3;
+  map<string, int64> CancelUnfreezeV2Amount = 4;
 };
 
 message Log {
   string Address = 1;
   string Data = 2;
   repeated string Topics = 3;
+};
+
+message CallValueInfo {
+  uint64 CallValue = 1;
+  uint64 TokenId = 2;
 };
 
 message InternalTransaction {
@@ -48,73 +81,39 @@ message InternalTransaction {
   string Hash = 5;
 };
 
+// MORE INFORMATION: https://developers.tron.network/reference/gettransactioninfobyid-1
 message Transaction {
-  TransactionInfo Info = 1;
-  TransactionResult Result = 2;
-  Receipt Receipt = 3;
-  Contract Contract = 4;
-  Staking Staking = 5;
-  repeated Log Logs = 6;
-  repeated InternalTransaction InternalTransactions = 7;
+  TransactionHeader Header = 1;
+  TransactionInfo Info = 2;
+  TransactionResult Result = 3;
+  Receipt Receipt = 4;
+  Contract Contract = 5;
+  Staking Staking = 6;
+  repeated Log Logs = 7;
+  repeated InternalTransaction InternalTransactions = 8;
 };
 
 // Block message
 message BlockHeader {
-  RawData rawData = 1;
-  string witness_signature = 2;
+  int64 Number = 1;
+  string Hash = 2;
+  int64 Timestamp = 3;
+  string ParentHash = 4;
+  string Version = 5;
+  string TxTrieRoot = 6;
+  string AccountStateRoot = 7;
+};
+
+// Information about witness (or validator) who packed this block.
+message WitnessInfo {
+  string Address = 1;
+  int64 Id = 2;
+  int64 Signature = 3;
 }
 
-message RawData {
-  int64 number = 1;
-  string txTrieRoot = 2;
-  string witness_address = 3;
-  int64 witness_id = 4;
-  string parentHash = 5;
-  int32 version = 6;
-  int64 timestamp = 7;
-  string accountStateRoot = 8;
-}
-
-message Ret {
-  string contractRet = 1;
-}
-
-message Value {
-  int32 amount = 1;
-  string owner_address = 2;
-  string to_address = 3;
-}
-
-message Parameter {
-  Value value = 1;
-  string type_url = 2;
-}
-
-message Contract {
-  Parameter parameter = 1;
-  string type = 2;
-}
-
-message RawDataTransaction {
-  repeated Contract contract = 1;
-  string ref_block_bytes = 2;
-  string ref_block_hash = 3;
-  int64 expiration = 4;
-  string data = 5;
-  int64 fee_limit = 6;
-  int64 timestamp = 7;
-}
-
-message Transaction {
-  repeated Ret ret = 1;
-  repeated string signature = 2;
-  string txID = 3;
-  RawDataTransaction raw_data = 4;
-  string raw_data_hex = 5;
-}
-
-message Block {
-  string blockID = 1;
-  BlockHeader block_header = 2;
-  repeated Transaction transactions = 3;
-}
+// MORE INFORMATION: https://developers.tron.network/reference/getblock-2
+message BlockMessage {
+  BlockHeader Header = 1;
+  WitnessInfo WitnessInfo = 2;
+  repeated Transaction Transactions = 3;
+};
