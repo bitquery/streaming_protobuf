@@ -3,9 +3,13 @@ package tron_messages;
 
 // Tx message
 message TransactionHeader {
-  string Id = 1;
+  bytes Id = 1;
   int64 Fee = 2;
   int64 Index = 3;
+  int64 Expiration = 4;
+  string Data = 5;
+  int64 FeeLimit = 6;
+  int64 Timestamp = 7;
 };
 
 message Argument {
@@ -15,14 +19,6 @@ message Argument {
     uint64 UInt = 3;
   }
 }
-
-// MORE INFORMATION: https://developers.tron.network/docs/tron-protocol-transaction
-message TransactionInfo {
-  int64 Expiration = 1;
-  string Data = 2;
-  int64 FeeLimit = 3;
-  int64 Timestamp = 4;
-};
 
 message TransactionResult {
   string Status = 1;
@@ -40,7 +36,7 @@ message Receipt {
 };
 
 message Contract {
-  string Address = 1;
+  bytes Address = 1;
   repeated string ExecutionResults = 2;
   string Type = 3;
   string TypeUrl = 4;
@@ -55,20 +51,20 @@ message Staking {
 };
 
 message Log {
-  string Address = 1;
-  string Data = 2;
-  repeated string Topics = 3;
+  bytes Address = 1;
+  bytes Data = 2;
+  repeated bytes Topics = 3;
 };
 
 message CallValue {
-  uint64 CallValue = 1;
+  int64 CallValue = 1;
   uint64 TokenId = 2;
 };
 
 message InternalTransaction {
   string CallerAddress = 1;
-  string Note = 2;
-  string TransferToAddress = 3;
+  bytes Note = 2;
+  bytes TransferToAddress = 3;
   repeated CallValue CallValues = 4;
   string Hash = 5;
 };
@@ -76,13 +72,12 @@ message InternalTransaction {
 // MORE INFORMATION: https://developers.tron.network/reference/gettransactioninfobyid-1
 message Transaction {
   TransactionHeader Header = 1;
-  TransactionInfo Info = 2;
-  TransactionResult Result = 3;
-  Receipt Receipt = 4;
-  repeated Contract Contracts = 5;
-  Staking Staking = 6;
-  repeated Log Logs = 7;
-  repeated InternalTransaction InternalTransactions = 8;
+  TransactionResult Result = 2;
+  Receipt Receipt = 3;
+  repeated Contract Contracts = 4;
+  Staking Staking = 5;
+  repeated Log Logs = 6;
+  repeated InternalTransaction InternalTransactions = 7;
 };
 
 // Block message
@@ -90,17 +85,17 @@ message BlockHeader {
   int64 Number = 1;
   string Hash = 2;
   int64 Timestamp = 3;
-  string ParentHash = 4;
+  bytes ParentHash = 4;
   string Version = 5;
-  string TxTrieRoot = 6;
-  string AccountStateRoot = 7;
+  bytes TxTrieRoot = 6;
+  bytes AccountStateRoot = 7;
 };
 
 // Information about witness (or validator) who packed this block.
 message WitnessInfo {
-  string Address = 1;
+  bytes Address = 1;
   int64 Id = 2;
-  int64 Signature = 3;
+  bytes Signature = 3;
 }
 
 // MORE INFORMATION: https://developers.tron.network/reference/getblock-2
