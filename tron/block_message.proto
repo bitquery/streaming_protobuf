@@ -83,7 +83,7 @@ message Transaction {
 // Block message
 message BlockHeader {
   int64 Number = 1;
-  string Hash = 2;
+  bytes Hash = 2;
   int64 Timestamp = 3;
   bytes ParentHash = 4;
   string Version = 5;
