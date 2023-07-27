@@ -7,9 +7,10 @@ message TransactionHeader {
   int64 Fee = 2;
   int64 Index = 3;
   int64 Expiration = 4;
-  string Data = 5;
+  bytes Data = 5;
   int64 FeeLimit = 6;
   int64 Timestamp = 7;
+  repeated bytes Signature = 8;
 };
 
 message Argument {
@@ -37,7 +38,7 @@ message Receipt {
 
 message Contract {
   bytes Address = 1;
-  repeated string ExecutionResults = 2;
+  repeated bytes ExecutionResults = 2;
   string Type = 3;
   string TypeUrl = 4;
   repeated Argument Arguments = 5;
@@ -62,7 +63,7 @@ message CallValue {
 };
 
 message InternalTransaction {
-  string CallerAddress = 1;
+  bytes CallerAddress = 1;
   bytes Note = 2;
   bytes TransferToAddress = 3;
   repeated CallValue CallValues = 4;
