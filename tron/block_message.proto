@@ -93,7 +93,7 @@ message BlockHeader {
 };
 
 // Information about witness (or validator) who packed this block.
-message WitnessInfo {
+message Witness {
   bytes Address = 1;
   int64 Id = 2;
   bytes Signature = 3;
@@ -102,6 +102,6 @@ message WitnessInfo {
 // MORE INFORMATION: https://developers.tron.network/reference/getblock-2
 message BlockMessage {
   BlockHeader Header = 1;
-  WitnessInfo WitnessInfo = 2;
+  Witness Witness = 2;
   repeated Transaction Transactions = 3;
 };
