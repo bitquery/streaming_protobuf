@@ -5,7 +5,7 @@ package tron_messages;
 message TransactionHeader {
   bytes Id = 1;
   int64 Fee = 2;
-  int64 Index = 3;
+  int32 Index = 3;
   int64 Expiration = 4;
   bytes Data = 5;
   int64 FeeLimit = 6;
