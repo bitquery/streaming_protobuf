@@ -65,7 +65,7 @@ message CallValue {
 
 message InternalTransaction {
   bytes CallerAddress = 1;
-  bytes Note = 2;
+  string Note = 2;
   bytes TransferToAddress = 3;
   repeated CallValue CallValues = 4;
   bytes Hash = 5;
