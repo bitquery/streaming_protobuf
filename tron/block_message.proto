@@ -10,7 +10,7 @@ message TransactionHeader {
   bytes Data = 5;
   int64 FeeLimit = 6;
   int64 Timestamp = 7;
-  repeated bytes Signature = 8;
+  repeated bytes Signatures = 8;
 };
 
 message Argument {
