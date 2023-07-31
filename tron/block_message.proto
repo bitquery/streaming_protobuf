@@ -55,6 +55,7 @@ message Log {
   bytes Address = 1;
   bytes Data = 2;
   repeated bytes Topics = 3;
+  int32 Index = 4;
 };
 
 message CallValue {
@@ -68,6 +69,7 @@ message InternalTransaction {
   bytes TransferToAddress = 3;
   repeated CallValue CallValues = 4;
   bytes Hash = 5;
+  int32 Index = 6;
 };
 
 // MORE INFORMATION: https://developers.tron.network/reference/gettransactioninfobyid-1
