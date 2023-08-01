@@ -18,6 +18,7 @@ message Argument {
   oneof Value {
     string String = 2;
     uint64 UInt = 3;
+    double Float = 4;
   }
 }
 
