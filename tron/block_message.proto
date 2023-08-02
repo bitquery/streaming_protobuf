@@ -61,7 +61,7 @@ message Log {
 
 message CallValue {
   int64 CallValue = 1;
-  uint64 TokenId = 2;
+  string TokenId = 2;
 };
 
 message InternalTransaction {
