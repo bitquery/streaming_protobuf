@@ -222,6 +222,9 @@ message TransactionHeader {
 
   // only applicable on L2 chains
   optional uint64 GasL1 = 18;
+
+  // only applicable to txpool transactions
+  uint64 Time = 19;
 }
 
 message Transaction {
@@ -229,7 +232,7 @@ message Transaction {
   Signature Signature = 2;
   Receipt Receipt = 3;
   Trace Trace = 4;
-  uint64 Time = 5;
+  reserved 5;
 }
 
 message Chain {
