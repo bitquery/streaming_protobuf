@@ -222,6 +222,15 @@ message TransactionHeader {
 
   // only applicable on L2 chains
   optional uint64 GasL1 = 18;
+
+  // only applicable for optimism
+  optional bool IsSystemTx = 19;
+
+  // only applicable for optimism
+  optional uint64 EffectiveNonce = 20;
+
+  // only applicable for optimism
+  optional bytes SourceHash = 21;
 }
 
 message Transaction {
