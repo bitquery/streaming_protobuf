@@ -28,6 +28,18 @@ message BlockHeader {
   uint64 GasUsed = 15;
   uint64 Time = 16;
   bytes BaseFee = 17;
+
+  // only applicable for optimism
+  optional uint64 SequenceNumber = 18;
+
+  // only applicable for optimism
+  optional bytes BatcherAddr = 19;
+
+  // only applicable for optimism
+  optional bytes L1FeeOverhead = 20;
+
+  // only applicable for optimism
+  optional bytes L1FeeScalar = 21;
 }
 
 message BlockResult {
