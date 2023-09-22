@@ -232,8 +232,8 @@ message TransactionHeader {
   AddressCode ToCode = 16;
   repeated AccessTuple AccessList = 17;
 
-  // only applicable on L2 chains
-  optional uint64 GasUsedL1 = 18;
+  // GasL1 aka GasUsedL1 (only applicable on L2 chains)
+  optional uint64 GasL1 = 18;
 
   // only applicable on L2 chains
   optional uint64 GasPriceL1 = 19;
