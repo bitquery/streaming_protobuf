@@ -86,7 +86,7 @@ message ReceiptHeader {
   bytes PostState = 6;
   uint64 Status = 7;
   AddressCode ContractAddressCode = 8;
-  optional ReceiptL1Extension L1Extension = 9;
+  optional ReceiptL1Extension L1 = 9;
 }
 
 message ReceiptL1Extension {
