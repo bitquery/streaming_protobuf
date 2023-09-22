@@ -86,6 +86,13 @@ message ReceiptHeader {
   bytes PostState = 6;
   uint64 Status = 7;
   AddressCode ContractAddressCode = 8;
+  optional ReceiptL1Extension L1Extension = 9;
+}
+
+message ReceiptL1Extension {
+	bytes GasPrice = 1;
+  bytes GasUsed = 2;
+  bytes Fee = 3;
 }
 
 message Receipt {
@@ -232,20 +239,17 @@ message TransactionHeader {
   AddressCode ToCode = 16;
   repeated AccessTuple AccessList = 17;
 
-  // GasL1 aka GasUsedL1 (only applicable on L2 chains)
+  // only applicable for arbitrum
   optional uint64 GasL1 = 18;
 
-  // only applicable on L2 chains
-  optional uint64 GasPriceL1 = 19;
+  // only applicable for optimism
+  optional bool IsSystemTx = 19;
 
   // only applicable for optimism
-  optional bool IsSystemTx = 20;
+  optional uint64 EffectiveNonce = 20;
 
   // only applicable for optimism
-  optional uint64 EffectiveNonce = 21;
-
-  // only applicable for optimism
-  optional bytes SourceHash = 22;
+  optional bytes SourceHash = 21;
 }
 
 message Transaction {
