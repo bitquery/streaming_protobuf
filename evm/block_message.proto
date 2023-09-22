@@ -233,16 +233,19 @@ message TransactionHeader {
   repeated AccessTuple AccessList = 17;
 
   // only applicable on L2 chains
-  optional uint64 GasL1 = 18;
+  optional uint64 GasUsedL1 = 18;
+
+  // only applicable on L2 chains
+  optional uint64 GasPriceL1 = 19;
 
   // only applicable for optimism
-  optional bool IsSystemTx = 19;
+  optional bool IsSystemTx = 20;
 
   // only applicable for optimism
-  optional uint64 EffectiveNonce = 20;
+  optional uint64 EffectiveNonce = 21;
 
   // only applicable for optimism
-  optional bytes SourceHash = 21;
+  optional bytes SourceHash = 22;
 }
 
 message Transaction {
