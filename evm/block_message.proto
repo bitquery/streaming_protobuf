@@ -64,6 +64,7 @@ message LogHeader {
   bytes Data = 3;
   bool Removed = 4;
   AddressCode AddressCode = 5;
+  optional bool IsSystem = 6;
 }
 
 message Log {
