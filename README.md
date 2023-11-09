@@ -7,6 +7,7 @@ Contains the schemas by the type of blockchain
 
 Example to use utility to decode
 
-<code>
+```
+brew install protobuf-c
 lz4cat FILE.block.lz4 | protoc-c --decode evm_messages.BlockMessage -I  ~/ evm_block_message.proto
-</code>
+```
