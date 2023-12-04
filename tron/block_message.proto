@@ -49,6 +49,7 @@ message Contract {
   string Type = 3;
   string TypeUrl = 4;
   repeated Argument Arguments = 5;
+  evm_messages.Trace Trace = 8;
 };
 
 message CancelUnfreezeV2Amount {
@@ -93,7 +94,6 @@ message Transaction {
   Staking Staking = 5;
   repeated Log Logs = 6;
   repeated InternalTransaction InternalTransactions = 7;
-  evm_messages.Trace Trace = 8;
 };
 
 // Block message
