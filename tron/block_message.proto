@@ -1,5 +1,11 @@
 syntax = "proto3";
+
 package tron_messages;
+
+import "evm/block_message.proto";
+
+option java_package = "org.tron.streaming.protobuf";
+option java_outer_classname = "TronMessage";
 
 // Tx message
 message TransactionHeader {
@@ -87,6 +93,7 @@ message Transaction {
   Staking Staking = 5;
   repeated Log Logs = 6;
   repeated InternalTransaction InternalTransactions = 7;
+  evm_messages.Trace Trace = 8;
 };
 
 // Block message
