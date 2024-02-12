@@ -91,7 +91,7 @@ message ReceiptHeader {
 }
 
 message ReceiptL1Extension {
-	bytes GasPrice = 1;
+  bytes GasPrice = 1;
   bytes GasUsed = 2;
   bytes Fee = 3;
 }

@@ -1,0 +1,29 @@
+syntax = "proto3";
+package offchain_message;
+
+
+message MarketdataMessage {
+  repeated Currency Currencies = 1;
+  string Source = 2; // cryptorank for example
+}
+
+message Currency {
+  repeated string Dids = 1; // did:ethr:0x1 for ETH
+  repeated string Addresses = 2;
+  string Name = 3;
+  string Symbol = 4;
+  string OriginalId = 5;
+  bool IsNative = 6;
+  PriceBucket Bucket = 7;
+}
+
+message Price {
+  uint64 Time = 1;
+  double PriceInUSD = 2;
+}
+
+message PriceBucket {
+  uint32 Interval = 1; // Interval in seconds between prices
+  repeated Price Prices = 2;
+  uint64 LastUpdated = 3;
+}
