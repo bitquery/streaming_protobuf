@@ -7,14 +7,25 @@ message MarketdataMessage {
   string Source = 2; // cryptorank for example
 }
 
+// did:ethr:0x1 // ETH on Mainnet
+// did:ethr:0x1:0x111111111117dc0aa78b770fa6a738034120c302 // 1inch on mainnet
+// did:btcr:mainnet // BTC Mainnet
+// did:near:mainnet // NEAR on mainnet
+// did:sol:devnet:2eK2DKs6vdzTEoj842Gfcs6DdtffPpw1iF6JbzQL4TuK
+
+message Address { 
+  string Did = 1;
+  string Chain = 2;
+  optional string Address = 3;
+}
+
 message Currency {
-  repeated string Dids = 1; // did:ethr:0x1 for ETH
-  repeated string Addresses = 2;
-  string Name = 3;
-  string Symbol = 4;
-  string OriginalId = 5;
-  bool IsNative = 6;
-  PriceBucket Bucket = 7;
+  repeated string Addresses = 1;
+  string Name = 2;
+  string Symbol = 3;
+  string OriginalId = 4;
+  bool IsNative = 5;
+  PriceBucket Bucket = 6;
 }
 
 message Price {
