@@ -9,22 +9,23 @@ message MarketdataMessage {
 
 // did:ethr:0x1 // ETH on Mainnet
 // did:ethr:0x1:0x111111111117dc0aa78b770fa6a738034120c302 // 1inch on mainnet
-// did:btcr:mainnet // BTC Mainnet
-// did:near:mainnet // NEAR on mainnet
+// did:btcr // BTC Mainnet
+// did:near // NEAR on mainnet
 // did:sol:devnet:2eK2DKs6vdzTEoj842Gfcs6DdtffPpw1iF6JbzQL4TuK
 
-message Address { 
-  string Did = 1;
-  string Chain = 2;
-  optional string Address = 3;
+message Token { 
+  string Id = 1;
+  string Did = 2;
+  string Network = 3;
+  optional string Address = 4;
+  bool IsNative = 5;
 }
 
 message Currency {
-  repeated string Addresses = 1;
+  repeated Token Tokens = 1;
   string Name = 2;
   string Symbol = 3;
   string OriginalId = 4;
-  bool IsNative = 5;
   PriceBucket Bucket = 6;
 }
 
