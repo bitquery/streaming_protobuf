@@ -4,7 +4,7 @@ package tron_messages;
 
 import "evm/block_message.proto";
 
-option java_package = "org.tron.streaming.protobuf";
+option java_package = "io.bitquery.protos";
 option java_outer_classname = "TronMessage";
 
 // Tx message
@@ -17,6 +17,8 @@ message TransactionHeader {
   int64 FeeLimit = 6;
   int64 Timestamp = 7;
   repeated bytes Signatures = 8;
+  // only applicable to broadcasted
+  optional uint64 Time = 9;
 };
 
 message Argument {
@@ -49,7 +51,8 @@ message Contract {
   string Type = 3;
   string TypeUrl = 4;
   repeated Argument Arguments = 5;
-  evm_messages.Trace Trace = 8;
+  repeated InternalTransaction InternalTransactions = 6;
+  evm_messages.Trace Trace = 7;
 };
 
 message CancelUnfreezeV2Amount {
@@ -93,7 +96,6 @@ message Transaction {
   repeated Contract Contracts = 4;
   Staking Staking = 5;
   repeated Log Logs = 6;
-  repeated InternalTransaction InternalTransactions = 7;
 };
 
 // Block message
@@ -105,6 +107,7 @@ message BlockHeader {
   int32 Version = 5;
   bytes TxTrieRoot = 6;
   bytes AccountStateRoot = 7;
+  uint32 TransactionsCount = 8;
 };
 
 // Information about witness (or validator) who packed this block.
