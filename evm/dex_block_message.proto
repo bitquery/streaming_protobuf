@@ -58,7 +58,7 @@ message DexTrade {
   bytes Sender = 8;
   bool Success = 9;
   repeated TradeFee Fees = 10;
-  int32 TradeIndex = 11;
+  int32 Index = 11;
 }
 
 message DexBlockMessage {
