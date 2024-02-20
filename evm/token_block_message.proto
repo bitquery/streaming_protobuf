@@ -30,6 +30,7 @@ message TokenTransfer {
   TokenInfo Currency = 9;
   bool Success = 10;
   bytes Data = 12;
+  int32 TransferIndex = 13;
 }
 
 
