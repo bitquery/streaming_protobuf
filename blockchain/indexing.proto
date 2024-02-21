@@ -8,3 +8,7 @@ message Indexing {
   bool  OnTree = 4;
   bool  OnTrunk = 5;
 }
+
+message Recording {
+  uint64 Hash = 1;
+}
