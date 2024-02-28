@@ -18,7 +18,8 @@ message Token {
   string Did = 2;
   string Network = 3;
   optional string Address = 4;
-  bool IsNative = 5;
+  optional string TokenId = 5; // For networks like TRON and TRC-10
+  bool IsNative = 6;
 }
 
 message Currency {
@@ -31,11 +32,11 @@ message Currency {
 
 message Price {
   uint64 Time = 1;
-  double PriceInUSD = 2;
+  double Usd = 2;
 }
 
 message PriceBucket {
   uint32 Interval = 1; // Interval in seconds between prices
   repeated Price Prices = 2;
-  uint64 LastUpdated = 3;
+  uint64 LastUpdatedAt = 3;
 }
