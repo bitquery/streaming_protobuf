@@ -11,7 +11,7 @@ message ParsedAbiTransactionStatus {
 
 message ParsedAbiTransaction {
   TransactionHeader TransactionHeader = 1;
-  // ReceiptHeader ReceiptHeader = 2;
+  Receipt Receipt = 2;
   // TransactionFee TransactionFee = 3;
   ParsedAbiTransactionStatus TransactionStatus = 4;
   // repeated ParsedAbiCall Calls = 5;
