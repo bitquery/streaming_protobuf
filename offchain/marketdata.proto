@@ -1,5 +1,5 @@
 syntax = "proto3";
-package offchain_message;
+package marketdata_messages;
 
 
 message MarketdataMessage {
@@ -13,7 +13,7 @@ message MarketdataMessage {
 // did:near // NEAR on mainnet
 // did:sol:devnet:2eK2DKs6vdzTEoj842Gfcs6DdtffPpw1iF6JbzQL4TuK
 
-message Token { 
+message Token {
   string Id = 1;
   string Did = 2;
   string Network = 3;
