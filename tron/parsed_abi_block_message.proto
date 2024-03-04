@@ -4,24 +4,18 @@ package tron_messages;
 import "tron/block_message.proto";
 import "evm/parsed_abi_block_message.proto";
 
-message ParsedAbiTransactionStatus {
-  bool Success = 1;
-  string EndError = 2;
-  string FaultError = 3;
-}
-
 message ParsedAbiTransaction {
-  TransactionHeader TransactionHeader = 1;
-  Receipt Receipt = 2;
+  tron_messages.TransactionHeader TransactionHeader = 1;
+  tron_messages.Receipt Receipt = 2;
   // TransactionFee TransactionFee = 3;
-  ParsedAbiTransactionStatus TransactionStatus = 4;
-  repeated ParsedAbiCall Calls = 5;
+  evm_messages.ParsedAbiTransactionStatus TransactionStatus = 4;
+  repeated evm_messages.ParsedAbiCall Calls = 5;
   uint64 Time = 6;
 }
 
 message ParsedAbiBlockMessage {
   // Chain Chain = 1;
-  BlockHeader Header = 2;
+  tron_messages.BlockHeader Header = 2;
   // repeated BlockHeader Uncles = 3;
   // MinerReward Reward = 4;
   // repeated MinerReward UncleRewards = 5;
