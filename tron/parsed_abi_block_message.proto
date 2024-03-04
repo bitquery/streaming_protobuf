@@ -2,6 +2,7 @@ syntax = "proto3";
 package tron_messages;
 
 import "tron/block_message.proto";
+import "evm/parsed_abi_block_message.proto";
 
 message ParsedAbiTransactionStatus {
   bool Success = 1;
@@ -14,7 +15,7 @@ message ParsedAbiTransaction {
   Receipt Receipt = 2;
   // TransactionFee TransactionFee = 3;
   ParsedAbiTransactionStatus TransactionStatus = 4;
-  // repeated ParsedAbiCall Calls = 5;
+  repeated ParsedAbiCall Calls = 5;
   uint64 Time = 6;
 }
 
