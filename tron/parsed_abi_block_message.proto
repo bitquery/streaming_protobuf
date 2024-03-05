@@ -16,9 +16,7 @@ message ParsedAbiTransaction {
 message ParsedAbiBlockMessage {
   // Chain Chain = 1;
   tron_messages.BlockHeader Header = 2;
-  // repeated BlockHeader Uncles = 3;
   // MinerReward Reward = 4;
-  // repeated MinerReward UncleRewards = 5;
   repeated ParsedAbiTransaction Transactions = 6;
   // optional BlockHeader L1Header = 7;
 }
