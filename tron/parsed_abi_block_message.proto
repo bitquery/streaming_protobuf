@@ -7,16 +7,14 @@ import "evm/parsed_abi_block_message.proto";
 message ParsedAbiTransaction {
   tron_messages.TransactionHeader TransactionHeader = 1;
   tron_messages.Receipt Receipt = 2;
-  // TransactionFee TransactionFee = 3;
-  evm_messages.ParsedAbiTransactionStatus TransactionStatus = 4;
-  repeated evm_messages.ParsedAbiCall Calls = 5;
-  uint64 Time = 6;
+  evm_messages.ParsedAbiTransactionStatus TransactionStatus = 3;
+  repeated evm_messages.ParsedAbiCall Calls = 4;
+  uint64 Time = 5;
 }
 
 message ParsedAbiBlockMessage {
-  // Chain Chain = 1;
+  tron_messages.Chain Chain = 1;
   tron_messages.BlockHeader Header = 2;
+  repeated ParsedAbiTransaction Transactions = 3;
   // MinerReward Reward = 4;
-  repeated ParsedAbiTransaction Transactions = 6;
-  // optional BlockHeader L1Header = 7;
 }
