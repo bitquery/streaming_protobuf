@@ -121,6 +121,6 @@ message BlockDescriptor {
 
 
 message BlockNotifyRequestBody {
-  BlockDescritor Descriptor = 1;
+  BlockDescriptor Descriptor = 1;
   string path = 2;
 };
