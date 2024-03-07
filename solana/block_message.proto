@@ -96,6 +96,7 @@ message BlockHeader {
   uint64 ParentSlot = 4;
   uint64 Height = 5;
   int64 Timestamp = 6;
+  string ParentHash = 7;
 };
 
 message BlockMessage {
