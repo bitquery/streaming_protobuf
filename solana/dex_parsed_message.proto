@@ -37,11 +37,15 @@ enum DexOrderEventType {
 }
 
 message DexOrderEvent {
-  DexOrderEventType Type = 1;
-  uint64 InstructionIndex = 2;
-  DexInfo Dex = 3;
-  DexMarket Market = 4;
-  DexOrder Order = 5;
+  uint32 TransactionIndex = 1;
+  uint32 InstructionIndex = 2;
+
+  DexOrderEventType Type = 3;
+  DexInfo Dex = 4;
+  DexMarket Market = 5;
+  DexOrder Order = 6;
+
+  uint64 Index = 7;
 }
 
 
@@ -54,29 +58,20 @@ message DexTradeSide {
 
 message DexTradeEvent {
 
-  uint64 InstructionIndex = 1;
-  DexInfo Dex = 2;
-  DexMarket Market = 3;
+  uint32 TransactionIndex = 1;
+  uint32 InstructionIndex = 2;
 
-  DexTradeSide Buy = 4;
-  DexTradeSide Sell = 5;
-  uint64 TradeIndex = 6;
+  DexInfo Dex = 3;
+  DexMarket Market = 4;
 
-}
+  DexTradeSide Buy = 5;
+  DexTradeSide Sell = 6;
+  uint64 Index = 7;
 
-message DexParsedInstruction {
-  repeated DexTradeEvent Trades = 1;
-  repeated DexOrderEvent OrderEvents = 2;
-}
-
-message DexParsedTransaction {
-  string Signature = 1;
-  TransactionStatus Status = 2;
-  TransactionHeader Header = 3;
-  repeated DexParsedInstruction Instructions = 4;
 }
 
 message DexParsedBlockMessage {
   BlockHeader Header = 1;
-  repeated DexParsedTransaction Transactions = 3;
+  repeated DexTradeEvent Trades = 2;
+  repeated DexOrderEvent OrderEvents = 3;
 }
