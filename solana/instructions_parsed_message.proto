@@ -27,9 +27,9 @@ message InstructionParsedInfo {
 message ParsedInstruction {
   Instruction Instruction = 1;
   InstructionParsedInfo Parsed = 2;
-  uint32 Index = 3;
-  int32 ParentIndex = 4;
-  repeated int32 AncestorIndexes = 5;
+  uint64 Index = 3;
+  int64 ParentIndex = 4;
+  repeated int64 AncestorIndexes = 5;
   repeated ParsedBalanceUpdate BalanceUpdates = 10;
   repeated string Logs = 20;
 }
