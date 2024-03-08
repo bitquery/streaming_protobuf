@@ -4,7 +4,7 @@ package solana_messages;
 import "solana/block_message.proto";
 
 message ParsedBalanceUpdate {
-  uint64 InstructionIndex = 1;
+  uint32 InstructionIndex = 1;
   int64 BalanceDiff = 2;
   int64 CumulativeBalanceDiff = 3;
   string Address = 4; // Same as OwnerAddress, deprecated
@@ -27,9 +27,9 @@ message InstructionParsedInfo {
 message ParsedInstruction {
   Instruction Instruction = 1;
   InstructionParsedInfo Parsed = 2;
-  uint64 Index = 3;
-  int64 ParentIndex = 4;
-  repeated int64 AncestorIndexes = 5;
+  uint32 Index = 3;
+  int32 ParentIndex = 4;
+  repeated int32 AncestorIndexes = 5;
   repeated ParsedBalanceUpdate BalanceUpdates = 10;
   repeated string Logs = 20;
 }

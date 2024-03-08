@@ -40,7 +40,7 @@ message TokenInfo {
 }
 
 message TokenTransfer {
-  uint64 InstructionIndex = 1;
+  uint32 InstructionIndex = 1;
   uint64 Amount = 2;
   string Sender = 4;
   string Receiver = 5;
@@ -50,7 +50,7 @@ message TokenTransfer {
 }
 
 message InstructionBalanceUpdate {
-  uint64 InstructionIndex = 1;
+  uint32 InstructionIndex = 1;
   uint64 PreBalance = 2;
   uint64 PostBalance = 3;
   int64 BalanceDiff = 4;

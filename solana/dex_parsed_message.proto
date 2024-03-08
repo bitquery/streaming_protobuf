@@ -45,7 +45,7 @@ message DexOrderEvent {
   DexMarket Market = 5;
   DexOrder Order = 6;
 
-  uint64 Index = 7;
+  uint32 Index = 7;
 }
 
 
@@ -66,7 +66,7 @@ message DexTradeEvent {
 
   DexTradeSide Buy = 5;
   DexTradeSide Sell = 6;
-  uint64 Index = 7;
+  uint32 Index = 7;
 
 }
 
