@@ -7,7 +7,7 @@ message Account {
   string Address = 1;
   bool IsSigner = 2;
   bool IsWritable = 3;
-  string Info = 4; // json: Added in streaming_processor
+  reserved 4;
   TokenAccount TokenInfo = 5;
 };
 
@@ -16,7 +16,7 @@ message TokenAccount {
   string Mint = 2;
   string Owner = 3;
   uint64 Decimals = 4;
-  string Info = 5; // json: Added in streaming_processor
+  reserved 5;
 };
 
 message BalanceUpdate {
@@ -34,7 +34,7 @@ message TokenBalanceUpdate {
 
 message Program {
   string Address = 1;
-  string Name = 2; // Added in streaming_processor
+  reserved 2;
 };
 
 message Instruction {
@@ -46,7 +46,7 @@ message Instruction {
   repeated Account Accounts = 6;
   repeated BalanceUpdate BalanceUpdates = 7;
   repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
-  string ParsedData = 10; // json - Added in streaming_processor
+  reserved 10;
 };
 
 message TransactionHeader {
