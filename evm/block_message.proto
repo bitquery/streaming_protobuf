@@ -159,8 +159,9 @@ message CaptureEnter {
 
   uint64 Gas = 5;
   bytes Value = 6;
+  repeated bytes TokenId = 7;
 
-  AddressCode ToCode = 7;
+  AddressCode ToCode = 8;
 }
 
 message CaptureExit {
