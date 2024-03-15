@@ -18,7 +18,7 @@ message TokenCreator {
 
 message TokenInfo {
   string Name = 1;
-  string Decimals = 2;
+  int32  Decimals = 2;
   string Uri = 3;
   string Symbol = 4;
   TokenType TokenType = 5;
