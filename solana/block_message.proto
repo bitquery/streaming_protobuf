@@ -4,16 +4,23 @@ option go_package = "streaming_processor_solana/solana_messages";
 
 
 message Account {
+
   string      Address = 1;
   bool        IsSigner = 2;
   bool        IsWritable = 3;
-  TokenOwner  TokenOwner = 4;
-};
 
-message TokenOwner {
+  optional string     Owner = 4;
+
+  // if Address is token holder, it contains info on that token ( Mint address )
+  // if Address is token itself, it contains info on token
+  optional TokenInfo  Token = 5;
+
+}
+
+message TokenInfo {
   string Mint = 2;
-  string Owner = 3;
-};
+  uint32 Decimals = 1;
+}
 
 message BalanceUpdate {
   uint64 PreBalance = 1;
