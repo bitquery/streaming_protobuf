@@ -38,7 +38,7 @@ message Instruction {
   uint64 CallerIndex = 2;
   uint64 InnerIndex = 3;
   uint64 NestingLevel = 4;
-  string Data = 5;
+  bytes  Data = 5;
   repeated uint32 AccountIndexes = 6;
   repeated BalanceUpdate BalanceUpdates = 7;
   repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
