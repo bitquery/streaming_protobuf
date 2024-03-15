@@ -4,56 +4,45 @@ option go_package = "streaming_processor_solana/solana_messages";
 
 
 message Account {
-  string Address = 1;
-  bool IsSigner = 2;
-  bool IsWritable = 3;
-  reserved 4;
-  TokenAccount TokenInfo = 5;
+  string      Address = 1;
+  bool        IsSigner = 2;
+  bool        IsWritable = 3;
+  TokenOwner  TokenOwner = 4;
 };
 
-message TokenAccount {
-  string Address = 1;
+message TokenOwner {
   string Mint = 2;
   string Owner = 3;
-  uint64 Decimals = 4;
-  reserved 5;
 };
 
 message BalanceUpdate {
   uint64 PreBalance = 1;
   uint64 PostBalance = 2;
-  uint64 AccountIndex = 3;
+  uint32 AccountIndex = 3;
 };
 
 message TokenBalanceUpdate {
-  TokenAccount Token = 1;
-  uint64 PreBalance = 2;
-  uint64 PostBalance = 3;
-  Account Account = 4;
-};
-
-message Program {
-  string Address = 1;
-  reserved 2;
+  uint32 TokenAccountIndex = 1;
+  uint32 AccountIndex = 2;
+  uint64 PreBalance = 3;
+  uint64 PostBalance = 4;
 };
 
 message Instruction {
-  Program Program = 1;
+  uint32 ProgramAccountIndex = 1;
   uint64 CallerIndex = 2;
   uint64 InnerIndex = 3;
   uint64 NestingLevel = 4;
   string Data = 5;
-  repeated Account Accounts = 6;
+  repeated uint32 AccountIndexes = 6;
   repeated BalanceUpdate BalanceUpdates = 7;
   repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
-  reserved 10;
 };
 
 message TransactionHeader {
   uint64 Fee = 1;
   string FeePayer = 2;
   string RecentBlockhash = 3;
-  // `Signer` is always first in `Accounts` and his signature is first in `Signatures`
   string Signer = 4; 
   repeated string Signatures = 5;
   repeated Account Accounts = 6;
