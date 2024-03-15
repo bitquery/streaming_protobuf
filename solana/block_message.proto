@@ -18,8 +18,8 @@ message Account {
 }
 
 message TokenInfo {
-  bytes Mint = 2;
-  uint32 Decimals = 1;
+  bytes Mint = 1;
+  uint32 Decimals = 2;
 }
 
 message BalanceUpdate {
