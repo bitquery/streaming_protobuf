@@ -12,8 +12,8 @@ enum TokenType {
 
 message TokenCreator {
   string Address = 1;
-  bool verified = 2;
-  uint64 share = 3;
+  bool Verified = 2;
+  uint64 Share = 3;
 }
 
 message TokenInfo {
@@ -21,22 +21,22 @@ message TokenInfo {
   string Decimals = 2;
   string Uri = 3;
   string Symbol = 4;
-  TokenType tokenType = 5;
+  TokenType TokenType = 5;
   int64 Key = 6;
-  int64 sellerFeeBasisPoints = 8;
-  int64 editionNonce = 9;
-  int64 tokenStandard = 10;
+  int64 SellerFeeBasisPoints = 8;
+  int64 EditionNonce = 9;
+  int64 TokenStandard = 10;
 
   string MintAddress = 11;
   string MetadataAddress = 12; 
   string UpdateAuthority = 13;
   string CollectionAddress = 14;
 
-  bool verifiedCollection = 20;
-  bool primarySaleHappened = 21;
-  bool isMutable = 22;
+  bool VerifiedCollection = 20;
+  bool PrimarySaleHappened = 21;
+  bool IsMutable = 22;
 
-  repeated TokenCreator tokenCreators = 31;
+  repeated TokenCreator TokenCreators = 31;
 }
 
 message TokenTransfer {
