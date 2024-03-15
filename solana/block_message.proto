@@ -5,11 +5,11 @@ option go_package = "streaming_processor_solana/solana_messages";
 
 message Account {
 
-  string      Address = 1;
+  bytes      Address = 1;
   bool        IsSigner = 2;
   bool        IsWritable = 3;
 
-  optional string     Owner = 4;
+  optional bytes     Owner = 4;
 
   // if Address is token holder, it contains info on that token ( Mint address )
   // if Address is token itself, it contains info on token
@@ -18,7 +18,7 @@ message Account {
 }
 
 message TokenInfo {
-  string Mint = 2;
+  bytes Mint = 2;
   uint32 Decimals = 1;
 }
 
@@ -46,10 +46,10 @@ message Instruction {
 
 message TransactionHeader {
   uint64 Fee = 1;
-  string FeePayer = 2;
-  string RecentBlockhash = 3;
-  string Signer = 4; 
-  repeated string Signatures = 5;
+  bytes FeePayer = 2;
+  bytes RecentBlockhash = 3;
+  bytes Signer = 4;
+  repeated bytes Signatures = 5;
   repeated Account Accounts = 6;
 }
 
@@ -62,7 +62,7 @@ enum RewardType {
 }
 
 message Reward {
-  string Address = 1;
+  bytes Address = 1;
   int64 Amount = 2;
   uint64 PostBalance = 3;
   RewardType RewardType = 4;
@@ -75,7 +75,7 @@ message TransactionStatus {
 }
 
 message Transaction {
-  string Signature = 1;
+  bytes Signature = 1;
   TransactionStatus Status = 2;
   TransactionHeader Header = 3;
   repeated BalanceUpdate TotalBalanceUpdates = 4;
@@ -87,11 +87,11 @@ message Transaction {
 
 message BlockHeader {
   uint64 Slot = 1;
-  string Hash = 2;
+  bytes Hash = 2;
   uint64 ParentSlot = 4;
   uint64 Height = 5;
   int64 Timestamp = 6;
-  string ParentHash = 7;
+  bytes ParentHash = 7;
 }
 
 message BlockMessage {
@@ -100,15 +100,3 @@ message BlockMessage {
   repeated Transaction Transactions = 3;
 }
 
-message BlockDescriptor {
-  string ChainId = 2;
-  string BlockHash = 3;
-  uint64 BlockNumber = 4;
-  uint64 ParentNumber = 5;
-  int64 Timestamp = 6;
-  uint64 TransactionsCount = 7;
-  uint64 MessageSize = 8;
-  bytes Checksum = 9;
-  string Height = 10;
-  string ParentHash = 11;
-}
