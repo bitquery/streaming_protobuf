@@ -26,14 +26,12 @@ message BalanceUpdate {
   uint64 PreBalance = 1;
   uint64 PostBalance = 2;
   uint32 AccountIndex = 3;
-};
+}
 
 message TokenBalanceUpdate {
   uint32 TokenAccountIndex = 1;
-  uint32 AccountIndex = 2;
-  uint64 PreBalance = 3;
-  uint64 PostBalance = 4;
-};
+  BalanceUpdate BalanceUpdate = 2;
+}
 
 message Instruction {
   uint32 ProgramAccountIndex = 1;
@@ -44,7 +42,7 @@ message Instruction {
   repeated uint32 AccountIndexes = 6;
   repeated BalanceUpdate BalanceUpdates = 7;
   repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
-};
+}
 
 message TransactionHeader {
   uint64 Fee = 1;
@@ -53,7 +51,7 @@ message TransactionHeader {
   string Signer = 4; 
   repeated string Signatures = 5;
   repeated Account Accounts = 6;
-};
+}
 
 enum RewardType {
   RewardTypeUnknown = 0;
@@ -61,7 +59,7 @@ enum RewardType {
   Rent = 2;
   Staking = 3;
   Voting = 4;
-};
+}
 
 message Reward {
   string Address = 1;
@@ -69,12 +67,12 @@ message Reward {
   uint64 PostBalance = 3;
   RewardType RewardType = 4;
   uint64 Commission = 5;
-};
+}
 
 message TransactionStatus {
   bool Success = 1;
   string ErrorMessage = 2;
-};
+}
 
 message Transaction {
   string Signature = 1;
@@ -85,7 +83,7 @@ message Transaction {
   repeated Instruction Instructions = 7;
   repeated string Logs = 8;
   uint64 Index = 9;
-};
+}
 
 message BlockHeader {
   uint64 Slot = 1;
@@ -94,13 +92,13 @@ message BlockHeader {
   uint64 Height = 5;
   int64 Timestamp = 6;
   string ParentHash = 7;
-};
+}
 
 message BlockMessage {
   BlockHeader Header = 1;
   repeated Reward Rewards = 2;
   repeated Transaction Transactions = 3;
-};
+}
 
 message BlockDescriptor {
   string ChainId = 2;
@@ -113,10 +111,4 @@ message BlockDescriptor {
   bytes Checksum = 9;
   string Height = 10;
   string ParentHash = 11;
-};
-
-
-message BlockNotifyRequestBody {
-  BlockDescriptor Descriptor = 1;
-  string path = 2;
-};
+}
