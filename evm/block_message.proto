@@ -119,6 +119,8 @@ message CaptureStart {
   bytes Value = 6;
 
   AddressCode ToCode = 7;
+
+  CallTransfer CallTransfer = 8;
 }
 
 message CaptureEnd {
@@ -159,9 +161,10 @@ message CaptureEnter {
 
   uint64 Gas = 5;
   bytes Value = 6;
-  repeated bytes TokenId = 7;
 
-  AddressCode ToCode = 8;
+  AddressCode ToCode = 7;
+
+  CallTransfer CallTransfer = 8;
 }
 
 message CaptureExit {
@@ -218,6 +221,15 @@ message Trace {
   repeated CaptureState CaptureStates = 5;
 
 
+}
+
+// The 'CallTransfer' message is designed for use with the TRON blockchain.
+// If the message is empty, it indicates that no transfer occurred.
+// If the 'value' field is not null and the 'tokenId' field is null, it indicates a TRX transfer.
+// If both the 'value' and 'tokenId' fields are not null, it indicates a TRC10 token transfer.
+message CallTransfer {
+  int64 Value = 1;
+  string TokenId = 2;
 }
 
 message AccessTuple {
