@@ -91,6 +91,9 @@ message ReceiptHeader {
   uint64 Status = 7;
   AddressCode ContractAddressCode = 8;
   optional ReceiptL1Extension L1 = 9;
+  optional bytes EffectiveGasPrice = 10;
+  optional uint64 BlobGasUsed = 11;
+  optional bytes BlobGasPrice = 12;
 }
 
 message ReceiptL1Extension {
@@ -270,6 +273,17 @@ message TransactionHeader {
 
   // only applicable to broadcasted
   optional uint64 Time = 22;
+
+  // for Txn Type: 3 (EIP-4844)
+  optional Blob Blob = 23;
+}
+
+message Blob {
+  repeated bytes Hashes = 1;
+  repeated bytes Proofs = 2;
+  repeated bytes Commitments = 3;
+  uint64 BlobGas = 4;
+  bytes BlobGasFeeCap = 5;
 }
 
 message Transaction {
