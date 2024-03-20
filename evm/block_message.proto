@@ -265,6 +265,17 @@ message TransactionHeader {
 
   // only applicable to broadcasted
   optional uint64 Time = 22;
+
+  // for Txn Type: 3 (EIP-4844)
+  optional Blob Blob = 23;
+}
+
+message Blob {
+  repeated bytes Hashes = 1;
+  repeated bytes Proofs = 2;
+  repeated bytes Commitments = 3;
+  uint64 BlobGas = 4;
+  bytes BlobGasFeeCap = 5;
 }
 
 message Transaction {
