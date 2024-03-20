@@ -123,7 +123,10 @@ message CaptureStart {
 
   AddressCode ToCode = 7;
 
-  CallTransfer CallTransfer = 8;
+  // The 'tokenId' is designed for use with the TRON blockchain.
+  // If the 'Value' field is not 0 and the 'TokenId' field is null, it indicates a TRX transfer.
+  // If the 'Value' field is not 0 and the 'TokenId' field not null, it indicates a TRC10 token transfer.
+  optional string TokenId = 8;
 }
 
 message CaptureEnd {
@@ -164,10 +167,8 @@ message CaptureEnter {
 
   uint64 Gas = 5;
   bytes Value = 6;
-
   AddressCode ToCode = 7;
-
-  CallTransfer CallTransfer = 8;
+  optional string TokenId = 8;
 }
 
 message CaptureExit {
@@ -226,15 +227,6 @@ message Trace {
 
 }
 
-// The 'CallTransfer' message is designed for use with the TRON blockchain.
-// If the message is empty, it indicates that no transfer occurred.
-// If the 'value' field is not null and the 'tokenId' field is null, it indicates a TRX transfer.
-// If both the 'value' and 'tokenId' fields are not null, it indicates a TRC10 token transfer.
-message CallTransfer {
-  int64 Value = 1;
-  string TokenId = 2;
-}
-
 message AccessTuple {
   bytes Address = 1;
   repeated bytes  StorageKeys = 2;
@@ -273,17 +265,6 @@ message TransactionHeader {
 
   // only applicable to broadcasted
   optional uint64 Time = 22;
-
-  // for Txn Type: 3 (EIP-4844)
-  optional Blob Blob = 23;
-}
-
-message Blob {
-  repeated bytes Hashes = 1;
-  repeated bytes Proofs = 2;
-  repeated bytes Commitments = 3;
-  uint64 BlobGas = 4;
-  bytes BlobGasFeeCap = 5;
 }
 
 message Transaction {
