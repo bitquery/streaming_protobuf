@@ -191,6 +191,8 @@ message CaptureStateHeader {
   uint64 Depth = 8;
 
   string Error = 9;
+
+  uint32 Index = 10;
 }
 
 message CaptureState {
