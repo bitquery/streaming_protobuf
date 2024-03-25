@@ -15,6 +15,7 @@ message TokenInfo {
     bytes Mint = 1;
     bytes Owner = 2;
     uint32 Decimals = 3;
+    bytes ProgramId = 4;
 }
 
 message BalanceUpdate {
