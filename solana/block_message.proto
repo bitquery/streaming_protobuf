@@ -23,11 +23,6 @@ message BalanceUpdate {
     uint32 AccountIndex = 3;
 }
 
-message TokenBalanceUpdate {
-    uint32 TokenAccountIndex = 1;
-    BalanceUpdate BalanceUpdate = 2;
-}
-
 message Instruction {
     uint32 ProgramAccountIndex = 1;
     uint64 CallerIndex = 2;
@@ -36,7 +31,7 @@ message Instruction {
     bytes  Data = 5;
     repeated uint32 AccountIndexes = 6;
     repeated BalanceUpdate BalanceUpdates = 7;
-    repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
+    repeated BalanceUpdate TokenBalanceUpdates = 8;
 }
 
 message TransactionHeader {
@@ -74,7 +69,7 @@ message Transaction {
     TransactionStatus Status = 2;
     TransactionHeader Header = 3;
     repeated BalanceUpdate TotalBalanceUpdates = 4;
-    repeated TokenBalanceUpdate TotalTokenBalanceUpdates = 5;
+    repeated BalanceUpdate TotalTokenBalanceUpdates = 5;
     repeated Instruction Instructions = 7;
     repeated string Logs = 8;
     uint64 Index = 9;
