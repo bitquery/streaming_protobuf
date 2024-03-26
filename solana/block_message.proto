@@ -4,123 +4,90 @@ option go_package = "streaming_processor_solana/solana_messages";
 
 
 message Account {
-  string Address = 1;
-  bool IsSigner = 2;
-  bool IsWritable = 3;
-  reserved 4;
-  TokenAccount TokenInfo = 5;
-};
+    bytes Address = 1;
+    bool IsSigner = 2;
+    bool IsWritable = 3;
 
-message TokenAccount {
-  string Address = 1;
-  string Mint = 2;
-  string Owner = 3;
-  uint64 Decimals = 4;
-  reserved 5;
-};
+    optional TokenInfo Token = 4;
+}
+
+message TokenInfo {
+    bytes Mint = 1;
+    bytes Owner = 2;
+    uint32 Decimals = 3;
+    bytes ProgramId = 4;
+}
 
 message BalanceUpdate {
-  uint64 PreBalance = 1;
-  uint64 PostBalance = 2;
-  uint64 AccountIndex = 3;
-};
-
-message TokenBalanceUpdate {
-  TokenAccount Token = 1;
-  uint64 PreBalance = 2;
-  uint64 PostBalance = 3;
-  Account Account = 4;
-};
-
-message Program {
-  string Address = 1;
-  reserved 2;
-};
+    uint64 PreBalance = 1;
+    uint64 PostBalance = 2;
+    uint32 AccountIndex = 3;
+}
 
 message Instruction {
-  Program Program = 1;
-  uint64 CallerIndex = 2;
-  uint64 InnerIndex = 3;
-  uint64 NestingLevel = 4;
-  string Data = 5;
-  repeated Account Accounts = 6;
-  repeated BalanceUpdate BalanceUpdates = 7;
-  repeated TokenBalanceUpdate TokenBalanceUpdates = 8;
-  reserved 10;
-};
+    uint32 ProgramAccountIndex = 1;
+    uint64 CallerIndex = 2;
+    uint64 InnerIndex = 3;
+    uint64 NestingLevel = 4;
+    bytes  Data = 5;
+    repeated uint32 AccountIndexes = 6;
+    repeated BalanceUpdate BalanceUpdates = 7;
+    repeated BalanceUpdate TokenBalanceUpdates = 8;
+}
 
 message TransactionHeader {
-  uint64 Fee = 1;
-  string FeePayer = 2;
-  string RecentBlockhash = 3;
-  // `Signer` is always first in `Accounts` and his signature is first in `Signatures`
-  string Signer = 4; 
-  repeated string Signatures = 5;
-  repeated Account Accounts = 6;
-};
+    uint64 Fee = 1;
+    bytes FeePayer = 2;
+    bytes RecentBlockhash = 3;
+    bytes Signer = 4;
+    repeated bytes Signatures = 5;
+    repeated Account Accounts = 6;
+}
 
 enum RewardType {
-  RewardTypeUnknown = 0;
-  Fee = 1;
-  Rent = 2;
-  Staking = 3;
-  Voting = 4;
-};
+    RewardTypeUnknown = 0;
+    Fee = 1;
+    Rent = 2;
+    Staking = 3;
+    Voting = 4;
+}
 
 message Reward {
-  string Address = 1;
-  int64 Amount = 2;
-  uint64 PostBalance = 3;
-  RewardType RewardType = 4;
-  uint64 Commission = 5;
-};
+    bytes Address = 1;
+    int64 Amount = 2;
+    uint64 PostBalance = 3;
+    RewardType RewardType = 4;
+    uint64 Commission = 5;
+}
 
 message TransactionStatus {
-  bool Success = 1;
-  string ErrorMessage = 2;
-};
+    bool Success = 1;
+    string ErrorMessage = 2;
+}
 
 message Transaction {
-  string Signature = 1;
-  TransactionStatus Status = 2;
-  TransactionHeader Header = 3;
-  repeated BalanceUpdate TotalBalanceUpdates = 4;
-  repeated TokenBalanceUpdate TotalTokenBalanceUpdates = 5;
-  repeated Instruction Instructions = 7;
-  repeated string Logs = 8;
-  uint64 Index = 9;
-};
+    bytes Signature = 1;
+    TransactionStatus Status = 2;
+    TransactionHeader Header = 3;
+    repeated BalanceUpdate TotalBalanceUpdates = 4;
+    repeated BalanceUpdate TotalTokenBalanceUpdates = 5;
+    repeated Instruction Instructions = 7;
+    repeated string Logs = 8;
+    uint64 Index = 9;
+}
 
 message BlockHeader {
-  uint64 Slot = 1;
-  string Hash = 2;
-  uint64 ParentSlot = 4;
-  uint64 Height = 5;
-  int64 Timestamp = 6;
-  string ParentHash = 7;
-};
+    uint64 Slot = 1;
+    bytes Hash = 2;
+    uint64 ParentSlot = 4;
+    uint64 Height = 5;
+    int64 Timestamp = 6;
+    bytes ParentHash = 7;
+}
 
 message BlockMessage {
-  BlockHeader Header = 1;
-  repeated Reward Rewards = 2;
-  repeated Transaction Transactions = 3;
-};
+    BlockHeader Header = 1;
+    repeated Reward Rewards = 2;
+    repeated Transaction Transactions = 3;
+}
 
-message BlockDescriptor {
-  string ChainId = 2;
-  string BlockHash = 3;
-  uint64 BlockNumber = 4;
-  uint64 ParentNumber = 5;
-  int64 Timestamp = 6;
-  uint64 TransactionsCount = 7;
-  uint64 MessageSize = 8;
-  bytes Checksum = 9;
-  string Height = 10;
-  string ParentHash = 11;
-};
-
-
-message BlockNotifyRequestBody {
-  BlockDescriptor Descriptor = 1;
-  string path = 2;
-};
