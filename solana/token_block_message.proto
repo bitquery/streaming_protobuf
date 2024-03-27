@@ -18,7 +18,7 @@ message TokenCreator {
 
 message Currency {
   string Name = 1;
-  int32  Decimals = 2;
+  uint32  Decimals = 2;
   string Uri = 3;
   string Symbol = 4;
   TokenType TokenType = 5;
