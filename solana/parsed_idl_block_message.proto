@@ -25,7 +25,7 @@ message ParsedIdlInstruction {
   repeated string Logs = 8;
 }
 
-message InstructionsParsedBlockMessage {
+message ParsedIdlBlockMessage {
   BlockHeader Header = 1;
   repeated ParsedIdlInstruction ParsedIdlInstructions = 2;
 }
