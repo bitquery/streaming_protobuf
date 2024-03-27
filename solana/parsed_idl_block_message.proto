@@ -1,0 +1,29 @@
+syntax = "proto3";
+package solana_messages;
+ 
+import "solana/block_message.proto";
+
+message ParsedIdl {
+  string ProgramIdlJson = 1;
+  string ProgramName = 2;
+  string MethodName = 5;
+  string ParsedDataJson = 3;
+  repeated string AccountNames = 4;
+  bytes IdlSignature = 6;
+}
+
+message ParsedIdlInstruction {
+  uint64 TransactionIndex = 1;
+  uint64 Index = 2;
+  int64 ParentIndex = 3;
+
+  repeated uint64 AncestorIndexes = 4;
+  optional ParsedIdl        ParsedIdl = 5;
+
+  repeated string Logs = 8;
+}
+
+message InstructionsParsedBlockMessage {
+  BlockHeader Header = 1;
+  repeated ParsedIdlInstruction ParsedIdlInstructions = 2;
+}

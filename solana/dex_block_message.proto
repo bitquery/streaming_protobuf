@@ -2,31 +2,33 @@ syntax = "proto3";
 package solana_messages;
 
 import "solana/block_message.proto";
-import "solana/transfers_parsed_message.proto";
+import "solana/token_block_message.proto";
 
 
 message DexInfo {
-  string ProgramAddress = 1;
-  string ProtocolName = 6;
-  string ProtocolFamily = 7;
+  bytes  ProgramAddress = 1;
+  string ProtocolName = 2;
+  string ProtocolFamily = 3;
 }
 
 message DexMarket {
-  string MarketAddress = 1;
-  TokenInfo CoinToken = 2;
-  TokenInfo PriceToken = 3;
+  bytes MarketAddress = 1;
+  Currency CoinToken = 2;
+  Currency PriceToken = 3;
 }
 
 message DexOrder {
-  string OrderId = 1; // uint128
-  bool BuySide = 2;
+  bytes OrderId = 1;
+  bool  BuySide = 2;
+
   int64 LimitPrice = 3;
   int64 LimitAmount = 4;
   
-  string Account = 10;
-  string Owner = 11;
-  string Payer = 12;
-  string Mint = 13;
+  bytes Account = 5;
+  bytes Owner = 6;
+  bytes Payer = 7;
+  bytes Mint = 8;
+
 }
 
 
@@ -51,8 +53,9 @@ message DexOrderEvent {
 
 message DexTradeSide {
   int64     Amount = 1;
-  TokenInfo Asset = 2;
-  string Account = 3;
+  Currency Asset = 2;
+
+  bytes Account = 3;
   DexOrder Order = 4;
 }
 
@@ -66,6 +69,7 @@ message DexTradeEvent {
 
   DexTradeSide Buy = 5;
   DexTradeSide Sell = 6;
+
   uint32 Index = 7;
 
 }
