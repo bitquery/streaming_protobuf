@@ -8,7 +8,6 @@ message ParsedArgument {
   string  Type = 2;
   oneof Value {
     string String = 3;
-    bytes Bytes = 4;
     uint64 UInt = 5;
     int64 Int = 6;
     bool   Bool = 7;
