@@ -17,7 +17,7 @@ message ParsedIdl {
 message ParsedIdlInstruction {
   uint32 TransactionIndex = 1;
   uint32 Index = 2;
-  uint32 ParentIndex = 3;
+  int32 ParentIndex = 3;
   uint32 Depth = 4;
 
   repeated uint32 AncestorIndexes = 5;
