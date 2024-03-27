@@ -13,7 +13,7 @@ enum TokenType {
 message TokenCreator {
   bytes Address = 1;
   bool Verified = 2;
-  uint64 Share = 3;
+  uint32 Share = 3;
 }
 
 message Currency {
