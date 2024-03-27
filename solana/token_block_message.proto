@@ -27,16 +27,17 @@ message Currency {
   optional uint32 EditionNonce = 9;
   optional string TokenStandard = 10;
 
-  bytes MintAddress = 11;
-  bytes MetadataAddress = 12;
-  bytes UpdateAuthority = 13;
-  bytes CollectionAddress = 14;
+  bytes ProgramAddress = 11;
+  bytes MintAddress = 12;
+  bytes MetadataAddress = 13;
+  bytes UpdateAuthority = 14;
+  bytes CollectionAddress = 15;
 
-  bool VerifiedCollection = 20;
-  bool PrimarySaleHappened = 21;
-  bool IsMutable = 22;
+  bool VerifiedCollection = 16;
+  bool PrimarySaleHappened = 17;
+  bool IsMutable = 18;
 
-  repeated TokenCreator TokenCreators = 31;
+  repeated TokenCreator TokenCreators = 19;
 }
 
 
