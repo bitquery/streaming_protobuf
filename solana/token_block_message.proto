@@ -62,10 +62,11 @@ message Transfer {
 
   uint64 Amount = 3;
 
-  bytes Sender = 4;
-  bytes Receiver = 5;
-  bytes SenderAuthority = 7;
-  bytes ReceiverAuthority = 8;
+  Account Sender = 4;
+  Account Receiver = 5;
+
+  Account SenderAuthority = 7;
+  Account ReceiverAuthority = 8;
 
   Currency Currency = 9;
 }
