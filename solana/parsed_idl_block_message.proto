@@ -3,6 +3,19 @@ package solana_messages;
  
 import "solana/block_message.proto";
 
+message ParsedArgument {
+  string  Name = 1;
+  string  Type = 2;
+  oneof Value {
+    string String = 3;
+    bytes Bytes = 4;
+    uint64 UInt = 5;
+    int64 Int = 6;
+    bool   Bool = 7;
+    string Json = 8;
+  }
+}
+
 message ParsedIdl {
   bytes  Address = 1;
   bool Parsed = 2;
@@ -10,7 +23,7 @@ message ParsedIdl {
   bytes  Signature = 4;
   string Name = 5;
   string Method = 6;
-  string Arguments = 7;
+  repeated ParsedArgument Arguments = 7;
   repeated string AccountNames = 8;
 }
 
