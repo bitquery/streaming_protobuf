@@ -23,7 +23,7 @@ message Currency {
   string Symbol = 4;
   TokenType TokenType = 5;
   int64 Key = 6;
-  int64 SellerFeeBasisPoints = 8;
+  uint32 SellerFeeBasisPoints = 8;
   int64 EditionNonce = 9;
   int64 TokenStandard = 10;
 
