@@ -17,7 +17,7 @@ message ParsedArgument {
   }
 }
 
-message ParsedIdl {
+message Program {
   bytes  Address = 1;
   bool Parsed = 2;
   string Json = 3;
@@ -41,7 +41,7 @@ message ParsedIdlInstruction {
   uint32 ExternalSeqNumber = 7;
   uint32 InternalSeqNumber = 8;
 
-  optional ParsedIdl        ParsedIdl = 9;
+  optional Program Program = 9;
 
   repeated Account Accounts = 10;
   repeated string Logs = 11;
