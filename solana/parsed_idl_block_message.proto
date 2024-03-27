@@ -12,7 +12,8 @@ message ParsedArgument {
     uint64 UInt = 5;
     int64 Int = 6;
     bool   Bool = 7;
-    string Json = 8;
+    float  Float = 8;
+    string Json = 9;
   }
 }
 
