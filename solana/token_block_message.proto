@@ -22,7 +22,7 @@ message Currency {
   string Uri = 3;
   string Symbol = 4;
   TokenType TokenType = 5;
-  uint32 Key = 6;
+  string Key = 6;
   uint32 SellerFeeBasisPoints = 8;
   optional uint32 EditionNonce = 9;
   optional string TokenStandard = 10;
