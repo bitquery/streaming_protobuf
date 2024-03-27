@@ -5,12 +5,13 @@ import "solana/block_message.proto";
 
 message ParsedIdl {
   bytes  Address = 1;
-  string Json = 2;
-  bytes  Signature = 3;
-  string Name = 4;
-  string Method = 5;
-  string Arguments = 6;
-  repeated string AccountNames = 7;
+  bool Parsed = 2;
+  string Json = 3;
+  bytes  Signature = 4;
+  string Name = 5;
+  string Method = 6;
+  string Arguments = 7;
+  repeated string AccountNames = 8;
 }
 
 message ParsedIdlInstruction {
