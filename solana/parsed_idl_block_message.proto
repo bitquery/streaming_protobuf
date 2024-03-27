@@ -29,7 +29,8 @@ message ParsedIdlInstruction {
 
   optional ParsedIdl        ParsedIdl = 9;
 
-  repeated string Logs = 10;
+  repeated Account Accounts = 10;
+  repeated string Logs = 11;
 }
 
 message ParsedIdlBlockMessage {
