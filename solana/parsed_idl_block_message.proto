@@ -21,14 +21,15 @@ message ParsedIdlInstruction {
   uint32 Depth = 3;
 
   repeated uint32 CallPath = 4;
-  repeated uint32 AncestorIndexes = 5;
+  int32 CallerIndex = 5;
+  repeated uint32 AncestorIndexes = 6;
 
-  uint32 ExternalSeqNumber = 6;
-  uint32 InternalSeqNumber = 7;
+  uint32 ExternalSeqNumber = 7;
+  uint32 InternalSeqNumber = 8;
 
-  optional ParsedIdl        ParsedIdl = 8;
+  optional ParsedIdl        ParsedIdl = 9;
 
-  repeated string Logs = 9;
+  repeated string Logs = 10;
 }
 
 message ParsedIdlBlockMessage {
