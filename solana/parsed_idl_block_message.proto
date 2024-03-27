@@ -13,6 +13,7 @@ message ParsedArgument {
     bool   Bool = 7;
     float  Float = 8;
     string Json = 9;
+    bytes  Address = 10;
   }
 }
 
