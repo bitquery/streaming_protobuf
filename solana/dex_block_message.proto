@@ -40,13 +40,10 @@ enum DexOrderEventType {
 
 message DexOrderEvent {
   uint32 InstructionIndex = 1;
-
   DexOrderEventType Type = 2;
   DexInfo Dex = 3;
   DexMarket Market = 4;
   DexOrder Order = 5;
-
-  uint32 Index = 6;
 }
 
 
@@ -60,14 +57,10 @@ message DexTradeSide {
 
 message DexTradeEvent {
   uint32 InstructionIndex = 1;
-
   DexInfo Dex = 2;
   DexMarket Market = 3;
-
   DexTradeSide Buy = 4;
   DexTradeSide Sell = 5;
-
-  uint32 Index = 6;
 
 }
 
