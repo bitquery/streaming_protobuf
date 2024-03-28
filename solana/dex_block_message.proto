@@ -72,11 +72,13 @@ message DexTradeEvent {
 }
 
 message ParsedDexTransaction {
-  uint32 TransactionIndex = 1;
-  bytes  Signature = 2;
-  repeated Account Accounts = 3;
-  repeated DexTradeEvent Trades = 4;
-  repeated DexOrderEvent OrderEvents = 5;
+  uint64 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated DexTradeEvent Trades = 5;
+  repeated DexOrderEvent OrderEvents = 6;
 }
 
 message DexParsedBlockMessage {

@@ -67,12 +67,14 @@ message InstructionBalanceUpdate {
 }
 
 message ParsedTokenTransaction {
-  uint32 TransactionIndex = 1;
-  bytes  Signature = 2;
-  repeated Account Accounts = 3;
-  repeated Transfer Transfers = 4;
-  repeated CurrencyBalanceUpdate    BalanceUpdates = 5;
-  repeated InstructionBalanceUpdate InstructionBalanceUpdates = 6;
+  uint64 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated Transfer Transfers = 5;
+  repeated CurrencyBalanceUpdate    BalanceUpdates = 6;
+  repeated InstructionBalanceUpdate InstructionBalanceUpdates = 7;
 }
 
 message TokenBlockMessage {

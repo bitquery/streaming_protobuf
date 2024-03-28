@@ -44,13 +44,21 @@ message ParsedIdlInstruction {
 
   repeated Account Accounts = 9;
   repeated string Logs = 10;
+
+  repeated BalanceUpdate BalanceUpdates = 11;
+  repeated BalanceUpdate TokenBalanceUpdates = 12;
+
 }
 
 message ParsedIdlTransaction {
-  uint32 TransactionIndex = 1;
-  bytes  Signature = 2;
-  repeated Account Accounts = 3;
-  repeated ParsedIdlInstruction ParsedIdlInstructions = 4;
+  uint64 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated BalanceUpdate TotalBalanceUpdates = 5;
+  repeated BalanceUpdate TotalTokenBalanceUpdates = 6;
+  repeated ParsedIdlInstruction ParsedIdlInstructions = 7;
 }
 
 message ParsedIdlBlockMessage {
