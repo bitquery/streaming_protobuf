@@ -41,10 +41,23 @@ message Currency {
 }
 
 
-message TransactionBalanceUpdate {
-  uint32 TransactionIndex = 1;
-  repeated CurrencyBalanceUpdate    BalanceUpdates = 2;
-  repeated InstructionBalanceUpdate InstructionBalanceUpdates = 3;
+message CurrencyBalanceUpdate {
+  BalanceUpdate BalanceUpdate = 1;
+  Currency Currency = 2;
+}
+
+message Transfer {
+  uint32 InstructionIndex = 1;
+
+  uint64 Amount = 2;
+
+  Account Sender = 3;
+  Account Receiver = 4;
+
+  Account SenderAuthority = 5;
+  Account ReceiverAuthority = 6;
+
+  Currency Currency = 7;
 }
 
 message InstructionBalanceUpdate {
@@ -52,28 +65,15 @@ message InstructionBalanceUpdate {
   repeated CurrencyBalanceUpdate CurrencyBalanceUpdates = 2;
 }
 
-message CurrencyBalanceUpdate {
-  BalanceUpdate BalanceUpdate = 1;
-  Currency Currency = 2;
-}
-
-message Transfer {
+message ParsedTokenTransaction {
   uint32 TransactionIndex = 1;
-  uint32 InstructionIndex = 2;
-
-  uint64 Amount = 3;
-
-  Account Sender = 4;
-  Account Receiver = 5;
-
-  Account SenderAuthority = 7;
-  Account ReceiverAuthority = 8;
-
-  Currency Currency = 9;
+  bytes  Signature = 2;
+  repeated Transfer Transfers = 3;
+  repeated CurrencyBalanceUpdate    BalanceUpdates = 4;
+  repeated InstructionBalanceUpdate InstructionBalanceUpdates = 5;
 }
 
 message TokenBlockMessage {
   BlockHeader Header = 1;
-  repeated Transfer Transfers = 2;
-  repeated TransactionBalanceUpdate TransactionBalanceUpdates = 3;
+  repeated ParsedTokenTransaction Transactions = 2;
 }

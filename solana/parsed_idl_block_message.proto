@@ -29,25 +29,30 @@ message Program {
 }
 
 message ParsedIdlInstruction {
+
+  uint32 Index = 1;
+  uint32 Depth = 2;
+
+  repeated uint32 CallPath = 3;
+  int32 CallerIndex = 4;
+  repeated uint32 AncestorIndexes = 5;
+
+  uint32 ExternalSeqNumber = 6;
+  uint32 InternalSeqNumber = 7;
+
+  optional Program Program = 8;
+
+  repeated Account Accounts = 9;
+  repeated string Logs = 10;
+}
+
+message ParsedIdlTransaction {
   uint32 TransactionIndex = 1;
-  uint32 Index = 2;
-
-  uint32 Depth = 3;
-
-  repeated uint32 CallPath = 4;
-  int32 CallerIndex = 5;
-  repeated uint32 AncestorIndexes = 6;
-
-  uint32 ExternalSeqNumber = 7;
-  uint32 InternalSeqNumber = 8;
-
-  optional Program Program = 9;
-
-  repeated Account Accounts = 10;
-  repeated string Logs = 11;
+  bytes  Signature = 2;
+  repeated ParsedIdlInstruction ParsedIdlInstructions = 3;
 }
 
 message ParsedIdlBlockMessage {
   BlockHeader Header = 1;
-  repeated ParsedIdlInstruction ParsedIdlInstructions = 2;
+  repeated ParsedIdlTransaction Transactions = 2;
 }
