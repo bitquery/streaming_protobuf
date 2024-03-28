@@ -48,7 +48,7 @@ message DexOrderEvent {
 
 
 message DexTradeSide {
-  int64     Amount = 1;
+  uint64     Amount = 1;
   Currency Asset = 2;
 
   bytes Account = 3;
