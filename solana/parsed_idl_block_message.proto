@@ -49,7 +49,8 @@ message ParsedIdlInstruction {
 message ParsedIdlTransaction {
   uint32 TransactionIndex = 1;
   bytes  Signature = 2;
-  repeated ParsedIdlInstruction ParsedIdlInstructions = 3;
+  repeated Account Accounts = 3;
+  repeated ParsedIdlInstruction ParsedIdlInstructions = 4;
 }
 
 message ParsedIdlBlockMessage {
