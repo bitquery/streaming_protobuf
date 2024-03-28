@@ -62,7 +62,8 @@ message Transfer {
 
 message InstructionBalanceUpdate {
   uint32 InstructionIndex = 1;
-  repeated CurrencyBalanceUpdate CurrencyBalanceUpdates = 2;
+  repeated CurrencyBalanceUpdate TotalCurrencyBalanceUpdates = 2;
+  repeated CurrencyBalanceUpdate OwnCurrencyBalanceUpdates = 3;
 }
 
 message ParsedTokenTransaction {
