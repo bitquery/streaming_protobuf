@@ -21,8 +21,8 @@ message DexOrder {
   bytes OrderId = 1;
   bool  BuySide = 2;
 
-  int64 LimitPrice = 3;
-  int64 LimitAmount = 4;
+  uint64 LimitPrice = 3;
+  uint64 LimitAmount = 4;
   
   bytes Account = 5;
   bytes Owner = 6;
