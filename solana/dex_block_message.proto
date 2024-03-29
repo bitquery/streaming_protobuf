@@ -51,7 +51,7 @@ message DexTradeSide {
   uint64     Amount = 1;
   Currency Asset = 2;
 
-  bytes Account = 3;
+  Account Account = 3;
   DexOrder Order = 4;
 }
 
