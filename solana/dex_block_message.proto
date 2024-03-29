@@ -18,7 +18,7 @@ message DexMarket {
 }
 
 message DexOrder {
-  bytes OrderId = 1;
+  string OrderId = 1;
   bool  BuySide = 2;
 
   uint64 LimitPrice = 3;
