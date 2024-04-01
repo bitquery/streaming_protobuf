@@ -65,7 +65,7 @@ message DexTradeEvent {
 }
 
 message ParsedDexTransaction {
-  uint64 Index = 1;
+  uint32 Index = 1;
   bytes Signature = 2;
   TransactionStatus Status = 3;
   TransactionHeader Header = 4;
