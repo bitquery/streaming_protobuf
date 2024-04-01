@@ -3,13 +3,6 @@ package solana_messages;
 
 import "solana/block_message.proto";
 
-enum TokenType {
-  SOL = 0;
-  WSOL = 1;
-  FT = 2;
-  NFT = 3;
-}
-
 message TokenCreator {
   bytes Address = 1;
   bool Verified = 2;
@@ -21,23 +14,27 @@ message Currency {
   uint32  Decimals = 2;
   string Uri = 3;
   string Symbol = 4;
-  TokenType TokenType = 5;
-  string Key = 6;
-  uint32 SellerFeeBasisPoints = 8;
-  optional uint32 EditionNonce = 9;
-  optional string TokenStandard = 10;
 
-  bytes ProgramAddress = 11;
-  bytes MintAddress = 12;
-  bytes MetadataAddress = 13;
-  bytes UpdateAuthority = 14;
-  bytes CollectionAddress = 15;
+  bool Native = 5;
+  bool Wrapped = 6;
+  bool Fungible = 7;
 
-  bool VerifiedCollection = 16;
-  bool PrimarySaleHappened = 17;
-  bool IsMutable = 18;
+  string Key = 8;
+  uint32 SellerFeeBasisPoints = 9;
+  optional uint32 EditionNonce = 10;
+  optional string TokenStandard = 11;
 
-  repeated TokenCreator TokenCreators = 19;
+  bytes ProgramAddress = 12;
+  bytes MintAddress = 13;
+  bytes MetadataAddress = 14;
+  bytes UpdateAuthority = 15;
+  bytes CollectionAddress = 16;
+
+  bool VerifiedCollection = 17;
+  bool PrimarySaleHappened = 18;
+  bool IsMutable = 19;
+
+  repeated TokenCreator TokenCreators = 20;
 }
 
 
