@@ -50,11 +50,9 @@ message Transfer {
 
   Account Sender = 3;
   Account Receiver = 4;
+  Account Authority = 5;
 
-  Account Sender_Authority = 5;
-  Account Receiver_Authority = 6;
-
-  Currency Currency = 7;
+  Currency Currency = 6;
 }
 
 message InstructionBalanceUpdate {
