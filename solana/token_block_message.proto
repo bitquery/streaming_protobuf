@@ -51,8 +51,8 @@ message Transfer {
   Account Sender = 3;
   Account Receiver = 4;
 
-  Account SenderAuthority = 5;
-  Account ReceiverAuthority = 6;
+  Account Sender_Authority = 5;
+  Account Receiver_Authority = 6;
 
   Currency Currency = 7;
 }
