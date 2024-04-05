@@ -13,7 +13,7 @@ message DexInfo {
 
 message DexMarket {
   bytes MarketAddress = 1;
-  Currency CoinCurrency = 2;
+  Currency BaseCurrency = 2;
   Currency PriceCurrency = 3;
 }
 
