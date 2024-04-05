@@ -13,8 +13,8 @@ message DexInfo {
 
 message DexMarket {
   bytes MarketAddress = 1;
-  Currency CoinToken = 2;
-  Currency PriceToken = 3;
+  Currency CoinCurrency = 2;
+  Currency PriceCurrency = 3;
 }
 
 message DexOrder {
@@ -49,7 +49,7 @@ message DexOrderEvent {
 
 message DexTradeSide {
   uint64     Amount = 1;
-  Currency Asset = 2;
+  Currency Currency = 2;
 
   Account Account = 3;
   DexOrder Order = 4;
