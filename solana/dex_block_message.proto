@@ -14,7 +14,7 @@ message DexInfo {
 message DexMarket {
   bytes MarketAddress = 1;
   Currency BaseCurrency = 2;
-  Currency PriceCurrency = 3;
+  Currency QuoteCurrency = 3;
 }
 
 message DexOrder {
