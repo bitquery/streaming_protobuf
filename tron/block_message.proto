@@ -9,7 +9,7 @@ option java_outer_classname = "TronMessage";
 
 // Tx message
 message TransactionHeader {
-  bytes Id = 1;
+  bytes Hash = 1;
   int64 Fee = 2;
   int32 Index = 3;
   int64 Expiration = 4;
@@ -19,6 +19,7 @@ message TransactionHeader {
   repeated bytes Signatures = 8;
   // only applicable to broadcasted
   optional uint64 Time = 9;
+  bytes FeePayer = 10;
 };
 
 message Argument {
@@ -90,6 +91,11 @@ message InternalTransaction {
   int32 Index = 6;
 };
 
+message RewardWithdraw {
+  bytes Receiver = 1;
+  uint64 Amount = 2;
+};
+
 // MORE INFORMATION: https://developers.tron.network/reference/gettransactioninfobyid-1
 message Transaction {
   TransactionHeader Header = 1;
@@ -97,6 +103,7 @@ message Transaction {
   Receipt Receipt = 3;
   repeated Contract Contracts = 4;
   Staking Staking = 5;
+  RewardWithdraw RewardWithdraw = 6;
 };
 
 // Block message

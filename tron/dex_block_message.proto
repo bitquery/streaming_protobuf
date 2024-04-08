@@ -1,0 +1,11 @@
+syntax = "proto3";
+package tron_messages;
+
+import "tron/block_message.proto";
+import "evm/dex_block_message.proto";
+
+message DexBlockMessage {
+  tron_messages.Chain Chain = 1;
+  tron_messages.BlockHeader Header = 2;
+  repeated evm_messages.DexTrade Trades = 3;
+}
