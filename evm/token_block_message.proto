@@ -13,6 +13,7 @@ message TokenInfo {
   int32  Decimals = 7;
   bool   HasURI = 8;
   bool   Fungible = 9;
+  string  AssetId = 10;
 }
 
 message TokenTransfer {
