@@ -14,6 +14,6 @@ message ParsedAbiTransaction {
 message ParsedAbiBlockMessage {
   tron_messages.Chain Chain = 1;
   tron_messages.BlockHeader Header = 2;
-  repeated ParsedAbiTransaction Transactions = 3;
-  // MinerReward Reward = 4;
+  tron_messages.Witness Witness = 3;
+  repeated ParsedAbiTransaction Transactions = 4;
 }
