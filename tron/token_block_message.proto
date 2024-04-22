@@ -8,5 +8,4 @@ message TokenBlockMessage {
   tron_messages.Chain Chain = 1;
   tron_messages.BlockHeader Header = 2;
   repeated evm_messages.TokenTransfer Transfers = 3;
-  tron_messages.RewardWithdraw RewardWithdraw = 4;
 }

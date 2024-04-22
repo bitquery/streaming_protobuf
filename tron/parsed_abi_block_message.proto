@@ -17,6 +17,7 @@ message ParsedAbiTransaction {
   tron_messages.TransactionResult TransactionResult = 4;
   ContractInfo ContractInfo = 5;
   repeated evm_messages.ParsedAbiCall Calls = 6;
+  tron_messages.RewardWithdraw RewardWithdraw = 7;
 }
 
 message ParsedAbiBlockMessage {
