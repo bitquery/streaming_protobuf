@@ -9,5 +9,5 @@ Example to use utility to decode
 
 ```
 brew install protobuf-c
-lz4cat FILE.block.lz4 | protoc-c --decode evm_messages.BlockMessage -I  ~/ evm_block_message.proto
+lz4cat FILE.block.lz4 | protoc-c --decode evm_messages.BlockMessage evm/block_message.proto > output.txt
 ```
