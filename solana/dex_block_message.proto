@@ -23,14 +23,12 @@ message DexOrder {
 
   uint64 LimitPrice = 3;
   uint64 LimitAmount = 4;
-  
+
   bytes Account = 5;
   bytes Owner = 6;
   bytes Payer = 7;
   bytes Mint = 8;
-
 }
-
 
 enum DexOrderEventType {
   OPEN = 0;
@@ -61,7 +59,8 @@ message DexTradeEvent {
   DexMarket Market = 3;
   DexTradeSide Buy = 4;
   DexTradeSide Sell = 5;
-
+  uint64 Royalty = 6;
+  uint64 Fee = 7;
 }
 
 message ParsedDexTransaction {
