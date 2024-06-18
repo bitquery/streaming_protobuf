@@ -152,6 +152,7 @@ message MinerReward {
   bytes TxFees = 4;
   bytes BurntFees = 5;
   bytes Uncle = 6;
+  optional bytes Beneficiary = 7;
 }
 
 
@@ -163,5 +164,6 @@ message ParsedAbiBlockMessage {
   repeated MinerReward UncleRewards = 5;
   repeated ParsedAbiTransaction Transactions = 6;
   optional BlockHeader L1Header = 7;
+  repeated MinerReward ExtraRewards = 8;
 }
 
