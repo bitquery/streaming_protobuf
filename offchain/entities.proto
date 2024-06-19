@@ -1,0 +1,23 @@
+syntax = "proto3";
+package entities_messages;
+
+message RequestMessage {
+  string uuid = 1;
+  repeated AddressWithBlockchain addresses = 2;
+}
+
+message ProviderDataMessage {
+  Provider provider = 1;
+  repeated bytes responses = 2;
+}
+
+message AddressWithBlockchain {
+  string address = 1;
+  string blockchain = 2;
+}
+
+message Provider {
+  string tag = 1;
+  string name = 2;
+  string url = 3;
+}
