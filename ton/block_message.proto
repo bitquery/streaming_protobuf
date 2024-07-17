@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package ton_messages;
+
+message Chain {
+  bytes ChainId = 1;
+}
+
+message BlockHeader {
+  int64 Number = 1;
+  bytes Hash = 2;
+}
+
+message BlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+}
