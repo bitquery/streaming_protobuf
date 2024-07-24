@@ -21,22 +21,41 @@ message GenSoftware {
 // }
 //
 
+message StateUpdate {
+  bytes OldHash = 1;
+  bytes NewHash = 2;
+}
+
+message TransactionFee {
+	// TotalFee is the original total_fee of a transaction directly from the blockchain.
+  uint64 TotalFee = 1;
+	// Collected during the Action phase.
+  uint64 FwdFee = 2;
+  uint64 ActionFee = 3;
+	// GasFee collected during the Compute Phase.
+  uint64 GasFee = 4;
+	// StorageFee collected during the Storage Phase.
+  uint64 StorageFee = 5;
+}
+
 message TransactionHeader {
   bytes Hash = 1;
   uint64 LT = 2;
   string Type = 3;
+  int32 Index = 4;
   // base64 format
-  bytes Account = 4;
-  uint64 PrevTransactionLT = 5;
-  bytes PrevTransactionHash = 6;
-	// StorageFee collected during the Storage Phase.
-  uint64 StorageFee = 7;
-	// TotalFee is the original total_fee of a transaction directly from the blockchain.
-  uint64 TotalFee = 8;
+  bytes AccountAddress = 5;
+  uint64 PrevTransactionLT = 6;
+  bytes PrevTransactionHash = 7;
+  TransactionFee TransactionFee = 8;
   uint32 Utime = 9;
 	bool Aborted = 10;
 	bool Destroyed = 11;
-  bytes SourceBoc = 12;
+  string OriginalStatus = 12;
+  string EndStatus = 13;
+  StateUpdate StateUpdate = 14;
+  // BOC of the transaction.
+  bytes SourceBoc = 15;
 }
 
 message ComputePhase {
@@ -44,9 +63,11 @@ message ComputePhase {
 	string SkipReason = 2;
 	bool Success = 3;
 	uint64 GasFees = 4;
-	string GasUsed = 5;
-	uint32 VmSteps = 6;
-	int32 ExitCode = 7;
+	uint64 GasUsed = 5;
+	uint64 GasLimit = 6;
+	uint64 GasCredit = 7;
+	uint32 VmSteps = 8;
+	int32 ExitCode = 9;
 }
 
 message StoragePhase {
@@ -114,6 +135,54 @@ message TransMergeInstall {
   ActionPhase ActionPhase = 4;
 }
 
+message IntMsgInfo{
+  uint64 CreatedLT = 1;
+  uint32 CreatedAt = 2;
+  bytes SourceAddress = 3;
+  bytes DestinationAddress = 4;
+  bool IhrDisabled = 5;
+  bool Bounce = 6;
+  bool Bounced = 7;
+  int64 Value = 8;
+  int64 FwdFee = 9;
+  int64 IhrFee = 10;
+  bytes Body = 11;
+  // hex format
+  bytes Opcode = 12;
+  string OpcodeName = 13;
+}
+
+message ExtInMsgInfo{
+  bytes DestinationAddress = 1;
+  bytes Hash = 2;
+  uint64 ImportFee = 3;
+  bytes Body = 4;
+  uint32 Opcode = 5;
+}
+
+message ExtOutMsgInfo{
+  uint64 CreatedLT = 1;
+  uint32 CreatedAt = 2;
+  bytes SourceAddress = 3;
+  bytes Body = 4;
+  uint32 Opcode = 5;
+}
+
+enum MessageDirection {
+  In = 0;
+  Out = 1;
+}
+
+message Message {
+  MessageDirection Direction = 1;
+
+  oneof SumType {
+    IntMsgInfo IntMsgInfo = 2;
+    ExtInMsgInfo ExtInMsgInfo = 3;
+    ExtOutMsgInfo ExtOutMsgInfo = 4;
+  }
+}
+
 message BlockExtra {
   bytes RandSeed = 1;
   bytes CreatedBy = 2;
@@ -170,6 +239,8 @@ message Transaction {
     TransMergePrepare TransMergePrepare = 6;
     TransMergeInstall TransMergeInstall = 7;
   }
+
+  repeated Message Messages = 8;
 }
 
 message BlockMessage {
