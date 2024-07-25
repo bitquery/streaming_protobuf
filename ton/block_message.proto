@@ -147,9 +147,6 @@ message IntMsgInfo{
   int64 FwdFee = 9;
   int64 IhrFee = 10;
   bytes Body = 11;
-  // hex format
-  bytes Opcode = 12;
-  string OpcodeName = 13;
 }
 
 message ExtInMsgInfo{
@@ -157,7 +154,6 @@ message ExtInMsgInfo{
   bytes Hash = 2;
   uint64 ImportFee = 3;
   bytes Body = 4;
-  uint32 Opcode = 5;
 }
 
 message ExtOutMsgInfo{
@@ -165,7 +161,6 @@ message ExtOutMsgInfo{
   uint32 CreatedAt = 2;
   bytes SourceAddress = 3;
   bytes Body = 4;
-  uint32 Opcode = 5;
 }
 
 enum MessageDirection {
