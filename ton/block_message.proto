@@ -212,15 +212,14 @@ message BlockHeader {
   bool KeyBlock = 19;
   uint32 PrevKeyBlockSeqno = 20;
   uint32 VertSeqno = 21;
+  int64 TransactionsCount = 22;
 
 	// GenSoftware describes software that created this particular block.
 	// It is up to the software to include this piece of information.
-  GenSoftware GenSoftware = 22;
+  GenSoftware GenSoftware = 23;
 
-	// ValueFlow   ValueFlow = 23;
-	BlockExtra BlockExtra = 24;
-
-  int64 TransactionsCount = 25;
+	// ValueFlow   ValueFlow = 24;
+	BlockExtra BlockExtra = 25;
 }
 
 message Transaction {
