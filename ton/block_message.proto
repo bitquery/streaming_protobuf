@@ -163,14 +163,7 @@ message ExtOutMsgInfo{
   bytes Body = 4;
 }
 
-enum MessageDirection {
-  In = 0;
-  Out = 1;
-}
-
 message Message {
-  MessageDirection Direction = 1;
-
   oneof SumType {
     IntMsgInfo IntMsgInfo = 2;
     ExtInMsgInfo ExtInMsgInfo = 3;
@@ -234,7 +227,8 @@ message Transaction {
     TransMergeInstall TransMergeInstall = 7;
   }
 
-  repeated Message Messages = 8;
+  optional Message InMessage = 8;
+  repeated Message OutMessages = 9;
 }
 
 message BlockMessage {
