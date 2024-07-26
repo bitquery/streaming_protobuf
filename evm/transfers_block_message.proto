@@ -14,7 +14,10 @@ message TransactionWithTransfers {
 }
 
 message TransfersBlockMessage {
-  Chain Chain = 1;
-  BlockHeader Header = 2;
-  repeated TransactionWithTransfers Transactions = 3;
+  BlockHeader Header = 1;
+  repeated TransactionWithTransfers Transactions = 2;
+}
+
+message TransfersBlocksMessage {
+  repeated TransfersBlockMessage Blocks = 1;
 }
