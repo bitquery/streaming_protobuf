@@ -8,8 +8,8 @@ message BlockID {
   uint32 Seqno = 3;
 
   // base64 format
-	bytes RootHash = 4;
-	bytes FileHash = 5;
+  bytes RootHash = 4;
+  bytes FileHash = 5;
 }
 
 message GenSoftware {
@@ -27,14 +27,15 @@ message StateUpdate {
 }
 
 message TransactionFee {
-	// TotalFee is the original total_fee of a transaction directly from the blockchain.
+  // TotalFee is the original total_fee of a transaction directly from the
+  // blockchain.
   uint64 TotalFee = 1;
-	// Collected during the Action phase.
+  // Collected during the Action phase.
   uint64 FwdFee = 2;
   uint64 ActionFee = 3;
-	// GasFee collected during the Compute Phase.
+  // GasFee collected during the Compute Phase.
   uint64 GasFee = 4;
-	// StorageFee collected during the Storage Phase.
+  // StorageFee collected during the Storage Phase.
   uint64 StorageFee = 5;
 }
 
@@ -49,8 +50,8 @@ message TransactionHeader {
   bytes PrevTransactionHash = 7;
   TransactionFee TransactionFee = 8;
   uint32 Utime = 9;
-	bool Aborted = 10;
-	bool Destroyed = 11;
+  bool Aborted = 10;
+  bool Destroyed = 11;
   string OriginalStatus = 12;
   string EndStatus = 13;
   StateUpdate StateUpdate = 14;
@@ -60,44 +61,44 @@ message TransactionHeader {
 
 message ComputePhase {
   bool Skipped = 1;
-	string SkipReason = 2;
-	bool Success = 3;
-	uint64 GasFees = 4;
-	uint64 GasUsed = 5;
-	uint64 GasLimit = 6;
-	uint64 GasCredit = 7;
-	uint32 VmSteps = 8;
-	int32 ExitCode = 9;
+  string SkipReason = 2;
+  bool Success = 3;
+  uint64 GasFees = 4;
+  uint64 GasUsed = 5;
+  uint64 GasLimit = 6;
+  uint64 GasCredit = 7;
+  uint32 VmSteps = 8;
+  int32 ExitCode = 9;
 }
 
 message StoragePhase {
   uint64 FeesCollected = 1;
-	uint64 FeesDue = 2;
-	string StatusChange = 3;
+  uint64 FeesDue = 2;
+  string StatusChange = 3;
 }
 
 message CreditPhase {
-	uint64 DueFeesCollected = 1;
+  uint64 DueFeesCollected = 1;
   uint64 Grams = 2;
 }
 
 message ActionPhase {
-	bool Success = 1;
-	bool Valid = 2;
-	bool NoFunds = 3;
-	string StatusChangeName = 4;
-	uint64 TotalFwdFees = 5;
-	uint64 TotalActionFees = 6;
-	int32 ResultCode = 7;
-	int32 ResultArg = 8;
-	uint32 TotalActions = 9;
-	uint32 SpecActions = 10;
+  bool Success = 1;
+  bool Valid = 2;
+  bool NoFunds = 3;
+  string StatusChangeName = 4;
+  uint64 TotalFwdFees = 5;
+  uint64 TotalActionFees = 6;
+  int32 ResultCode = 7;
+  int32 ResultArg = 8;
+  uint32 TotalActions = 9;
+  uint32 SpecActions = 10;
   uint32 SkippedActions = 11;
   uint32 MsgsCreated = 12;
 }
 
 message BouncePhase {
-	string PhaseType = 1;
+  string PhaseType = 1;
 }
 
 message TransOrd {
@@ -135,7 +136,7 @@ message TransMergeInstall {
   ActionPhase ActionPhase = 4;
 }
 
-message IntMsgInfo{
+message IntMsgInfo {
   uint64 CreatedLT = 1;
   uint32 CreatedAt = 2;
   bytes SourceAddress = 3;
@@ -149,14 +150,14 @@ message IntMsgInfo{
   bytes Body = 11;
 }
 
-message ExtInMsgInfo{
+message ExtInMsgInfo {
   bytes DestinationAddress = 1;
   bytes Hash = 2;
   uint64 ImportFee = 3;
   bytes Body = 4;
 }
 
-message ExtOutMsgInfo{
+message ExtOutMsgInfo {
   uint64 CreatedLT = 1;
   uint32 CreatedAt = 2;
   bytes SourceAddress = 3;
@@ -165,9 +166,9 @@ message ExtOutMsgInfo{
 
 message Message {
   oneof SumType {
-    IntMsgInfo IntMsgInfo = 2;
-    ExtInMsgInfo ExtInMsgInfo = 3;
-    ExtOutMsgInfo ExtOutMsgInfo = 4;
+    IntMsgInfo IntMsgInfo = 1;
+    ExtInMsgInfo ExtInMsgInfo = 2;
+    ExtOutMsgInfo ExtOutMsgInfo = 3;
   }
 }
 
@@ -207,12 +208,12 @@ message BlockHeader {
   uint32 VertSeqno = 21;
   int64 TransactionsCount = 22;
 
-	// GenSoftware describes software that created this particular block.
-	// It is up to the software to include this piece of information.
+  // GenSoftware describes software that created this particular block.
+  // It is up to the software to include this piece of information.
   GenSoftware GenSoftware = 23;
 
-	// ValueFlow   ValueFlow = 24;
-	BlockExtra BlockExtra = 25;
+  // ValueFlow   ValueFlow = 24;
+  BlockExtra BlockExtra = 25;
 }
 
 message Transaction {
