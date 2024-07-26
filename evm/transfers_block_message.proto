@@ -1,0 +1,20 @@
+syntax = "proto3";
+package evm_messages;
+
+import "evm/block_message.proto";
+import "evm/token_block_message.proto";
+import "evm/parsed_abi_block_message.proto";
+
+
+message TransactionWithTransfers {
+  TransactionHeader TransactionHeader = 1;
+  ReceiptHeader ReceiptHeader = 2;
+  TransactionFee TransactionFee = 3;
+  repeated TokenTransfer Transfers = 4;
+}
+
+message TransfersBlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  repeated TransactionWithTransfers Transactions = 3;
+}
