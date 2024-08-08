@@ -1,0 +1,29 @@
+syntax = "proto3";
+package ton_messages;
+
+import "ton/block_message.proto";
+
+message TokenInfo {
+  bytes SmartContract = 1;
+  string Name = 2;
+  string Symbol = 3;
+  int32 Decimals = 4;
+  bool HasURI = 5;
+  bool Fungible = 6;
+}
+
+message TokenTransfer {
+  uint64 TransactionIndex = 1;
+  bytes Sender = 2;
+  bytes Receiver = 3;
+  bytes Amount = 4;
+  TokenInfo Currency = 5;
+  bool Success = 6;
+  uint32 Index = 7;
+}
+
+message TokenBlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  TokenTransfer TokenTransfer = 3;
+}
