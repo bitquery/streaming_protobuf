@@ -23,7 +23,7 @@ message TokenTransfer {
 }
 
 message TokenBlockMessage {
-  Chain Chain = 1;
-  BlockHeader Header = 2;
-  TokenTransfer TokenTransfer = 3;
+  ton_messages.Chain Chain = 1;
+  ton_messages.BlockHeader Header = 2;
+  repeated TokenTransfer Transfers = 3;
 }

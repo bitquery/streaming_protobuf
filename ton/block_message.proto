@@ -43,7 +43,7 @@ message TransactionHeader {
   bytes Hash = 1;
   uint64 LT = 2;
   string Type = 3;
-  int32 Index = 4;
+  uint64 Index = 4;
   // base64 format
   bytes AccountAddress = 5;
   uint64 PrevTransactionLT = 6;
