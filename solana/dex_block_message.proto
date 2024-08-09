@@ -28,6 +28,29 @@ message DexOrder {
   bytes Owner = 6;
   bytes Payer = 7;
   bytes Mint = 8;
+
+}
+
+message ParsedPoolLiquidityChange {
+  uint32 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated PoolLiquidityChangeEvent Changes = 5;
+}
+
+message PoolLiquidityChangeEvent {
+  uint32 InstructionIndex = 1;
+  DexInfo Dex = 2;
+  PoolSide Side1 = 4;
+  PoolSide Side2 = 5;
+}
+
+message PoolSide {
+  Currency Currency = 1;
+  int64    ChangeAmount = 2;
+  uint64   PostAmount = 3;
 }
 
 enum DexOrderEventType {
@@ -71,6 +94,7 @@ message ParsedDexTransaction {
 
   repeated DexTradeEvent Trades = 5;
   repeated DexOrderEvent OrderEvents = 6;
+  repeated PoolLiquidityChangeEvent PoolChanges = 7;
 }
 
 message DexParsedBlockMessage {
