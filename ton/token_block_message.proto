@@ -10,6 +10,12 @@ message TokenInfo {
   int32 Decimals = 4;
   bool HasURI = 5;
   bool Fungible = 6;
+  bool Native = 7;
+}
+
+message Opcode {
+  string Name = 1;
+  bytes Hash = 2;
 }
 
 message TokenTransfer {
@@ -18,8 +24,11 @@ message TokenTransfer {
   bytes Receiver = 3;
   bytes Amount = 4;
   TokenInfo Currency = 5;
-  bool Success = 6;
-  uint32 Index = 7;
+  Opcode Opcode = 6;
+  bool Success = 7;
+  uint32 Index = 8;
+
+  optional string Comment = 9;
 }
 
 message TokenBlockMessage {
