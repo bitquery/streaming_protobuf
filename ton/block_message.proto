@@ -57,6 +57,7 @@ message TransactionHeader {
   StateUpdate StateUpdate = 14;
   // BOC of the transaction.
   bytes SourceBoc = 15;
+  bool Success = 16;
 }
 
 message ComputePhase {
