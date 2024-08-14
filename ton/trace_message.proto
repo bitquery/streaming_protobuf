@@ -11,5 +11,5 @@ message Trace {
 
 message TraceMessage {
   Chain Chain = 1;
-  Trace Trace = 2;
+  repeated Trace Traces = 2;
 }
