@@ -94,7 +94,7 @@ message ParsedDexTransaction {
 
   repeated DexTradeEvent Trades = 5;
   repeated DexOrderEvent OrderEvents = 6;
-  repeated PoolLiquidityChangeEvent PoolChanges = 7;
+  repeated PoolLiquidityChangeEvent PoolEvents = 7;
 }
 
 message DexParsedBlockMessage {
