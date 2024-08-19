@@ -43,12 +43,12 @@ message ParsedPoolLiquidityChange {
 message PoolLiquidityChangeEvent {
   uint32 InstructionIndex = 1;
   DexInfo Dex = 2;
-  PoolSide Side1 = 4;
-  PoolSide Side2 = 5;
+  DexMarket Market = 3;
+  PoolSide BaseCurrency = 4;
+  PoolSide QuoteCurrency = 5;
 }
 
 message PoolSide {
-  Currency Currency = 1;
   int64    ChangeAmount = 2;
   uint64   PostAmount = 3;
 }
