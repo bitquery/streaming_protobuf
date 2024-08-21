@@ -1,0 +1,45 @@
+syntax = "proto3";
+package ton_messages;
+
+import "ton/block_message.proto";
+import "google/protobuf/any.proto";
+
+message MessageOpcode {
+  string Name = 1;
+  bytes Hash = 2;
+  google.protobuf.Any Body = 3;
+}
+
+message ParsedMessage {
+  ton_messages.Message Message = 1;
+  MessageOpcode Opcode = 2;
+}
+
+message ParsedTransaction {
+  ton_messages.TransactionHeader TransactionHeader = 1;
+
+  oneof SumType {
+    ton_messages.TransOrd TransOrd = 2;
+    ton_messages.TransStorage TransStorage = 3;
+    ton_messages.TransTickTock TransTickTock = 4;
+    ton_messages.TransSplitPrepare TransSplitPrepare = 5;
+    ton_messages.TransMergePrepare TransMergePrepare = 6;
+    ton_messages.TransMergeInstall TransMergeInstall = 7;
+  }
+
+  optional ParsedMessage InMessage = 8;
+  repeated ParsedMessage OutMessages = 9;
+
+  repeated string AccountAddressInterfaces = 10;
+}
+
+message Event {
+  ton_messages.BlockHeader BlockHeader = 1;
+  ParsedTransaction ParsedTransaction = 2;
+  repeated Event Children = 3;
+}
+
+message EventMessage {
+  Chain Chain = 1;
+  repeated Event Events = 2;
+}
