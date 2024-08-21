@@ -102,6 +102,17 @@ message BouncePhase {
   string PhaseType = 1;
 }
 
+message TransactionType {
+  oneof Type {
+    TransOrd TransOrd = 1;
+    TransStorage TransStorage = 2;
+    TransTickTock TransTickTock = 3;
+    TransSplitPrepare TransSplitPrepare = 4;
+    TransMergePrepare TransMergePrepare = 5;
+    TransMergeInstall TransMergeInstall = 6;
+  }
+}
+
 message TransOrd {
   ComputePhase ComputePhase = 1;
   StoragePhase StoragePhase = 2;
@@ -219,18 +230,9 @@ message BlockHeader {
 
 message Transaction {
   TransactionHeader Header = 1;
-
-  oneof SumType {
-    TransOrd TransOrd = 2;
-    TransStorage TransStorage = 3;
-    TransTickTock TransTickTock = 4;
-    TransSplitPrepare TransSplitPrepare = 5;
-    TransMergePrepare TransMergePrepare = 6;
-    TransMergeInstall TransMergeInstall = 7;
-  }
-
-  optional Message InMessage = 8;
-  repeated Message OutMessages = 9;
+  TransactionType TransactionType = 2;
+  optional Message InMessage = 3;
+  repeated Message OutMessages = 4;
 }
 
 message BlockMessage {

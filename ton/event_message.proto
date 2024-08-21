@@ -12,25 +12,17 @@ message MessageOpcode {
 
 message ParsedMessage {
   ton_messages.Message Message = 1;
+
   MessageOpcode Opcode = 2;
 }
 
 message ParsedTransaction {
   ton_messages.TransactionHeader TransactionHeader = 1;
+  ton_messages.TransactionType TransactionType = 2;
+  optional ParsedMessage InMessage = 3;
+  repeated ParsedMessage OutMessages = 4;
 
-  oneof SumType {
-    ton_messages.TransOrd TransOrd = 2;
-    ton_messages.TransStorage TransStorage = 3;
-    ton_messages.TransTickTock TransTickTock = 4;
-    ton_messages.TransSplitPrepare TransSplitPrepare = 5;
-    ton_messages.TransMergePrepare TransMergePrepare = 6;
-    ton_messages.TransMergeInstall TransMergeInstall = 7;
-  }
-
-  optional ParsedMessage InMessage = 8;
-  repeated ParsedMessage OutMessages = 9;
-
-  repeated string AccountAddressInterfaces = 10;
+  repeated string AccountAddressInterfaces = 5;
 }
 
 message Event {
