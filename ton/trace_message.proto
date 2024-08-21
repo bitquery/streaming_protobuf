@@ -6,7 +6,8 @@ import "ton/block_message.proto";
 message Trace {
   ton_messages.BlockHeader BlockHeader = 1;
   ton_messages.Transaction Transaction = 2;
-  repeated Trace Children = 3;
+  uint32 Depth = 3;
+  repeated Trace Children = 4;
 }
 
 message TraceMessage {

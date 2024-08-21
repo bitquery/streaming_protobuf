@@ -19,8 +19,6 @@ message ParsedMessage {
 message ParsedTransaction {
   ton_messages.TransactionHeader TransactionHeader = 1;
   ton_messages.TransactionType TransactionType = 2;
-  optional ParsedMessage InMessage = 3;
-  repeated ParsedMessage OutMessages = 4;
 
   repeated string AccountAddressInterfaces = 5;
 }
@@ -28,7 +26,10 @@ message ParsedTransaction {
 message Event {
   ton_messages.BlockHeader BlockHeader = 1;
   ParsedTransaction ParsedTransaction = 2;
-  repeated Event Children = 3;
+  optional ParsedMessage InMessage = 3;
+  uint32 Depth = 4;
+
+  repeated Event Children = 5;
 }
 
 message EventMessage {
