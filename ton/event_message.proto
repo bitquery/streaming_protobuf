@@ -20,7 +20,7 @@ message ParsedTransaction {
   ton_messages.TransactionHeader TransactionHeader = 1;
   ton_messages.TransactionType TransactionType = 2;
 
-  repeated string AccountAddressInterfaces = 5;
+  repeated string AccountAddressInterfaces = 3;
 }
 
 message Event {
