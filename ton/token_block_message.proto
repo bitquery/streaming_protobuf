@@ -2,6 +2,7 @@ syntax = "proto3";
 package ton_messages;
 
 import "ton/block_message.proto";
+import "ton/event_message.proto";
 
 message TokenInfo {
   bytes SmartContract = 1;
@@ -11,28 +12,46 @@ message TokenInfo {
   bool HasURI = 5;
   bool Fungible = 6;
   bool Native = 7;
+  // string Image = 8;
+  // string Description = 9;
 }
 
-message Opcode {
-  string Name = 1;
-  bytes Hash = 2;
+// message Opcode {
+//   string Name = 1;
+//   bytes Hash = 2;
+// }
+
+message Transfer {
+  bytes Sender = 1;
+  bytes Receiver = 2;
+  bytes Amount = 3;
+  TokenInfo Currency = 4;
+  bool Success = 5;
+  optional string Comment = 6;
 }
 
 message TokenTransfer {
-  uint64 TransactionIndex = 1;
-  bytes Sender = 2;
-  bytes Receiver = 3;
-  bytes Amount = 4;
-  TokenInfo Currency = 5;
-  Opcode Opcode = 6;
-  bool Success = 7;
-  uint32 Index = 8;
+  ton_messages.BlockHeader BlockHeader = 1;
+  ton_messages.ParsedTransaction ParsedTransaction = 2;
+  optional ParsedMessage InMessage = 3;
+  Transfer Transfer = 4;
 
-  optional string Comment = 9;
+  // uint64 TransactionIndex = 1;
+  // bytes Sender = 2;
+  // bytes SenderWallet = 3;
+  // bytes Receiver = 4;
+  // bytes Amount = 5;
+  // TokenInfo Currency = 6;
+  //
+  // Opcode Opcode = 7;
+  // bool Success = 8;
+  // uint32 Index = 9;
+  //
+  // optional string Comment = 10;
 }
 
 message TokenBlockMessage {
   ton_messages.Chain Chain = 1;
-  ton_messages.BlockHeader Header = 2;
-  repeated TokenTransfer Transfers = 3;
+  repeated TokenTransfer Transfers = 2;
+  // ton_messages.BlockHeader Header = 2;
 }

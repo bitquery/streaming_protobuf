@@ -2,7 +2,6 @@ syntax = "proto3";
 package ton_messages;
 
 import "ton/block_message.proto";
-import "google/protobuf/any.proto";
 
 message MessageOpcode {
   string Name = 1;
