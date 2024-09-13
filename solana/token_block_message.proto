@@ -35,6 +35,7 @@ message Currency {
   bool IsMutable = 19;
 
   repeated TokenCreator TokenCreators = 20;
+  uint64 Supply = 21;
 }
 
 
