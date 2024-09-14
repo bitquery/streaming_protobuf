@@ -16,6 +16,7 @@ message TokenInfo {
     bytes Owner = 2;
     uint32 Decimals = 3;
     bytes ProgramId = 4;
+    uint64 Supply = 5;
 }
 
 message BalanceUpdate {
