@@ -12,8 +12,8 @@ message TokenInfo {
   bool HasURI = 5;
   bool Fungible = 6;
   bool Native = 7;
-  // string Image = 8;
-  // string Description = 9;
+  string ImageURI = 8;
+  string Description = 9;
 }
 
 // message Opcode {
