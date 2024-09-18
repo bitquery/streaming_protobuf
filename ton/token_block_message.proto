@@ -10,10 +10,11 @@ message TokenInfo {
   string Symbol = 3;
   int32 Decimals = 4;
   bool HasURI = 5;
-  bool Fungible = 6;
-  bool Native = 7;
-  string ImageURI = 8;
-  string Description = 9;
+  string URI = 6;
+  bool Fungible = 7;
+  bool Native = 8;
+  string ImageURI = 9;
+  string Description = 10;
 }
 
 // message Opcode {
