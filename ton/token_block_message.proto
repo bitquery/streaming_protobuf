@@ -15,12 +15,9 @@ message TokenInfo {
   bool Native = 8;
   string ImageURI = 9;
   string Description = 10;
+  string SocialNetworksURI = 11;
+  string WebsitesURI = 12;
 }
-
-// message Opcode {
-//   string Name = 1;
-//   bytes Hash = 2;
-// }
 
 message Transfer {
   bytes Sender = 1;
@@ -36,19 +33,6 @@ message TokenTransfer {
   ton_messages.ParsedTransaction ParsedTransaction = 2;
   optional ParsedMessage InMessage = 3;
   Transfer Transfer = 4;
-
-  // uint64 TransactionIndex = 1;
-  // bytes Sender = 2;
-  // bytes SenderWallet = 3;
-  // bytes Receiver = 4;
-  // bytes Amount = 5;
-  // TokenInfo Currency = 6;
-  //
-  // Opcode Opcode = 7;
-  // bool Success = 8;
-  // uint32 Index = 9;
-  //
-  // optional string Comment = 10;
 }
 
 message TokenBlockMessage {
