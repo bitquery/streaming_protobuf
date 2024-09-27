@@ -1,0 +1,64 @@
+syntax = "proto3";
+package ton_messages;
+
+import "ton/block_message.proto";
+import "ton/event_message.proto";
+import "ton/token_block_message.proto";
+
+message DexInfo {
+  bytes SmartContract = 1;
+
+  bytes OwnerAddress = 2;
+  bytes FeeRecipient = 3;
+
+  string ProtocolName = 4;
+  string ProtocolFamily = 5;
+  string ProtocolVersion = 6;
+
+  TokenInfo Pair = 7;
+  repeated TokenInfo Currencies = 8;
+  repeated TokenInfo UnderlyingCurrencies = 9;
+}
+
+message TradeAsset {
+  TokenInfo Currency = 1;
+  bytes Amount = 2;
+  bytes Id = 3;
+  string URI = 4;
+  bytes Data = 5;
+}
+
+message TradeSide {
+  bytes Seller = 1;
+  bytes Buyer = 2;
+  bytes OrderId = 3;
+  repeated TradeAsset Assets = 4;
+}
+
+message TradeFee {
+  TokenInfo Currency = 1;
+  bytes Amount = 2;
+  bytes Id = 3;
+  bytes Payer = 4;
+  bytes Recipient = 5;
+}
+
+message DexTrade {
+  BlockHeader BlockHeader = 1;
+  ParsedTransaction ParsedTransaction = 2;
+
+  DexInfo Dex = 3;
+
+  TradeSide Buy = 4;
+  TradeSide Sell = 5;
+
+  bytes Sender = 6;
+  bool Success = 7;
+  repeated TradeFee Fees = 8;
+}
+
+message DexBlockMessage {
+  ton_messages.Chain Chain = 1;
+  ton_messages.BlockHeader Header = 2;
+  repeated DexTrade Trades = 3;
+}
