@@ -44,17 +44,17 @@ message TradeFee {
 }
 
 message DexTrade {
-  uint64 TransactionIndex = 1;
+  BlockHeader BlockHeader = 1;
+  ParsedTransaction ParsedTransaction = 2;
 
-  DexInfo Dex = 2;
+  DexInfo Dex = 3;
 
-  TradeSide Buy = 3;
-  TradeSide Sell = 4;
+  TradeSide Buy = 4;
+  TradeSide Sell = 5;
 
-  bytes Sender = 5;
-  bool Success = 6;
-  repeated TradeFee Fees = 7;
-  uint32 Index = 8;
+  bytes Sender = 6;
+  bool Success = 7;
+  repeated TradeFee Fees = 8;
 }
 
 message DexBlockMessage {
