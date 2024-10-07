@@ -7,17 +7,13 @@ import "ton/token_block_message.proto";
 
 message DexInfo {
   bytes SmartContract = 1;
+  bytes FeeRecipient = 2;
 
-  bytes OwnerAddress = 2;
-  bytes FeeRecipient = 3;
+  string ProtocolName = 3;
+  string ProtocolFamily = 4;
+  string ProtocolVersion = 5;
 
-  string ProtocolName = 4;
-  string ProtocolFamily = 5;
-  string ProtocolVersion = 6;
-
-  TokenInfo Pair = 7;
-  repeated TokenInfo Currencies = 8;
-  repeated TokenInfo UnderlyingCurrencies = 9;
+  repeated TokenInfo Currencies = 6;
 }
 
 message TradeAsset {
@@ -31,8 +27,7 @@ message TradeAsset {
 message TradeSide {
   bytes Seller = 1;
   bytes Buyer = 2;
-  bytes OrderId = 3;
-  repeated TradeAsset Assets = 4;
+  repeated TradeAsset Assets = 3;
 }
 
 message TradeFee {
