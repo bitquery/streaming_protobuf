@@ -41,19 +41,19 @@ message TradeFee {
 message DexTrade {
   BlockHeader BlockHeader = 1;
   ParsedTransaction ParsedTransaction = 2;
+  optional ParsedMessage InMessage = 3;
 
-  DexInfo Dex = 3;
+  DexInfo Dex = 4;
 
-  TradeSide Buy = 4;
-  TradeSide Sell = 5;
+  TradeSide Buy = 5;
+  TradeSide Sell = 6;
 
-  bytes Sender = 6;
-  bool Success = 7;
-  repeated TradeFee Fees = 8;
+  bytes Sender = 7;
+  bool Success = 8;
+  repeated TradeFee Fees = 9;
 }
 
 message DexBlockMessage {
   ton_messages.Chain Chain = 1;
-  ton_messages.BlockHeader Header = 2;
-  repeated DexTrade Trades = 3;
+  repeated DexTrade Trades = 2;
 }
