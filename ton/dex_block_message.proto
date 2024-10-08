@@ -6,7 +6,7 @@ import "ton/event_message.proto";
 import "ton/token_block_message.proto";
 
 message DexInfo {
-  bytes SmartContract = 1;
+  AccountID SmartContract = 1;
   bytes FeeRecipient = 2;
 
   string ProtocolName = 3;
@@ -25,8 +25,8 @@ message TradeAsset {
 }
 
 message TradeSide {
-  bytes Seller = 1;
-  bytes Buyer = 2;
+  AccountID Seller = 1;
+  AccountID Buyer = 2;
   repeated TradeAsset Assets = 3;
 }
 
@@ -34,8 +34,8 @@ message TradeFee {
   TokenInfo Currency = 1;
   bytes Amount = 2;
   bytes Id = 3;
-  bytes Payer = 4;
-  bytes Recipient = 5;
+  AccountID Payer = 4;
+  AccountID Recipient = 5;
 }
 
 message DexTrade {
@@ -48,7 +48,7 @@ message DexTrade {
   TradeSide Buy = 5;
   TradeSide Sell = 6;
 
-  bytes Sender = 7;
+  AccountID Sender = 7;
   bool Success = 8;
   repeated TradeFee Fees = 9;
 }

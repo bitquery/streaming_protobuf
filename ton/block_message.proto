@@ -17,9 +17,10 @@ message GenSoftware {
   uint64 Capabilities = 2;
 }
 
-// message ValueFlow {
-// }
-//
+message AccountID {
+  int32 Workchain = 1;
+  bytes Address = 2;
+}
 
 message StateUpdate {
   bytes OldHash = 1;
@@ -44,8 +45,7 @@ message TransactionHeader {
   uint64 LT = 2;
   string Type = 3;
   uint64 Index = 4;
-  // base64 format
-  bytes AccountAddress = 5;
+  AccountID AccountAddress = 5;
   uint64 PrevTransactionLT = 6;
   bytes PrevTransactionHash = 7;
   TransactionFee TransactionFee = 8;
@@ -151,8 +151,8 @@ message TransMergeInstall {
 message IntMsgInfo {
   uint64 CreatedLT = 1;
   uint32 CreatedAt = 2;
-  bytes SourceAddress = 3;
-  bytes DestinationAddress = 4;
+  AccountID SourceAddress = 3;
+  AccountID DestinationAddress = 4;
   bool IhrDisabled = 5;
   bool Bounce = 6;
   bool Bounced = 7;
@@ -163,7 +163,7 @@ message IntMsgInfo {
 }
 
 message ExtInMsgInfo {
-  bytes DestinationAddress = 1;
+  AccountID DestinationAddress = 1;
   bytes Hash = 2;
   uint64 ImportFee = 3;
   bytes Body = 4;
@@ -172,7 +172,7 @@ message ExtInMsgInfo {
 message ExtOutMsgInfo {
   uint64 CreatedLT = 1;
   uint32 CreatedAt = 2;
-  bytes SourceAddress = 3;
+  AccountID SourceAddress = 3;
   bytes Body = 4;
 }
 

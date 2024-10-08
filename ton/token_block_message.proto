@@ -5,7 +5,7 @@ import "ton/block_message.proto";
 import "ton/event_message.proto";
 
 message TokenInfo {
-  bytes SmartContract = 1;
+  AccountID SmartContract = 1;
   string Name = 2;
   string Symbol = 3;
   int32 Decimals = 4;
@@ -20,8 +20,8 @@ message TokenInfo {
 }
 
 message Transfer {
-  bytes Sender = 1;
-  bytes Receiver = 2;
+  AccountID Sender = 1;
+  AccountID Receiver = 2;
   bytes Amount = 3;
   TokenInfo Currency = 4;
   bool Success = 5;
