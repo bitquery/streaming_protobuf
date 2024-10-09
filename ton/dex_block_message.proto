@@ -7,7 +7,7 @@ import "ton/token_block_message.proto";
 
 message DexInfo {
   AccountID SmartContract = 1;
-  bytes FeeRecipient = 2;
+  AccountID FeeRecipient = 2;
 
   string ProtocolName = 3;
   string ProtocolFamily = 4;
