@@ -5,9 +5,7 @@ go 1.22
 require (
 	github.com/bitquery/streaming_processor v1.16.26
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/golang/protobuf v1.5.3
 	github.com/mr-tron/base58 v1.2.0
-	github.com/pierrec/lz4/v4 v4.1.21
 	google.golang.org/protobuf v1.35.1
 )
 
