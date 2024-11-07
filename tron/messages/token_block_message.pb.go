@@ -7,7 +7,7 @@
 package tron_messages
 
 import (
-	messages "evm/messages"
+	messages "github.com/bitquery/streaming_protobuf/evm/messages"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
