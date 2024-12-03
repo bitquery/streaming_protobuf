@@ -16,7 +16,6 @@ message TokenInfo {
     bytes Owner = 2;
     uint32 Decimals = 3;
     bytes ProgramId = 4;
-    uint64 Supply = 5;
 }
 
 message BalanceUpdate {
@@ -24,6 +23,7 @@ message BalanceUpdate {
     uint64 PostBalance = 2;
     uint32 AccountIndex = 3;
 }
+
 
 message Instruction {
     uint32 ProgramAccountIndex = 1;
@@ -34,6 +34,7 @@ message Instruction {
     repeated uint32 AccountIndexes = 6;
     repeated BalanceUpdate BalanceUpdates = 7;
     repeated BalanceUpdate TokenBalanceUpdates = 8;
+    repeated BalanceUpdate TokenSupplyUpdates = 9;
 }
 
 message TransactionHeader {
