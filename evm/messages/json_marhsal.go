@@ -3,7 +3,7 @@ package evm_messages
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/bitquery/streaming_protobuf/pkg/util"
+	"github.com/bitquery/streaming_protobuf/v2/pkg/util"
 
 	"strconv"
 )

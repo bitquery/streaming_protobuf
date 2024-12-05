@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	evm_messages "github.com/bitquery/streaming_protobuf/evm/messages"
-	"github.com/bitquery/streaming_protobuf/pkg/util"
+	evm_messages "github.com/bitquery/streaming_protobuf/v2/evm/messages"
+	"github.com/bitquery/streaming_protobuf/v2/pkg/util"
 	"github.com/btcsuite/btcutil/base58"
 )
 
