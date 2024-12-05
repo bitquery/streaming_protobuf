@@ -1,7 +1,7 @@
 package blockchain_messages
 
 import (
-	"github.com/bitquery/streaming_protobuf/pkg/util"
+	"github.com/bitquery/streaming_protobuf/v2/pkg/util"
 )
 
 // BlockDescriptor is a base block definition structure

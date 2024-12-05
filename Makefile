@@ -56,10 +56,10 @@ generate_offchain:
 	-I=. \
 	--experimental_allow_proto3_optional \
 	--go_out=. \
-	--go_opt="Mevm/block_message.proto=github.com/bitquery/streaming_protobuf/evm/messages;evm_messages" \
-	--go_opt="Mevm/parsed_abi_block_message.proto=github.com/bitquery/streaming_protobuf/evm/messages;evm_messages" \
-	--go_opt="Mevm/token_block_message.proto=github.com/bitquery/streaming_protobuf/evm/messages;evm_messages" \
-	--go_opt="Mevm/dex_block_message.proto=github.com/bitquery/streaming_protobuf/evm/messages;evm_messages" \
+	--go_opt="Mevm/block_message.proto=github.com/bitquery/streaming_protobuf/v2/evm/messages;evm_messages" \
+	--go_opt="Mevm/parsed_abi_block_message.proto=github.com/bitquery/streaming_protobuf/v2/evm/messages;evm_messages" \
+	--go_opt="Mevm/token_block_message.proto=github.com/bitquery/streaming_protobuf/v2/evm/messages;evm_messages" \
+	--go_opt="Mevm/dex_block_message.proto=github.com/bitquery/streaming_protobuf/v2/evm/messages;evm_messages" \
 	--go_opt="Mtron/block_message.proto=tron/messages;tron_messages" \
 	--go_opt="Mtron/dex_block_message.proto=tron/messages;tron_messages" \
 	--go_opt="Mtron/parsed_abi_block_message.proto=tron/messages;tron_messages" \

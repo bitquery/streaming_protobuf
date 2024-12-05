@@ -1,7 +1,7 @@
 package evm_messages
 
 import (
-	blockchain_messages "github.com/bitquery/streaming_protobuf/blockchain/messages"
+	blockchain_messages "github.com/bitquery/streaming_protobuf/v2/blockchain/messages"
 )
 
 type DexBlockMessageDescriptor struct {
