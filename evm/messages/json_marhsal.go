@@ -3,7 +3,7 @@ package evm_messages
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/bitquery/streaming_protobuf/v2/pkg/util"
+	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
 
 	"strconv"
 )
@@ -20,20 +20,20 @@ func (signature *ParsedAbiSignature) MarshalJSON() ([]byte, error) {
 
 func (header *TransactionHeader) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"Hash":           util.HexEncode(header.Hash),
+		"Hash":           encoder.HexEncode(header.Hash),
 		"Gas":            strconv.FormatUint(header.Gas, 10),
-		"Value":          util.BytesToBigInt(header.Value, false).Text(10),
+		"Value":          encoder.BytesToBigInt(header.Value, false).Text(10),
 		"Data":           hex.EncodeToString(header.Data),
 		"Nonce":          strconv.FormatUint(header.Nonce, 10),
-		"ChainId":        util.BytesToBigInt(header.ChainId, false).Text(10),
-		"Cost":           util.BytesToBigInt(header.Cost, false).Text(10),
-		"GasFeeCap":      util.BytesToBigInt(header.GasFeeCap, false).Text(10),
-		"GasPrice":       util.BytesToBigInt(header.GasPrice, false).Text(10),
-		"GasTipCap":      util.BytesToBigInt(header.GasTipCap, false).Text(10),
+		"ChainId":        encoder.BytesToBigInt(header.ChainId, false).Text(10),
+		"Cost":           encoder.BytesToBigInt(header.Cost, false).Text(10),
+		"GasFeeCap":      encoder.BytesToBigInt(header.GasFeeCap, false).Text(10),
+		"GasPrice":       encoder.BytesToBigInt(header.GasPrice, false).Text(10),
+		"GasTipCap":      encoder.BytesToBigInt(header.GasTipCap, false).Text(10),
 		"Protected":      header.Protected,
 		"Type":           header.Type,
-		"To":             util.HexEncode(header.To),
-		"From":           util.HexEncode(header.From),
+		"To":             encoder.HexEncode(header.To),
+		"From":           encoder.HexEncode(header.From),
 		"AccessList":     header.AccessList,
 		"GasL1":          header.GasL1,
 		"IsSystemTx":     header.IsSystemTx,
@@ -51,7 +51,7 @@ func (tuple *AccessTuple) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(map[string]any{
-		"Address":     util.HexEncode(tuple.Address),
+		"Address":     encoder.HexEncode(tuple.Address),
 		"StorageKeys": keys,
 	})
 }
@@ -69,7 +69,7 @@ func (header *ReceiptHeader) MarshalJSON() ([]byte, error) {
 		"Bloom":             hex.EncodeToString(header.Bloom),
 		"GasUsed":           strconv.FormatUint(header.GasUsed, 10),
 		"Type":              header.Type,
-		"ContractAddress":   util.HexEncode(header.ContractAddress),
+		"ContractAddress":   encoder.HexEncode(header.ContractAddress),
 		"CumulativeGasUsed": strconv.FormatUint(header.CumulativeGasUsed, 10),
 		"PostState":         hex.EncodeToString(header.PostState),
 		"Status":            header.Status,
@@ -82,7 +82,7 @@ func (state *ParsedStateChange) MarshalJSON() ([]byte, error) {
 		"ExitIndex":            state.ExitIndex,
 		"ChangeAfterCallIndex": state.ChangeAfterCallIndex,
 		"Pc":                   state.Pc,
-		"Address":              util.HexEncode(state.Address),
+		"Address":              encoder.HexEncode(state.Address),
 		"Location":             hex.EncodeToString(state.Location),
 		"Value":                hex.EncodeToString(state.Value),
 	})
@@ -98,7 +98,7 @@ func (topic *Topic) MarshalJSON() ([]byte, error) {
 func (header *LogHeader) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"Index":    header.Index,
-		"Address":  util.HexEncode(header.Address),
+		"Address":  encoder.HexEncode(header.Address),
 		"Data":     hex.EncodeToString(header.Data),
 		"Removed":  header.Removed,
 		"IsSystem": header.IsSystem,
@@ -112,7 +112,7 @@ func (header *ParsedAbiLogHeader) MarshalJSON() ([]byte, error) {
 		"ExitIndex":         header.ExitIndex,
 		"LogAfterCallIndex": header.LogAfterCallIndex,
 		"Pc":                header.Pc,
-		"SmartContract":     util.HexEncode(header.SmartContract),
+		"SmartContract":     encoder.HexEncode(header.SmartContract),
 		"Signature":         header.Signature,
 	})
 }
@@ -135,12 +135,12 @@ func (header *ParsedAbiCallHeader) MarshalJSON() ([]byte, error) {
 		"CallerIndex":   header.CallerIndex,
 		"InternalCalls": header.InternalCalls,
 		"CallPath":      header.CallPath,
-		"From":          util.HexEncode(header.From),
-		"To":            util.HexEncode(header.To),
+		"From":          encoder.HexEncode(header.From),
+		"To":            encoder.HexEncode(header.To),
 		"Create":        header.Create,
 		"Input":         hex.EncodeToString(header.Input),
 		"Gas":           header.Gas,
-		"Value":         util.BytesToBigInt(header.Value, false).Text(10),
+		"Value":         encoder.BytesToBigInt(header.Value, false).Text(10),
 		"Output":        hex.EncodeToString(header.Output),
 		"GasUsed":       header.GasUsed,
 		"Error":         header.Error,
@@ -155,12 +155,12 @@ func (header *ParsedAbiCallHeader) MarshalJSON() ([]byte, error) {
 
 func (start *CaptureStart) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"From":   util.HexEncode(start.From),
-		"To":     util.HexEncode(start.To),
+		"From":   encoder.HexEncode(start.From),
+		"To":     encoder.HexEncode(start.To),
 		"Create": start.Create,
 		"Input":  hex.EncodeToString(start.Input),
 		"Gas":    strconv.FormatUint(start.Gas, 10),
-		"Value":  util.BytesToBigInt(start.Value, false).Text(10),
+		"Value":  encoder.BytesToBigInt(start.Value, false).Text(10),
 	})
 }
 
@@ -187,11 +187,11 @@ func (fault *CaptureFault) MarshalJSON() ([]byte, error) {
 
 func (contract *Contract) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"CallerAddress": util.HexEncode(contract.CallerAddress),
-		"Caller":        util.HexEncode(contract.Caller),
-		"Address":       util.HexEncode(contract.Address),
+		"CallerAddress": encoder.HexEncode(contract.CallerAddress),
+		"Caller":        encoder.HexEncode(contract.Caller),
+		"Address":       encoder.HexEncode(contract.Address),
 		"Input":         hex.EncodeToString(contract.Input),
-		"Value":         util.BytesToBigInt(contract.Value, false).Text(10),
+		"Value":         encoder.BytesToBigInt(contract.Value, false).Text(10),
 	})
 }
 
@@ -211,7 +211,7 @@ func (header *CaptureStateHeader) MarshalJSON() ([]byte, error) {
 
 func (store *Store) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"Address":  util.HexEncode(store.Address),
+		"Address":  encoder.HexEncode(store.Address),
 		"Location": hex.EncodeToString(store.Location),
 		"Value":    hex.EncodeToString(store.Value),
 	})
@@ -219,11 +219,11 @@ func (store *Store) MarshalJSON() ([]byte, error) {
 
 func (currency *DexInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"SmartContract":        util.HexEncode(currency.SmartContract),
+		"SmartContract":        encoder.HexEncode(currency.SmartContract),
 		"Delegated":            currency.Delegated,
 		"DelegatedTo":          currency.DelegatedTo,
-		"OwnerAddress":         util.HexEncode(currency.OwnerAddress),
-		"FeeRecipient":         util.HexEncode(currency.FeeRecipient),
+		"OwnerAddress":         encoder.HexEncode(currency.OwnerAddress),
+		"FeeRecipient":         encoder.HexEncode(currency.FeeRecipient),
 		"ProtocolName":         currency.ProtocolName,
 		"ProtocolFamily":       currency.ProtocolFamily,
 		"ProtocolVersion":      currency.ProtocolVersion,
@@ -235,9 +235,9 @@ func (currency *DexInfo) MarshalJSON() ([]byte, error) {
 
 func (currency *TokenInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"SmartContract": util.HexEncode(currency.SmartContract),
+		"SmartContract": encoder.HexEncode(currency.SmartContract),
 		"Delegated":     currency.Delegated,
-		"DelegatedTo":   util.HexEncode(currency.DelegatedTo),
+		"DelegatedTo":   encoder.HexEncode(currency.DelegatedTo),
 		"ProtocolName":  currency.ProtocolName,
 		"Name":          currency.Name,
 		"Symbol":        currency.Symbol,
@@ -253,7 +253,7 @@ func (trade *DexTrade) MarshalJSON() ([]byte, error) {
 		"Dex":     trade.Dex,
 		"Buy":     trade.Buy,
 		"Sell":    trade.Sell,
-		"Sender":  util.HexEncode(trade.Sender),
+		"Sender":  encoder.HexEncode(trade.Sender),
 		"Success": trade.Success,
 		"Fees":    trade.Fees,
 		"Index":   trade.Index,
@@ -263,17 +263,17 @@ func (trade *DexTrade) MarshalJSON() ([]byte, error) {
 func (fee *TradeFee) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"Currency":  fee.Currency,
-		"Amount":    util.BytesToBigInt(fee.Amount, false).Text(10),
+		"Amount":    encoder.BytesToBigInt(fee.Amount, false).Text(10),
 		"Id":        hex.EncodeToString(fee.Id),
-		"Payer":     util.HexEncode(fee.Payer),
-		"Recipient": util.HexEncode(fee.Recipient),
+		"Payer":     encoder.HexEncode(fee.Payer),
+		"Recipient": encoder.HexEncode(fee.Recipient),
 	})
 }
 
 func (side *TradeSide) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"Seller":  util.HexEncode(side.Seller),
-		"Buyer":   util.HexEncode(side.Buyer),
+		"Seller":  encoder.HexEncode(side.Seller),
+		"Buyer":   encoder.HexEncode(side.Buyer),
 		"OrderId": hex.EncodeToString(side.OrderId),
 		"Assets":  side.Assets,
 	})
@@ -282,7 +282,7 @@ func (side *TradeSide) MarshalJSON() ([]byte, error) {
 func (asset *TradeAsset) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"Currency": asset.Currency,
-		"Amount":   util.BytesToBigInt(asset.Amount, false).Text(10),
+		"Amount":   encoder.BytesToBigInt(asset.Amount, false).Text(10),
 		"Id":       hex.EncodeToString(asset.Id),
 		"URI":      asset.URI,
 		"Data":     hex.EncodeToString(asset.Data),
@@ -299,7 +299,7 @@ func (value *ArgumentValue) argValue(name string) map[string]any {
 	switch value.Value.(type) {
 	case *ArgumentValue_Bytes:
 		if value.Type == "address" {
-			val = util.HexEncode(value.Value.(*ArgumentValue_Bytes).Bytes)
+			val = encoder.HexEncode(value.Value.(*ArgumentValue_Bytes).Bytes)
 		} else {
 			val = hex.EncodeToString(value.Value.(*ArgumentValue_Bytes).Bytes)
 		}

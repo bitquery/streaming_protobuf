@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	evm_messages "github.com/bitquery/streaming_protobuf/v2/evm/messages"
-	"github.com/bitquery/streaming_protobuf/v2/pkg/util"
+	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
 	"github.com/btcsuite/btcutil/base58"
 )
 
@@ -146,7 +146,7 @@ func callHeader(header *evm_messages.ParsedAbiCallHeader) map[string]any {
 		"Create":        header.Create,
 		"Input":         hex.EncodeToString(header.Input),
 		"Gas":           header.Gas,
-		"Value":         util.BytesToBigInt(header.Value, false).Text(10),
+		"Value":         encoder.BytesToBigInt(header.Value, false).Text(10),
 		"Output":        hex.EncodeToString(header.Output),
 		"GasUsed":       header.GasUsed,
 		"Error":         header.Error,
@@ -288,8 +288,8 @@ func TradeSideJsonStructure(side *evm_messages.TradeSide) any {
 func AssetJsonStructure(asset *evm_messages.TradeAsset) map[string]any {
 	return map[string]any{
 		"Currency": CurrencyJsonStructure(asset.Currency),
-		"Amount":   util.BytesToBigInt(asset.Amount, false).Text(10),
-		"Id":       util.BytesToBigInt(asset.Id, false).Text(10),
+		"Amount":   encoder.BytesToBigInt(asset.Amount, false).Text(10),
+		"Id":       encoder.BytesToBigInt(asset.Id, false).Text(10),
 		"URI":      asset.URI,
 		"Data":     hex.EncodeToString(asset.Data),
 	}
@@ -340,8 +340,8 @@ func DexJsonStructure(dex *evm_messages.DexInfo) any {
 func FeeJsonStructure(fee *evm_messages.TradeFee) map[string]any {
 	return map[string]any{
 		"Currency":  CurrencyJsonStructure(fee.Currency),
-		"Amount":    util.BytesToBigInt(fee.Amount, false).Text(10),
-		"Id":        util.BytesToBigInt(fee.Id, false).Text(10),
+		"Amount":    encoder.BytesToBigInt(fee.Amount, false).Text(10),
+		"Id":        encoder.BytesToBigInt(fee.Id, false).Text(10),
 		"Payer":     encodeTronAddress(fee.Payer),
 		"Recipient": encodeTronAddress(fee.Recipient),
 	}

@@ -1,16 +1,16 @@
 package blockchain_messages
 
 import (
-	"github.com/bitquery/streaming_protobuf/v2/pkg/util"
+	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
 )
 
 // BlockDescriptor is a base block definition structure
 type BlockDescriptor struct {
 	BlockHash    string
-	BlockNumber  util.JsonNumber
+	BlockNumber  encoder.JsonNumber
 	ParentHash   string
-	ParentNumber util.JsonNumber
-	Height       util.JsonNumber
+	ParentNumber encoder.JsonNumber
+	Height       encoder.JsonNumber
 }
 
 // BlockMessageDescriptor is a descriptor for a block message, it may include transaction hashes for broadcasted
