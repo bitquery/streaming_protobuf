@@ -20,10 +20,10 @@ func (signature *ParsedAbiSignature) MarshalJSON() ([]byte, error) {
 
 func (header *TransactionHeader) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"Hash":           encoder.HexEncode(header.Hash),
-		"Gas":            strconv.FormatUint(header.Gas, 10),
-		"Value":          encoder.BytesToBigInt(header.Value, false).Text(10),
-		"Data":           hex.EncodeToString(header.Data),
+		"Hash":  encoder.HexEncode(header.Hash),
+		"Gas":   strconv.FormatUint(header.Gas, 10),
+		"Value": encoder.BytesToBigInt(header.Value, false).Text(10),
+		// "Data":           hex.EncodeToString(header.Data),
 		"Nonce":          strconv.FormatUint(header.Nonce, 10),
 		"ChainId":        encoder.BytesToBigInt(header.ChainId, false).Text(10),
 		"Cost":           encoder.BytesToBigInt(header.Cost, false).Text(10),
@@ -126,6 +126,15 @@ func (trace *Trace) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (call *ParsedAbiCall) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"Header":       call.Header,
+		"Arguments":    call.Arguments,
+		"ReturnValues": call.ReturnValues,
+		"Logs":         call.Logs,
+	})
+}
+
 func (header *ParsedAbiCallHeader) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"Index":         header.Index,
@@ -138,18 +147,18 @@ func (header *ParsedAbiCallHeader) MarshalJSON() ([]byte, error) {
 		"From":          encoder.HexEncode(header.From),
 		"To":            encoder.HexEncode(header.To),
 		"Create":        header.Create,
-		"Input":         hex.EncodeToString(header.Input),
-		"Gas":           header.Gas,
-		"Value":         encoder.BytesToBigInt(header.Value, false).Text(10),
-		"Output":        hex.EncodeToString(header.Output),
-		"GasUsed":       header.GasUsed,
-		"Error":         header.Error,
-		"Opcode":        header.Opcode,
-		"SelfDestruct":  header.SelfDestruct,
-		"Delegated":     header.Delegated,
-		"Success":       header.Success,
-		"Reverted":      header.Reverted,
-		"Signature":     header.Signature,
+		//"Input":         hex.EncodeToString(header.Input),
+		"Gas":   header.Gas,
+		"Value": encoder.BytesToBigInt(header.Value, false).Text(10),
+		//"Output":        hex.EncodeToString(header.Output),
+		"GasUsed":      header.GasUsed,
+		"Error":        header.Error,
+		"Opcode":       header.Opcode,
+		"SelfDestruct": header.SelfDestruct,
+		"Delegated":    header.Delegated,
+		"Success":      header.Success,
+		"Reverted":     header.Reverted,
+		"Signature":    header.Signature,
 	})
 }
 
