@@ -66,7 +66,7 @@ func (signature *Signature) MarshalJSON() ([]byte, error) {
 
 func (header *ReceiptHeader) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"Bloom":             hex.EncodeToString(header.Bloom),
+		//"Bloom":             hex.EncodeToString(header.Bloom),
 		"GasUsed":           strconv.FormatUint(header.GasUsed, 10),
 		"Type":              header.Type,
 		"ContractAddress":   encoder.HexEncode(header.ContractAddress),
