@@ -3,9 +3,9 @@ package evm_messages
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
-
 	"strconv"
+
+	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
 )
 
 func (signature *ParsedAbiSignature) MarshalJSON() ([]byte, error) {
@@ -286,6 +286,18 @@ func (asset *TradeAsset) MarshalJSON() ([]byte, error) {
 		"Id":       hex.EncodeToString(asset.Id),
 		"URI":      asset.URI,
 		"Data":     hex.EncodeToString(asset.Data),
+	})
+}
+
+func (fee *TransactionFee) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"SenderFee":         encoder.BytesToBigInt(fee.SenderFee, false).Text(10),
+		"PriorityFeePerGas": encoder.BytesToBigInt(fee.PriorityFeePerGas, false).Text(10),
+		"EffectiveGasPrice": encoder.BytesToBigInt(fee.EffectiveGasPrice, false).Text(10),
+		"Burnt":             encoder.BytesToBigInt(fee.Burnt, false).Text(10),
+		"Savings":           encoder.BytesToBigInt(fee.Savings, false).Text(10),
+		"MinerReward":       encoder.BytesToBigInt(fee.MinerReward, false).Text(10),
+		"GasRefund":         fee.GasRefund,
 	})
 }
 
