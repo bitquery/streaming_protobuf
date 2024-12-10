@@ -131,3 +131,17 @@ func (arg *ParsedArgument) MarshalJSON() ([]byte, error) {
 		"Value": val,
 	})
 }
+
+func (order *DexOrder) MarshalJSON() ([]byte, error) {
+	var id string
+	if order.OrderId != nil {
+		id = hex.EncodeToString(order.OrderId)
+	}
+	return json.Marshal(map[string]any{
+		"OrderId": id,
+		"Account": base58.Encode(order.Account),
+		"Owner":   base58.Encode(order.Owner),
+		"Payer":   base58.Encode(order.Payer),
+		"Mint":    base58.Encode(order.Mint),
+	})
+}
