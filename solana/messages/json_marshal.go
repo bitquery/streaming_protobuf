@@ -1,7 +1,9 @@
 package solana_messages
 
 import (
+	"encoding/hex"
 	"encoding/json"
+
 	"github.com/mr-tron/base58"
 )
 
@@ -69,5 +71,63 @@ func (token *TokenInfo) MarshalJSON() ([]byte, error) {
 		"Owner":     base58.Encode(token.Owner),
 		"Decimals":  token.Decimals,
 		"ProgramId": base58.Encode(token.ProgramId),
+	})
+}
+
+func (instruction *ParsedIdlInstruction) MarshalJSON() ([]byte, error) {
+	var data string
+	if instruction.Data != nil {
+		data = hex.EncodeToString(instruction.Data)
+	}
+	return json.Marshal(map[string]any{
+		"Index":             instruction.Index,
+		"Depth":             instruction.Depth,
+		"CallPath":          instruction.CallPath,
+		"CallerIndex":       instruction.CallerIndex,
+		"AncestorIndexes":   instruction.AncestorIndexes,
+		"ExternalSeqNumber": instruction.ExternalSeqNumber,
+		"InternalSeqNumber": instruction.InternalSeqNumber,
+		"Program":           instruction.Program,
+		"Accounts":          instruction.Accounts,
+		"Logs":              instruction.Logs,
+		"Data":              data,
+	})
+}
+
+func (program *Program) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"Address":      base58.Encode(program.Address),
+		"Parsed":       program.Parsed,
+		"Name":         program.Name,
+		"Method":       program.Method,
+		"Arguments":    program.Arguments,
+		"AccountNames": program.AccountNames,
+	})
+}
+
+func (arg *ParsedArgument) MarshalJSON() ([]byte, error) {
+	var val any
+
+	switch arg.Value.(type) {
+	case *ParsedArgument_String_:
+		val = arg.Value.(*ParsedArgument_String_).String_
+	case *ParsedArgument_UInt:
+		val = arg.Value.(*ParsedArgument_UInt).UInt
+	case *ParsedArgument_Int:
+		val = arg.Value.(*ParsedArgument_Int).Int
+	case *ParsedArgument_Bool:
+		val = arg.Value.(*ParsedArgument_Bool).Bool
+	case *ParsedArgument_Float:
+		val = arg.Value.(*ParsedArgument_Float).Float
+	case *ParsedArgument_Json:
+		val = arg.Value.(*ParsedArgument_Json).Json
+	case *ParsedArgument_Address:
+		val = base58.Encode(arg.Value.(*ParsedArgument_Address).Address)
+	}
+
+	return json.Marshal(map[string]any{
+		"Name":  arg.Name,
+		"Type":  arg.Type,
+		"Value": val,
 	})
 }
