@@ -1,6 +1,6 @@
 module github.com/bitquery/streaming_protobuf/v2
 
-go 1.22
+go 1.21
 
 require (
 	github.com/btcsuite/btcutil v1.0.2
