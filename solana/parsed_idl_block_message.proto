@@ -49,6 +49,8 @@ message ParsedIdlInstruction {
   repeated BalanceUpdate TokenBalanceUpdates = 12;
 
   bytes Data = 13;
+
+  repeated BalanceUpdate TokenSupplyUpdates = 14;
 }
 
 message ParsedIdlTransaction {
