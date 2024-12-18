@@ -59,6 +59,7 @@ message InstructionBalanceUpdate {
   uint32 InstructionIndex = 1;
   repeated CurrencyBalanceUpdate TotalCurrencyBalanceUpdates = 2;
   repeated CurrencyBalanceUpdate OwnCurrencyBalanceUpdates = 3;
+  repeated CurrencyBalanceUpdate TokenSupplyUpdates = 4;
 }
 
 message ParsedTokenTransaction {
