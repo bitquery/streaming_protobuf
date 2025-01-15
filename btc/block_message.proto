@@ -15,17 +15,17 @@ message BlockHeader {
   int32 Weight = 5;
   int64 Height = 6;
   int32 Version = 7;
-  string VersionHex = 8;
-  string MerkleRoot = 9;
+  bytes VersionHex = 8;
+  bytes MerkleRoot = 9;
   int64 Time = 10;
   int64 MedianTime = 11;
   uint32 Nonce = 12;
-  string Bits = 13;
+  bytes Bits = 13;
   double Difficulty = 14;
-  string Chainwork = 15;
+  bytes Chainwork = 15;
   uint32 NTx = 16;
-  string PreviousHash = 17;
-  string NextHash = 18;
+  bytes PreviousHash = 17;
+  bytes NextHash = 18;
 }
 
 message Transaction {
@@ -35,20 +35,19 @@ message Transaction {
 }
 
 message TransactionHeader {
-  string Id = 1;
-  string Hash = 2;
-  int32 Size = 3;
-  int32 VSize = 4;
-  int32 Weight = 5;
-  uint32 Version = 6;
-  uint32 LockTime = 7;
-  string BlockHash = 8;
-  uint64 Confirmations = 9;
+  bytes Hex = 1;
+  bytes Id = 2;
+  bytes Hash = 3;
+  int32 Size = 4;
+  int32 VSize = 5;
+  int32 Weight = 6;
+  uint32 Version = 7;
+  uint32 LockTime = 8;
 }
 
 message TransactionInput {
   string Coinbase = 1;
-  string TxId = 2;
+  bytes TxId = 2;
   uint32 VOut = 3;
   ScriptSig ScriptSig = 4;
   uint32 Sequence = 5;
@@ -57,7 +56,7 @@ message TransactionInput {
 
 message ScriptSig {
   string Asm = 1;
-  string Hex = 2;
+  bytes Hex = 2;
 }
 
 message TransactionOutput {
@@ -69,7 +68,7 @@ message TransactionOutput {
 message ScriptPubKey {
   string Asm = 1;
   string Desc = 2;
-  string Hex = 3;
+  bytes Hex = 3;
   string Type = 4;
   string Address = 5;
 }
