@@ -46,7 +46,7 @@ message TransactionHeader {
 }
 
 message TransactionInput {
-  string Coinbase = 1;
+  bytes Coinbase = 1;
   bytes TxId = 2;
   uint32 VOut = 3;
   ScriptSig ScriptSig = 4;
