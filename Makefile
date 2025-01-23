@@ -72,4 +72,5 @@ generate_btc:
 	--experimental_allow_proto3_optional \
 	--go_out=. \
 	--go_opt="Mbtc/block_message.proto=btc/messages;btc_messages" \
+	--go_opt="Mbtc/parsed_block_message.proto=btc/messages;btc_messages" \
 	$(shell find ./btc -type f -name '*.proto')
