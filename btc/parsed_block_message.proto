@@ -11,16 +11,8 @@ message ParsedBlockMessage {
 
 message ParsedTransaction {
   TransactionHeader Header = 1;
-  uint64 TxIndex = 2;
-  bool IsCoinbase = 3;
-  uint32 InputCount = 4;
-  uint32 OutputCount = 5;
-  uint64 InputValue = 6;
-  uint64 OutputValue = 7;
-  uint64 FeeValue = 8;
-  uint64 MinedValue = 9;
-  repeated ParsedTransactionInput Inputs = 10;
-  repeated ParsedTransactionOutput Outputs = 11;
+  repeated ParsedTransactionInput Inputs = 2;
+  repeated ParsedTransactionOutput Outputs = 3;
 }
 
 message ParsedTransactionInput {
