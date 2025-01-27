@@ -21,7 +21,7 @@ message ParsedTransactionInput {
   bytes OutputTxId = 4;
   uint32 OutputIndex = 5;
   string ScriptType = 6;
-  string ScriptTemplate = 7;
+  ScriptTemplate ScriptTemplate = 7;
   uint64 Value = 8;
 }
 
@@ -29,8 +29,15 @@ message ParsedTransactionOutput {
   uint32 Index = 2;
   string Address = 3;
   string ScriptType = 4;
-  string ScriptTemplate = 5;
+  ScriptTemplate ScriptTemplate = 5;
   uint32 ReqSigs = 6;
   uint64 Value = 7;
   string Direction = 8;
+}
+
+message ScriptTemplate {
+  string Type = 1;
+  string Short = 2;
+  string Pattern = 3;
+  string SimplePattern = 4;
 }
