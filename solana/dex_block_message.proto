@@ -3,7 +3,7 @@ package solana_messages;
 
 import "solana/block_message.proto";
 import "solana/token_block_message.proto";
-
+import "solana/parsed_idl_block_message.proto";
 
 message DexInfo {
   bytes  ProgramAddress = 1;
@@ -46,6 +46,7 @@ message PoolLiquidityChangeEvent {
   DexMarket Market = 3;
   PoolSide BaseCurrency = 4;
   PoolSide QuoteCurrency = 5;
+  ParsedIdlInstruction Instruction = 6;
 }
 
 message PoolSide {
@@ -65,6 +66,7 @@ message DexOrderEvent {
   DexInfo Dex = 3;
   DexMarket Market = 4;
   DexOrder Order = 5;
+  ParsedIdlInstruction Instruction = 6;
 }
 
 
@@ -84,6 +86,7 @@ message DexTradeEvent {
   DexTradeSide Sell = 5;
   uint64 Royalty = 6;
   uint64 Fee = 7;
+  ParsedIdlInstruction Instruction = 8;
 }
 
 message ParsedDexTransaction {
