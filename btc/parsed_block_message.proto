@@ -22,7 +22,8 @@ message ParsedTransactionInput {
   uint32 OutputIndex = 5;
   string ScriptType = 6;
   ScriptTemplate ScriptTemplate = 7;
-  uint64 Value = 8;
+  string Script = 8;
+  uint64 Value = 9;
 }
 
 message ParsedTransactionOutput {
@@ -30,9 +31,10 @@ message ParsedTransactionOutput {
   string Address = 3;
   string ScriptType = 4;
   ScriptTemplate ScriptTemplate = 5;
-  uint32 ReqSigs = 6;
-  uint64 Value = 7;
-  string Direction = 8;
+  string Script = 6;
+  uint32 ReqSigs = 7;
+  uint64 Value = 8;
+  string Direction = 9;
 }
 
 message ScriptTemplate {
