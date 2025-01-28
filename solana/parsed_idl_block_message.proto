@@ -67,4 +67,5 @@ message ParsedIdlTransaction {
 message ParsedIdlBlockMessage {
   BlockHeader Header = 1;
   repeated ParsedIdlTransaction Transactions = 2;
+  repeated Reward Rewards = 3;
 }
