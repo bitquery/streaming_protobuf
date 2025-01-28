@@ -63,6 +63,7 @@ message InstructionBalanceUpdate {
   repeated CurrencyBalanceUpdate TotalCurrencyBalanceUpdates = 2;
   repeated CurrencyBalanceUpdate OwnCurrencyBalanceUpdates = 3;
   repeated CurrencyBalanceUpdate TokenSupplyUpdates = 4;
+  ParsedIdlInstruction Instruction = 5;
 }
 
 message ParsedTokenTransaction {
