@@ -13,33 +13,38 @@ message ParsedTransaction {
   TransactionHeader Header = 1;
   repeated ParsedTransactionInput Inputs = 2;
   repeated ParsedTransactionOutput Outputs = 3;
+  uint64 Fee = 4;
 }
 
 message ParsedTransactionInput {
-  uint32 Index = 2;
-  string Address = 3;
-  bytes OutputTxId = 4;
-  uint32 OutputIndex = 5;
-  string ScriptType = 6;
-  ScriptTemplate ScriptTemplate = 7;
-  bytes Script = 8;
-  uint64 Value = 9;
+  MinBlockHeader Block = 1;
+  TransactionInput Input = 2;
+  ParsedTransactionOutput SpentOutput = 3;
+}
+
+message MinBlockHeader {
+  bytes Hash = 1;
+  int64 Height = 2;
+  int64 Time = 3;
 }
 
 message ParsedTransactionOutput {
-  uint32 Index = 2;
-  string Address = 3;
-  string ScriptType = 4;
-  ScriptTemplate ScriptTemplate = 5;
-  bytes Script = 6;
-  uint32 ReqSigs = 7;
-  uint64 Value = 8;
-  string Direction = 9;
+  TransactionOutput Output = 1;
+  string Address = 2;
+  ScriptType ScriptType = 3;
+  bytes Script = 4;
+  uint32 ReqSigs = 5;
+  uint64 Value = 6;
 }
 
-message ScriptTemplate {
-  string Type = 1;
-  string Short = 2;
-  string Pattern = 3;
-  string SimplePattern = 4;
+enum ScriptType {
+  UNKNOWN = 0;
+  PUBKEY = 1;
+  PUBKEYHASH = 2;
+  SCRIPTHASH = 3;
+  MULTISIG = 4;
+  NULLDATA = 5;
+  WITNESS_V0_KEYHASH = 6;
+  WITNESS_V0_SCRIPTHASH = 7;
+  WITNESS_UNKNOWN = 8;
 }
