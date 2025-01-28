@@ -2,6 +2,7 @@ syntax = "proto3";
 package solana_messages;
 
 import "solana/block_message.proto";
+import "solana/parsed_idl_block_message.proto";
 
 message TokenCreator {
   bytes Address = 1;
@@ -53,6 +54,8 @@ message Transfer {
   Account Authority = 5;
 
   Currency Currency = 6;
+
+  ParsedIdlInstruction Instruction = 7;
 }
 
 message InstructionBalanceUpdate {
