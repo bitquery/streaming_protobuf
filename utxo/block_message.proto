@@ -1,6 +1,6 @@
 syntax = 'proto3';
 
-package btc_messages;
+package utxo_messages;
 
 message BlockMessage {
   BlockHeader Header = 1;

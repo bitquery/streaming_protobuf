@@ -1,5 +1,5 @@
 
-all: generate_evm generate_market generate_offchain generate_solana generate_ton generate_tron generate_btc
+all: generate_evm generate_market generate_offchain generate_solana generate_ton generate_tron generate_utxo
 
 generate_evm:
 	protoc \
@@ -66,11 +66,11 @@ generate_offchain:
 	--go_opt="Mtron/token_block_message.proto=tron/messages;tron_messages" \
 	$(shell find ./tron -type f -name '*.proto')
 
-generate_btc:
+generate_utxo:
 	protoc \
 	-I=. \
 	--experimental_allow_proto3_optional \
 	--go_out=. \
-	--go_opt="Mbtc/block_message.proto=btc/messages;btc_messages" \
-	--go_opt="Mbtc/parsed_block_message.proto=btc/messages;btc_messages" \
-	$(shell find ./btc -type f -name '*.proto')
+	--go_opt="Mutxo/block_message.proto=utxo/messages;utxo_messages" \
+	--go_opt="Mutxo/parsed_block_message.proto=utxo/messages;utxo_messages" \
+	$(shell find ./utxo -type f -name '*.proto')
