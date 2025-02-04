@@ -4,9 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/akamensky/base58"
 	evm_messages "github.com/bitquery/streaming_protobuf/v2/evm/messages"
 	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
-	"github.com/btcsuite/btcutil/base58"
 )
 
 func (chain *Chain) MarshalJSON() ([]byte, error) {
