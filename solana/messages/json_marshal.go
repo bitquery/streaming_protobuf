@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/mr-tron/base58"
+	"github.com/akamensky/base58"
 )
 
 func (info *DexInfo) MarshalJSON() ([]byte, error) {
