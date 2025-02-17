@@ -17,7 +17,6 @@ message ParsedTransaction {
 }
 
 message ParsedTransactionInput {
-  MinBlockHeader Block = 1;
   TransactionInput Input = 2;
   ParsedTransactionOutput SpentOutput = 3;
 }
@@ -35,6 +34,7 @@ message ParsedTransactionOutput {
   bytes Script = 4;
   uint32 ReqSigs = 5;
   uint64 Value = 6;
+  MinBlockHeader Block = 7;
 }
 
 enum ScriptType {
