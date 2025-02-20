@@ -692,6 +692,59 @@ func (x *ScriptPubKey) GetAddress() string {
 	return ""
 }
 
+type TransactionOutputWithBlockHash struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Output    *TransactionOutput `protobuf:"bytes,1,opt,name=Output,proto3" json:"Output,omitempty"`
+	BlockHash []byte             `protobuf:"bytes,2,opt,name=BlockHash,proto3" json:"BlockHash,omitempty"`
+}
+
+func (x *TransactionOutputWithBlockHash) Reset() {
+	*x = TransactionOutputWithBlockHash{}
+	mi := &file_utxo_block_message_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransactionOutputWithBlockHash) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransactionOutputWithBlockHash) ProtoMessage() {}
+
+func (x *TransactionOutputWithBlockHash) ProtoReflect() protoreflect.Message {
+	mi := &file_utxo_block_message_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransactionOutputWithBlockHash.ProtoReflect.Descriptor instead.
+func (*TransactionOutputWithBlockHash) Descriptor() ([]byte, []int) {
+	return file_utxo_block_message_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *TransactionOutputWithBlockHash) GetOutput() *TransactionOutput {
+	if x != nil {
+		return x.Output
+	}
+	return nil
+}
+
+func (x *TransactionOutputWithBlockHash) GetBlockHash() []byte {
+	if x != nil {
+		return x.BlockHash
+	}
+	return nil
+}
+
 var File_utxo_block_message_proto protoreflect.FileDescriptor
 
 var file_utxo_block_message_proto_rawDesc = []byte{
@@ -792,7 +845,15 @@ var file_utxo_block_message_proto_rawDesc = []byte{
 	0x52, 0x03, 0x48, 0x65, 0x78, 0x12, 0x12, 0x0a, 0x04, 0x54, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x41, 0x64, 0x64,
 	0x72, 0x65, 0x73, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x41, 0x64, 0x64, 0x72,
-	0x65, 0x73, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x73, 0x73, 0x22, 0x78, 0x0a, 0x1e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x57, 0x69, 0x74, 0x68, 0x42, 0x6c, 0x6f, 0x63,
+	0x6b, 0x48, 0x61, 0x73, 0x68, 0x12, 0x38, 0x0a, 0x06, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x75, 0x74, 0x78, 0x6f, 0x5f, 0x6d, 0x65, 0x73,
+	0x73, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x52, 0x06, 0x4f, 0x75, 0x74, 0x70, 0x75, 0x74, 0x12,
+	0x1c, 0x0a, 0x09, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x61, 0x73, 0x68, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0c, 0x52, 0x09, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x61, 0x73, 0x68, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -807,16 +868,17 @@ func file_utxo_block_message_proto_rawDescGZIP() []byte {
 	return file_utxo_block_message_proto_rawDescData
 }
 
-var file_utxo_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_utxo_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_utxo_block_message_proto_goTypes = []any{
-	(*BlockMessage)(nil),      // 0: utxo_messages.BlockMessage
-	(*BlockHeader)(nil),       // 1: utxo_messages.BlockHeader
-	(*Transaction)(nil),       // 2: utxo_messages.Transaction
-	(*TransactionHeader)(nil), // 3: utxo_messages.TransactionHeader
-	(*TransactionInput)(nil),  // 4: utxo_messages.TransactionInput
-	(*ScriptSig)(nil),         // 5: utxo_messages.ScriptSig
-	(*TransactionOutput)(nil), // 6: utxo_messages.TransactionOutput
-	(*ScriptPubKey)(nil),      // 7: utxo_messages.ScriptPubKey
+	(*BlockMessage)(nil),                   // 0: utxo_messages.BlockMessage
+	(*BlockHeader)(nil),                    // 1: utxo_messages.BlockHeader
+	(*Transaction)(nil),                    // 2: utxo_messages.Transaction
+	(*TransactionHeader)(nil),              // 3: utxo_messages.TransactionHeader
+	(*TransactionInput)(nil),               // 4: utxo_messages.TransactionInput
+	(*ScriptSig)(nil),                      // 5: utxo_messages.ScriptSig
+	(*TransactionOutput)(nil),              // 6: utxo_messages.TransactionOutput
+	(*ScriptPubKey)(nil),                   // 7: utxo_messages.ScriptPubKey
+	(*TransactionOutputWithBlockHash)(nil), // 8: utxo_messages.TransactionOutputWithBlockHash
 }
 var file_utxo_block_message_proto_depIdxs = []int32{
 	1, // 0: utxo_messages.BlockMessage.Header:type_name -> utxo_messages.BlockHeader
@@ -826,11 +888,12 @@ var file_utxo_block_message_proto_depIdxs = []int32{
 	6, // 4: utxo_messages.Transaction.Outputs:type_name -> utxo_messages.TransactionOutput
 	5, // 5: utxo_messages.TransactionInput.ScriptSig:type_name -> utxo_messages.ScriptSig
 	7, // 6: utxo_messages.TransactionOutput.ScriptPubKey:type_name -> utxo_messages.ScriptPubKey
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	6, // 7: utxo_messages.TransactionOutputWithBlockHash.Output:type_name -> utxo_messages.TransactionOutput
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_utxo_block_message_proto_init() }
@@ -844,7 +907,7 @@ func file_utxo_block_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_utxo_block_message_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
