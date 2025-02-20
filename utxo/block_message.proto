@@ -73,5 +73,10 @@ message ScriptPubKey {
   string Address = 5;
 }
 
+message TransactionOutputWithBlockHash {
+  TransactionOutput Output = 1;
+  bytes BlockHash = 2;
+}
+
 
 
