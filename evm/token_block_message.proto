@@ -17,7 +17,7 @@ message TokenInfo {
 }
 
 message TokenTransfer {
-  uint64 TransactionIndex = 1;
+  uint64 TransactionIndex = 1 [deprecated = true];
   uint64 CallIndex = 2;
   uint64 LogIndex = 3;
 
@@ -33,7 +33,7 @@ message TokenTransfer {
   bytes Data = 12;
   uint32 Index = 13;
 
-  bytes TransactionHash = 14;
+  TransactionHeader TransactionHeader = 14;
 
 }
 

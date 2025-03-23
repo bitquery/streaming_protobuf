@@ -46,7 +46,7 @@ message TradeFee {
 
 message DexTrade {
 
-  uint64 TransactionIndex = 1;
+  uint64 TransactionIndex = 1 [deprecated = true];
   uint64 CallIndex = 2;
   uint64 LogIndex = 3;
   bool   HasLog = 4;
@@ -60,7 +60,7 @@ message DexTrade {
   repeated TradeFee Fees = 10;
   uint32 Index = 11;
 
-  bytes TransactionHash = 12;
+  TransactionHeader TransactionHeader = 12;
 }
 
 message DexBlockMessage {
