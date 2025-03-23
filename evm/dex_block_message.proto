@@ -59,6 +59,8 @@ message DexTrade {
   bool Success = 9;
   repeated TradeFee Fees = 10;
   uint32 Index = 11;
+
+  bytes TransactionHash = 12;
 }
 
 message DexBlockMessage {

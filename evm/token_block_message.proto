@@ -32,6 +32,9 @@ message TokenTransfer {
   bool Success = 10;
   bytes Data = 12;
   uint32 Index = 13;
+
+  bytes TransactionHash = 14;
+
 }
 
 
