@@ -34,15 +34,27 @@ message TokenTransfer {
   uint32 Index = 13;
 
   TransactionHeader TransactionHeader = 14;
-
 }
 
+message TransactionBalanceUpdate {
+  TransactionHeader TransactionHeader = 1;
+  repeated BalanceUpdate BalanceUpdates = 2;
+}
+
+message BalanceUpdate {
+  TokenInfo Currency = 1;
+  bytes PreBalance = 2;
+  bytes PostBalance = 3;
+  BalanceUpdateReason Reason = 4;
+}
 
 message TokenBlockMessage {
   Chain Chain = 1;
   BlockHeader Header = 2;
   repeated TokenTransfer Transfers = 5;
   optional BlockHeader L1Header = 6;
+  repeated BalanceUpdate BlockBalanceUpdates = 7;
+  repeated TransactionBalanceUpdate TransactionBalanceUpdates = 8;
 }
 
 

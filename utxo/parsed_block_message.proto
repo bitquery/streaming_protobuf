@@ -9,11 +9,24 @@ message ParsedBlockMessage {
   repeated ParsedTransaction Transactions = 2;
 }
 
+enum BalanceUpdateReason  {
+  BalanceChangeBlockReward = 0;
+  BalanceChangeTransaction = 1;
+}
+
+message BalanceUpdate {
+  uint64 PreBalance = 1;
+  uint64 PostBalance = 2;
+  string Address = 3;
+  BalanceUpdateReason Reason = 4;
+}
+
 message ParsedTransaction {
   TransactionHeader Header = 1;
   repeated ParsedTransactionInput Inputs = 2;
   repeated ParsedTransactionOutput Outputs = 3;
   uint64 Fee = 4;
+  repeated BalanceUpdate BalanceUpdates = 5;
 }
 
 message ParsedTransactionInput {
