@@ -36,6 +36,8 @@ message Currency {
   bool IsMutable = 19;
 
   repeated TokenCreator TokenCreators = 20;
+  bytes FreezeAuthority = 21;
+  bytes MintAuthority = 22;
 }
 
 
