@@ -38,6 +38,8 @@ message Currency {
   repeated TokenCreator TokenCreators = 20;
   bytes FreezeAuthority = 21;
   bytes MintAuthority = 22;
+
+  bool Parsed = 23;
 }
 
 
