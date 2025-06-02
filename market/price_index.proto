@@ -1,0 +1,15 @@
+syntax = "proto3";
+package marketdata_messages;
+
+import "market/marketdata.proto";
+
+message TokenPrice {
+  Token Token = 1;
+  double PriceInUsd = 2;
+}
+
+message PriceIndexMessage {
+  uint64 Time = 1;
+  string Network = 2;
+  repeated TokenPrice TokenPrices = 3;
+}

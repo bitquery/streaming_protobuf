@@ -18,6 +18,8 @@ generate_market:
 	--experimental_allow_proto3_optional \
 	--go_out=. \
 	--go_opt="Mmarket/marketdata.proto=market/messages;marketdata_messages" \
+	--go_opt="Mmarket/trades.proto=market/messages;marketdata_messages" \
+	--go_opt="Mmarket/price_index.proto=market/messages;marketdata_messages" \
 	$(shell find ./market -type f -name '*.proto')
 
 generate_offchain:

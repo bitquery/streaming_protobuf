@@ -1,0 +1,34 @@
+syntax = "proto3";
+package marketdata_messages;
+
+import "market/marketdata.proto";
+
+message Market {
+  string ProtocolName = 3;
+  string ProtocolFamily = 4;
+  string ProtocolVersion = 5;
+
+  bytes SmartContract = 6;
+  bytes OwnerAddress = 7;
+  bytes PairAddress = 8;
+}
+
+message Asset {
+  Token Token = 1;
+  bytes Amount = 2;
+  bytes Id = 3;
+  string URI = 4;
+  bytes Data = 5;
+}
+
+message Trade {
+  Market Market = 1;
+  Asset Base = 2;
+  Asset Quote = 3;
+}
+
+message TradesMessage {
+  uint64 Time = 1;
+  string Network = 2;
+  repeated Trade Trades = 4;
+}
