@@ -23,8 +23,8 @@ message Asset {
 
 message Trade {
   Market Market = 1;
-  Asset Base = 2;
-  Asset Quote = 3;
+  Asset Sell = 2;
+  Asset Buy = 3;
 }
 
 message TradesMessage {
