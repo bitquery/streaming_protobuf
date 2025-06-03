@@ -21,6 +21,5 @@ message CurrencyPrice {
 
 message PriceIndexMessage {
   uint64 Time = 1;
-  string Network = 2;
-  repeated CurrencyPrice CurrencyPrices = 3;
+  repeated CurrencyPrice CurrencyPrices = 2;
 }
