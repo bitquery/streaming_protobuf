@@ -3,7 +3,7 @@ package marketdata_messages;
 
 
 message MarketdataMessage {
-  repeated Currency Currencies = 1;
+  repeated CurrencyPriceBucket Currencies = 1;
   string Source = 2; // cryptorank for example
 }
 
@@ -24,7 +24,7 @@ message Token {
   string Symbol = 8;
 }
 
-message Currency {
+message CurrencyPriceBucket {
   repeated Token Tokens = 1;
   string Name = 2;
   string Symbol = 3;

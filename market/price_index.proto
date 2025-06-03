@@ -3,13 +3,24 @@ package marketdata_messages;
 
 import "market/marketdata.proto";
 
-message TokenPrice {
-  Token Token = 1;
+message Currency {
+  string Id = 1;
+  string Name = 2;
+  string Symbol = 3;
+}
+
+message CurrencyPrice {
+  Currency Currency = 1;
+
   double PriceInUsd = 2;
+  double PriceInUsdSmoothed1k = 3;
+  double PriceInUsdSmoothed10k = 4;
+
+  repeated Token Tokens = 5;
 }
 
 message PriceIndexMessage {
   uint64 Time = 1;
   string Network = 2;
-  repeated TokenPrice TokenPrices = 3;
+  repeated CurrencyPrice CurrencyPrices = 3;
 }
