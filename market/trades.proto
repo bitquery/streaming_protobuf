@@ -31,11 +31,6 @@ message Asset {
   bytes Data = 5;
 }
 
-message Pair {
-  Market Market = 1;
-  repeated Trade Trades = 4;
-}
-
 message TradesMessage {
   uint64 Time = 1;
   string Network = 2;
