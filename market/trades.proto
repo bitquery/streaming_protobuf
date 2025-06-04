@@ -4,31 +4,40 @@ package marketdata_messages;
 import "market/marketdata.proto";
 
 message Market {
-  string ProtocolName = 3;
-  string ProtocolFamily = 4;
-  string ProtocolVersion = 5;
 
-  bytes SmartContract = 6;
-  bytes OwnerAddress = 7;
-  bytes PairAddress = 8;
+  string ProtocolName = 1;
+  string ProtocolFamily = 2;
+  string ProtocolVersion = 3;
+
+  bytes SmartContract = 4;
+  bytes OwnerAddress = 5;
+  bytes PairAddress = 6;
+
+  Token Buy = 7;
+  Token Sell = 8;
+
+  repeated Trade Trades = 9;
+}
+
+message Trade {
+  Asset Sell = 2;
+  Asset Buy = 3;
 }
 
 message Asset {
-  Token Token = 1;
   bytes Amount = 2;
   bytes Id = 3;
   string URI = 4;
   bytes Data = 5;
 }
 
-message Trade {
+message Pair {
   Market Market = 1;
-  Asset Sell = 2;
-  Asset Buy = 3;
+  repeated Trade Trades = 4;
 }
 
 message TradesMessage {
   uint64 Time = 1;
   string Network = 2;
-  repeated Trade Trades = 4;
+  repeated Market Markets = 3;
 }
