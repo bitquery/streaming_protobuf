@@ -25,7 +25,7 @@ message Trade {
 }
 
 message Asset {
-  bytes Amount = 2;
+  float Amount = 2;
   bytes Id = 3;
   string URI = 4;
   bytes Data = 5;
