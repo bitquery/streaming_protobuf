@@ -3,7 +3,7 @@ package marketdata_messages;
 
 import "market/marketdata.proto";
 
-message Market {
+message Pair {
 
   string ProtocolName = 1;
   string ProtocolFamily = 2;
@@ -34,5 +34,5 @@ message Asset {
 message TradesMessage {
   uint64 Time = 1;
   string Network = 2;
-  repeated Market Markets = 3;
+  repeated Pair Pairs = 3;
 }
