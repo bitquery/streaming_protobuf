@@ -15,8 +15,9 @@ message CurrencyPrice {
   double PriceInUsd = 2;
   double PriceInUsdSmoothed1k = 3;
   double PriceInUsdSmoothed10k = 4;
+  double PriceInUsdSmoothed100k = 5;
 
-  repeated Token Tokens = 5;
+  repeated Token Tokens = 6;
 }
 
 message PriceIndexMessage {
