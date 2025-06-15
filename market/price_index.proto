@@ -9,6 +9,54 @@ message Currency {
   string Symbol = 3;
 }
 
+message TimeInterval {
+  uint32 Start = 1;
+  uint32 End = 2;
+}
+
+message AveragePrice {
+  TimeInterval TimeInterval = 1;
+  double PriceInUsd = 2;
+  double UsdAmount = 3;
+  double TokenAmount = 4;
+}
+
+message AveragePriceByPeriods {
+  AveragePrice Period1Second = 1;
+  AveragePrice Period10Seconds = 2;
+  AveragePrice Period1Minute = 3;
+  AveragePrice Period10Minutes = 4;
+  AveragePrice Period1Hour = 5;
+}
+
+message AveragePriceByVolume {
+  AveragePrice Volume1KUsd = 1;
+  AveragePrice Volume10KUsd = 2;
+  AveragePrice Volume100KUsd = 3;
+  AveragePrice Volume1MUsd = 4;
+}
+
+message PairUpdate {
+  Token Base = 1;
+  Token Quote = 2;
+  double BaseAmount = 3;
+  double QuoteAmount = 4;
+  double UsdAmount = 5;
+}
+
+message CurrencyUpdate {
+  Currency Currency = 1;
+
+  repeated PairUpdate PairUpdates = 2;
+
+  AveragePriceByPeriods SimpleMovingAverage = 3;
+  AveragePriceByPeriods WeightedSimpleMovingAverage = 4;
+  AveragePriceByPeriods ExponentialMovingAverage = 5;
+  AveragePriceByPeriods SmoothedMovingAverage = 6;
+  AveragePriceByVolume AveragePriceByVolume = 7;
+
+}
+
 message CurrencyPrice {
   Currency Currency = 1;
 
@@ -22,5 +70,5 @@ message CurrencyPrice {
 
 message PriceIndexMessage {
   uint64 Time = 1;
-  repeated CurrencyPrice CurrencyPrices = 2;
+  repeated CurrencyUpdate CurrencyUpdates = 2;
 }
