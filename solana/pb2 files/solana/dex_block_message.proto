@@ -1,0 +1,106 @@
+syntax = "proto3";
+package solana_messages;
+
+import "solana/block_message.proto";
+import "solana/token_block_message.proto";
+import "solana/parsed_idl_block_message.proto";
+
+message DexInfo {
+  bytes  ProgramAddress = 1;
+  string ProtocolName = 2;
+  string ProtocolFamily = 3;
+}
+
+message DexMarket {
+  bytes MarketAddress = 1;
+  Currency BaseCurrency = 2;
+  Currency QuoteCurrency = 3;
+}
+
+message DexOrder {
+  bytes OrderId = 1;
+  bool  BuySide = 2;
+
+  uint64 LimitPrice = 3;
+  uint64 LimitAmount = 4;
+
+  bytes Account = 5;
+  bytes Owner = 6;
+  bytes Payer = 7;
+  bytes Mint = 8;
+
+}
+
+message ParsedPoolLiquidityChange {
+  uint32 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated PoolLiquidityChangeEvent Changes = 5;
+}
+
+message PoolLiquidityChangeEvent {
+  uint32 InstructionIndex = 1;
+  DexInfo Dex = 2;
+  DexMarket Market = 3;
+  PoolSide BaseCurrency = 4;
+  PoolSide QuoteCurrency = 5;
+  ParsedIdlInstruction Instruction = 6;
+}
+
+message PoolSide {
+  int64    ChangeAmount = 2;
+  uint64   PostAmount = 3;
+}
+
+enum DexOrderEventType {
+  OPEN = 0;
+  UPDATE = 1;
+  CANCEL = 2;
+}
+
+message DexOrderEvent {
+  uint32 InstructionIndex = 1;
+  DexOrderEventType Type = 2;
+  DexInfo Dex = 3;
+  DexMarket Market = 4;
+  DexOrder Order = 5;
+  ParsedIdlInstruction Instruction = 6;
+}
+
+
+message DexTradeSide {
+  uint64     Amount = 1;
+  Currency Currency = 2;
+
+  Account Account = 3;
+  DexOrder Order = 4;
+}
+
+message DexTradeEvent {
+  uint32 InstructionIndex = 1;
+  DexInfo Dex = 2;
+  DexMarket Market = 3;
+  DexTradeSide Buy = 4;
+  DexTradeSide Sell = 5;
+  uint64 Royalty = 6;
+  uint64 Fee = 7;
+  ParsedIdlInstruction Instruction = 8;
+}
+
+message ParsedDexTransaction {
+  uint32 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated DexTradeEvent Trades = 5;
+  repeated DexOrderEvent OrderEvents = 6;
+  repeated PoolLiquidityChangeEvent PoolEvents = 7;
+}
+
+message DexParsedBlockMessage {
+  BlockHeader Header = 1;
+  repeated ParsedDexTransaction Transactions = 2;
+}
