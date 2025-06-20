@@ -21,6 +21,15 @@ message AveragePrice {
   double TokenAmount = 4;
 }
 
+message OhlcPrice {
+  TimeInterval TimeInterval = 1;
+  double Open = 2;
+  double Close = 3;
+  double High = 4;
+  double Low = 5;
+  double Volume = 6;
+}
+
 message AveragePriceByPeriods {
   AveragePrice Period1Second = 1;
   AveragePrice Period10Seconds = 2;
@@ -44,28 +53,22 @@ message PairUpdate {
   double UsdAmount = 5;
 }
 
+
+
 message CurrencyUpdate {
   Currency Currency = 1;
 
   repeated PairUpdate PairUpdates = 2;
 
-  AveragePriceByPeriods SimpleMovingAverage = 3;
-  AveragePriceByPeriods WeightedSimpleMovingAverage = 4;
-  AveragePriceByPeriods ExponentialMovingAverage = 5;
-  AveragePriceByPeriods SmoothedMovingAverage = 6;
-  AveragePriceByVolume AveragePriceByVolume = 7;
+  OhlcPrice OhlcPrice = 3;
 
-}
+  AveragePriceByPeriods SimpleMovingAverage = 4;
+  AveragePriceByPeriods WeightedSimpleMovingAverage = 5;
+  AveragePriceByPeriods ExponentialMovingAverage = 6;
+  AveragePriceByPeriods SmoothedMovingAverage = 7;
 
-message CurrencyPrice {
-  Currency Currency = 1;
+  AveragePriceByVolume AveragePriceByVolume = 8;
 
-  double PriceInUsd = 2;
-  double PriceInUsdSmoothed1k = 3;
-  double PriceInUsdSmoothed10k = 4;
-  double PriceInUsdSmoothed100k = 5;
-
-  repeated Token Tokens = 6;
 }
 
 message PriceIndexMessage {
