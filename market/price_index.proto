@@ -48,7 +48,6 @@ message AveragePriceByTimeInterval {
   double SimpleMovingAverage = 4;
   double WeightedSimpleMovingAverage = 5;
   double ExponentialMovingAverage = 6;
-  double SmoothedMovingAverage = 7;
 
 }
 
