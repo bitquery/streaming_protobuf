@@ -9,42 +9,6 @@ message Currency {
   string Symbol = 3;
 }
 
-message TimeInterval {
-  uint32 Start = 1;
-  uint32 End = 2;
-}
-
-message AveragePrice {
-  TimeInterval TimeInterval = 1;
-  double PriceInUsd = 2;
-  double UsdAmount = 3;
-  double TokenAmount = 4;
-}
-
-message OhlcPrice {
-  TimeInterval TimeInterval = 1;
-  double Open = 2;
-  double Close = 3;
-  double High = 4;
-  double Low = 5;
-  double Volume = 6;
-}
-
-message AveragePriceByPeriods {
-  AveragePrice Period1Second = 1;
-  AveragePrice Period10Seconds = 2;
-  AveragePrice Period1Minute = 3;
-  AveragePrice Period10Minutes = 4;
-  AveragePrice Period1Hour = 5;
-}
-
-message AveragePriceByVolume {
-  AveragePrice Volume1KUsd = 1;
-  AveragePrice Volume10KUsd = 2;
-  AveragePrice Volume100KUsd = 3;
-  AveragePrice Volume1MUsd = 4;
-}
-
 message PairUpdate {
   Token Base = 1;
   Token Quote = 2;
@@ -53,22 +17,46 @@ message PairUpdate {
   double UsdAmount = 5;
 }
 
+message AveragePrice {
+  double PriceInUsd = 2;
+  double UsdAmount = 3;
+  double TokenAmount = 4;
+}
 
+message TimeInterval {
+  uint32 Duration = 1;
+  uint32 Start = 2;
+  uint32 End = 3;
+}
+
+message Ohlc {
+  double Open = 2;
+  double Close = 3;
+  double High = 4;
+  double Low = 5;
+  double Volume = 6;
+}
+
+message AveragePriceByTimeInterval {
+  TimeInterval TimeInterval = 1;
+  Ohlc Ohlc = 2;
+  AveragePrice SimpleMovingAverage = 3;
+  AveragePrice WeightedSimpleMovingAverage = 4;
+  AveragePrice ExponentialMovingAverage = 5;
+  AveragePrice SmoothedMovingAverage = 6;
+}
+
+message AveragePriceByVolume {
+  double TargetVolume = 1;
+  TimeInterval TimeInterval = 2;
+  AveragePrice AveragePrice = 3;
+}
 
 message CurrencyUpdate {
   Currency Currency = 1;
-
   repeated PairUpdate PairUpdates = 2;
-
-  OhlcPrice OhlcPrice = 3;
-
-  AveragePriceByPeriods SimpleMovingAverage = 4;
-  AveragePriceByPeriods WeightedSimpleMovingAverage = 5;
-  AveragePriceByPeriods ExponentialMovingAverage = 6;
-  AveragePriceByPeriods SmoothedMovingAverage = 7;
-
-  AveragePriceByVolume AveragePriceByVolume = 8;
-
+  repeated AveragePriceByTimeInterval AveragePriceByTimeIntervals = 3;
+  repeated AveragePriceByVolume AveragePriceByVolumes = 4;
 }
 
 message PriceIndexMessage {
