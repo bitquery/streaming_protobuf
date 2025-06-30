@@ -17,7 +17,8 @@ message PairUpdate {
   double UsdAmount = 5;
 }
 
-message AveragePrice {
+message IntervalPrice {
+  TimeInterval TimeInterval = 1;
   double PriceInUsd = 2;
   double UsdAmount = 3;
   double TokenAmount = 4;
@@ -39,17 +40,21 @@ message Ohlc {
 
 message AveragePriceByTimeInterval {
   TimeInterval TimeInterval = 1;
+
   Ohlc Ohlc = 2;
-  AveragePrice SimpleMovingAverage = 3;
-  AveragePrice WeightedSimpleMovingAverage = 4;
-  AveragePrice ExponentialMovingAverage = 5;
-  AveragePrice SmoothedMovingAverage = 6;
+
+  repeated  IntervalPrice Historical  = 3;
+
+  double SimpleMovingAverage = 4;
+  double WeightedSimpleMovingAverage = 5;
+  double ExponentialMovingAverage = 6;
+  double SmoothedMovingAverage = 7;
+
 }
 
 message AveragePriceByVolume {
   double TargetVolume = 1;
-  TimeInterval TimeInterval = 2;
-  AveragePrice AveragePrice = 3;
+  IntervalPrice AveragePrice = 3;
 }
 
 message CurrencyUpdate {
