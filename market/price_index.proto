@@ -2,12 +2,7 @@ syntax = "proto3";
 package marketdata_messages;
 
 import "market/marketdata.proto";
-
-message Currency {
-  string Id = 1;
-  string Name = 2;
-  string Symbol = 3;
-}
+import "market/trades.proto";
 
 message PairUpdate {
   Token Base = 1;

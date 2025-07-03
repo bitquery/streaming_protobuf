@@ -3,6 +3,17 @@ package marketdata_messages;
 
 import "market/marketdata.proto";
 
+message Currency {
+  string Id = 1;
+  string Name = 2;
+  string Symbol = 3;
+}
+
+message TradedCurrency {
+  Token Token = 1;
+  Currency Currency = 2;
+}
+
 message Pair {
 
   string ProtocolName = 1;
@@ -13,22 +24,22 @@ message Pair {
   bytes OwnerAddress = 5;
   bytes PairAddress = 6;
 
-  Token Buy = 7;
-  Token Sell = 8;
+  TradedCurrency Buy = 7;
+  TradedCurrency Sell = 8;
 
   repeated Trade Trades = 9;
 }
 
 message Trade {
+  Asset Buy = 1;
   Asset Sell = 2;
-  Asset Buy = 3;
 }
 
 message Asset {
-  double Amount = 2;
-  bytes Id = 3;
-  string URI = 4;
-  bytes Data = 5;
+  double Amount = 1;
+  bytes Id = 2;
+  string URI = 3;
+  bytes Data = 4;
 }
 
 message TradesMessage {
