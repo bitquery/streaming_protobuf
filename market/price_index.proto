@@ -5,8 +5,8 @@ import "market/marketdata.proto";
 import "market/trades.proto";
 
 message PairUpdate {
-  Token Base = 1;
-  Token Quote = 2;
+  TradedCurrency Base = 1;
+  TradedCurrency Quote = 2;
   double BaseAmount = 3;
   double QuoteAmount = 4;
   double UsdAmount = 5;
