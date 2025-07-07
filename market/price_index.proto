@@ -9,9 +9,8 @@ message Currency {
   string Symbol = 3;
 }
 
-message PairUpdate {
-  Currency Base = 1;
-  Currency Quote = 2;
+message Quote {
+  Currency QuoteCurrency = 1;
   double BaseAmount = 3;
   double QuoteAmount = 4;
   double UsdAmount = 5;
@@ -58,7 +57,7 @@ message AveragePriceByVolume {
 
 message CurrencyUpdate {
   Currency Currency = 1;
-  repeated PairUpdate PairUpdates = 2;
+  repeated Quote Quotes = 2;
   repeated AveragePriceByTimeInterval AveragePriceByTimeIntervals = 3;
   repeated AveragePriceByVolume AveragePriceByVolumes = 4;
 }
