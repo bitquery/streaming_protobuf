@@ -10,8 +10,8 @@ message Currency {
 }
 
 message PairUpdate {
-  Token Base = 1;
-  Token Quote = 2;
+  Currency Base = 1;
+  Currency Quote = 2;
   double BaseAmount = 3;
   double QuoteAmount = 4;
   double UsdAmount = 5;
