@@ -26,9 +26,10 @@ message Quote {
 
 message IntervalPrice {
   TimeInterval TimeInterval = 1;
-  double PriceInUsd = 2;
+  double Price = 2;
   double UsdAmount = 3;
-  double TokenAmount = 4;
+  double BaseAmount = 4;
+  double QuoteAmount = 5;
 }
 
 message TimeInterval {
