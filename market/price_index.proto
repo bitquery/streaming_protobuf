@@ -55,11 +55,16 @@ message AveragePriceByVolume {
   IntervalPrice AveragePrice = 3;
 }
 
+message EstimatedPrices {
+  double AdaptivePrice = 1;
+}
+
 message CurrencyUpdate {
   Currency Currency = 1;
   repeated Quote Quotes = 2;
   repeated AveragePriceByTimeInterval AveragePriceByTimeIntervals = 3;
   repeated AveragePriceByVolume AveragePriceByVolumes = 4;
+  EstimatedPrices Estimates = 5;
 }
 
 message PriceIndexMessage {
