@@ -12,10 +12,11 @@ message Currency {
 message Market {
   string Id = 1;
   string Network = 2;
-  string Name = 3;
-  string Address = 4;
-  string Protocol = 5;
-  string Program = 6;
+  string NetworkBid = 3;
+  string Name = 4;
+  string Address = 5;
+  string Protocol = 6;
+  string Program = 7;
 }
 
 message Quote {
