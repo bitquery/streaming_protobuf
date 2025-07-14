@@ -90,10 +90,11 @@ message TokenUpdate {
 
 message PairUpdate {
   Currency Currency = 1;
-  Token Token = 2;
-  Token QuoteToken = 3;
-  Market Market = 4;
-  PriceUpdate PriceUpdate = 5;
+  Currency QuoteCurrency = 2;
+  Token Token = 3;
+  Token QuoteToken = 4;
+  Market Market = 5;
+  PriceUpdate PriceUpdate = 6;
 }
 
 message PriceIndexMessage {
