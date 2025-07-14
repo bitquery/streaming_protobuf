@@ -21,17 +21,17 @@ message Market {
 
 message Quote {
   Currency QuoteCurrency = 1;
-  double BaseAmount = 3;
-  double QuoteAmount = 4;
-  double UsdAmount = 5;
+  float BaseAmount = 3;
+  float QuoteAmount = 4;
+  float UsdAmount = 5;
 }
 
 message IntervalPrice {
   TimeInterval TimeInterval = 1;
-  double Price = 2;
-  double UsdAmount = 3;
-  double BaseAmount = 4;
-  double QuoteAmount = 5;
+  float Price = 2;
+  float UsdAmount = 3;
+  float BaseAmount = 4;
+  float QuoteAmount = 5;
 }
 
 message TimeInterval {
@@ -41,11 +41,11 @@ message TimeInterval {
 }
 
 message Ohlc {
-  double Open = 2;
-  double Close = 3;
-  double High = 4;
-  double Low = 5;
-  double Volume = 6;
+  float Open = 2;
+  float Close = 3;
+  float High = 4;
+  float Low = 5;
+  float Volume = 6;
 }
 
 message AveragePriceByTimeInterval {
@@ -55,19 +55,19 @@ message AveragePriceByTimeInterval {
 
   repeated  IntervalPrice Historical  = 3;
 
-  double SimpleMovingAverage = 4;
-  double WeightedSimpleMovingAverage = 5;
-  double ExponentialMovingAverage = 6;
+  float SimpleMovingAverage = 4;
+  float WeightedSimpleMovingAverage = 5;
+  float ExponentialMovingAverage = 6;
 
 }
 
 message AveragePriceByVolume {
-  double TargetVolume = 1;
+  float TargetVolume = 1;
   IntervalPrice AveragePrice = 3;
 }
 
 message EstimatedPrices {
-  double AdaptivePrice = 1;
+  float AdaptivePrice = 1;
 }
 
 message PriceUpdate {
