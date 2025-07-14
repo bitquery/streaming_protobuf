@@ -95,6 +95,7 @@ message PairUpdate {
   Token QuoteToken = 4;
   Market Market = 5;
   PriceUpdate PriceUpdate = 6;
+  PriceUpdate PriceUpdateInQuoteTokens = 7;
 }
 
 message PriceIndexMessage {
