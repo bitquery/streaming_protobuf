@@ -33,6 +33,7 @@ message IntervalPrice {
   float UsdAmount = 3;
   float BaseAmount = 4;
   float QuoteAmount = 5;
+  float BaseAmountQuotedInUsd = 6;
 }
 
 message TimeInterval {
