@@ -24,6 +24,7 @@ message Quote {
   float BaseAmount = 3;
   float QuoteAmount = 4;
   float UsdAmount = 5;
+  float BaseAmountQuotedInUsd = 6;
 }
 
 message IntervalPrice {
