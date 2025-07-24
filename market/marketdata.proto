@@ -22,6 +22,7 @@ message Token {
   bool IsNative = 6;
   string Name = 7;
   string Symbol = 8;
+  string NetworkBid = 9;
 }
 
 message CurrencyPriceBucket {

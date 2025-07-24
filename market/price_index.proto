@@ -16,7 +16,8 @@ message Market {
   string Name = 4;
   string Address = 5;
   string Protocol = 6;
-  string Program = 7;
+  string ProtocolFamily = 7;
+  string Program = 8;
 }
 
 message Quote {
