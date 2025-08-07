@@ -24,7 +24,7 @@ message Amounts {
   float Base = 1;
   float Quote = 2;
   float Usd = 3;
-  float BaseAttributedToQuote = 4;
+  float BaseAttributedToUsd = 4;
 }
 
 message Quote {
