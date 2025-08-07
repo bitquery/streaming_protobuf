@@ -32,11 +32,6 @@ message Quote {
   Amounts Amounts = 2;
 }
 
-message IntervalPrice {
-  TimeInterval TimeInterval = 1;
-  float Price = 2;
-  Amounts Amounts = 3;
-}
 
 message TimeInterval {
   uint32 Duration = 1;
@@ -55,19 +50,26 @@ message Ohlc {
 message PriceByTimeInterval {
   TimeInterval TimeInterval = 1;
 
-  Ohlc Ohlc = 2;
+  Amounts Amounts = 2;
 
-  IntervalPrice Price  = 3;
+  float MeanPrice = 3;
 
   float SimpleMovingAverage = 4;
   float WeightedSimpleMovingAverage = 5;
   float ExponentialMovingAverage = 6;
 
+  Ohlc Ohlc = 7;
+
 }
 
 message PriceByVolume {
   float TargetVolume = 1;
-  IntervalPrice AveragePrice = 2;
+
+  TimeInterval TimeInterval = 2;
+
+  Amounts Amounts = 3;
+
+  float MeanPrice = 4;
 }
 
 message EstimatedPrices {
