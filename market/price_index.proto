@@ -20,21 +20,22 @@ message Market {
   string Program = 8;
 }
 
+message Amounts {
+  float Base = 1;
+  float Quote = 2;
+  float Usd = 3;
+  float BaseAttributedToQuote = 4;
+}
+
 message Quote {
   Currency QuoteCurrency = 1;
-  float BaseAmount = 3;
-  float QuoteAmount = 4;
-  float UsdAmount = 5;
-  float BaseAmountQuotedInUsd = 6;
+  Amounts Amounts = 2;
 }
 
 message IntervalPrice {
   TimeInterval TimeInterval = 1;
   float Price = 2;
-  float UsdAmount = 3;
-  float BaseAmount = 4;
-  float QuoteAmount = 5;
-  float BaseAmountQuotedInUsd = 6;
+  Amounts Amounts = 3;
 }
 
 message TimeInterval {
@@ -44,19 +45,19 @@ message TimeInterval {
 }
 
 message Ohlc {
-  float Open = 2;
-  float Close = 3;
-  float High = 4;
-  float Low = 5;
-  float Volume = 6;
+  float Open = 1;
+  float Close = 2;
+  float High = 3;
+  float Low = 4;
+  float Volume = 5;
 }
 
-message AveragePriceByTimeInterval {
+message PriceByTimeInterval {
   TimeInterval TimeInterval = 1;
 
   Ohlc Ohlc = 2;
 
-  repeated  IntervalPrice Historical  = 3;
+  IntervalPrice Price  = 3;
 
   float SimpleMovingAverage = 4;
   float WeightedSimpleMovingAverage = 5;
@@ -64,9 +65,9 @@ message AveragePriceByTimeInterval {
 
 }
 
-message AveragePriceByVolume {
+message PriceByVolume {
   float TargetVolume = 1;
-  IntervalPrice AveragePrice = 3;
+  IntervalPrice AveragePrice = 2;
 }
 
 message EstimatedPrices {
@@ -75,8 +76,8 @@ message EstimatedPrices {
 
 message PriceUpdate {
   repeated Quote Quotes = 1;
-  repeated AveragePriceByTimeInterval AveragePriceByTimeIntervals = 2;
-  repeated AveragePriceByVolume AveragePriceByVolumes = 3;
+  repeated PriceByTimeInterval PriceByTimeIntervals = 2;
+  repeated PriceByVolume PriceByVolumes = 3;
   EstimatedPrices Estimates = 4;
 }
 
