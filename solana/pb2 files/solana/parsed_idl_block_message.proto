@@ -1,0 +1,71 @@
+syntax = "proto3";
+package solana_messages;
+ 
+import "solana/block_message.proto";
+
+message ParsedArgument {
+  string  Name = 1;
+  string  Type = 2;
+  oneof Value {
+    string String = 3;
+    uint64 UInt = 5;
+    int64 Int = 6;
+    bool   Bool = 7;
+    float  Float = 8;
+    string Json = 9;
+    bytes  Address = 10;
+  }
+}
+
+message Program {
+  bytes  Address = 1;
+  bool Parsed = 2;
+  string Json = 3;
+  bytes  Signature = 4;
+  string Name = 5;
+  string Method = 6;
+  repeated ParsedArgument Arguments = 7;
+  repeated string AccountNames = 8;
+}
+
+message ParsedIdlInstruction {
+
+  uint32 Index = 1;
+  uint32 Depth = 2;
+
+  repeated uint32 CallPath = 3;
+  int32 CallerIndex = 4;
+  repeated uint32 AncestorIndexes = 5;
+
+  uint32 ExternalSeqNumber = 6;
+  uint32 InternalSeqNumber = 7;
+
+  optional Program Program = 8;
+
+  repeated Account Accounts = 9;
+  repeated string Logs = 10;
+
+  repeated BalanceUpdate BalanceUpdates = 11;
+  repeated BalanceUpdate TokenBalanceUpdates = 12;
+
+  bytes Data = 13;
+
+  repeated BalanceUpdate TokenSupplyUpdates = 14;
+}
+
+message ParsedIdlTransaction {
+  uint32 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated BalanceUpdate TotalBalanceUpdates = 5;
+  repeated BalanceUpdate TotalTokenBalanceUpdates = 6;
+  repeated ParsedIdlInstruction ParsedIdlInstructions = 7;
+}
+
+message ParsedIdlBlockMessage {
+  BlockHeader Header = 1;
+  repeated ParsedIdlTransaction Transactions = 2;
+  repeated Reward Rewards = 3;
+}

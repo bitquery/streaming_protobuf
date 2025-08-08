@@ -1,0 +1,38 @@
+syntax = "proto3";
+package solana_messages;
+
+import "solana/token_block_message.proto";
+import "solana/dex_block_message.proto";
+
+message OhlcDescriptor {
+  int32 PeriodMsec = 1;
+  int32 DelayMsec = 2;
+  int64 TimestampMsec = 3;
+}
+
+message OhlcPairTradeAmount {
+  uint64 BaseAmount = 1;
+  uint64 QuoteAmount = 2;
+  DexInfo Dex = 3;
+}
+
+message OhlcPair {
+  Currency Base = 1;
+  Currency Quote = 2;
+
+  uint64 BaseAmount = 3;
+  uint64 QuoteAmount = 4;
+
+  float High = 5;
+  float Low = 6;
+  float Open = 7;
+  float Close = 8;
+
+  repeated OhlcPairTradeAmount Trades = 9;
+}
+
+message OhlcMessage {
+  OhlcDescriptor Descriptor = 1;
+  repeated OhlcPair Pair = 2;
+}
+
