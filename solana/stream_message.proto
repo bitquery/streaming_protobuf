@@ -46,13 +46,6 @@ message BalanceUpdateStreamMessage {
   BlockAttributes Block = 1;
   TransactionAttributes Transaction = 2;
 
-  BalanceUpdate BalanceUpdate = 3;
-}
-
-message TokenBalanceUpdateStreamMessage {
-  BlockAttributes Block = 1;
-  TransactionAttributes Transaction = 2;
-
   CurrencyBalanceUpdate BalanceUpdate = 3;
 }
 
