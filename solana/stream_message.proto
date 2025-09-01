@@ -2,14 +2,15 @@ syntax = "proto3";
 package solana_messages;
 option go_package = "streaming_processor_solana/solana_messages";
 
+import "solana/token_block_message.proto";
 import "solana/block_message.proto";
 import "solana/dex_block_message.proto";
 import "solana/parsed_idl_block_message.proto";
 
 
 message TransactionAttributes {
-  bytes Signature = 1;
-  uint32 Index = 2;
+  uint32 Index = 1;
+  bytes Signature = 2;
 
   TransactionStatus Status = 3;
   TransactionHeader Header = 4;
@@ -38,4 +39,26 @@ message PoolLiquidityChangeStreamMessage {
   TransactionAttributes Transaction = 2;
 
   PoolLiquidityChangeEvent PoolEvent = 3;
+}
+//
+
+message BalanceUpdateStreamMessage {
+  BlockAttributes Block = 1;
+  TransactionAttributes Transaction = 2;
+
+  BalanceUpdate BalanceUpdate = 3;
+}
+
+message TokenBalanceUpdateStreamMessage {
+  BlockAttributes Block = 1;
+  TransactionAttributes Transaction = 2;
+
+  CurrencyBalanceUpdate BalanceUpdate = 3;
+}
+
+message TransferStreamMessage {
+  BlockAttributes Block = 1;
+  TransactionAttributes Transaction = 2;
+
+  Transfer Transfer = 3;
 }
