@@ -1,5 +1,6 @@
 syntax = "proto3";
 package solana_messages;
+option go_package = "streaming_processor_solana/solana_messages";
 
 import "solana/block_message.proto";
 import "solana/parsed_idl_block_message.proto";

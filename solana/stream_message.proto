@@ -1,0 +1,42 @@
+syntax = "proto3";
+package solana_messages;
+option go_package = "streaming_processor_solana/solana_messages";
+
+import "solana/block_message.proto";
+import "solana/dex_block_message.proto";
+import "solana/parsed_idl_block_message.proto";
+
+
+message DexTradeStreamMessage {
+  uint64 Slot = 1;
+  bytes Signature = 2;
+  uint32 Index = 3;
+
+  TransactionStatus Status = 4;
+  TransactionHeader Header = 5;
+
+  DexTradeEvent Trade = 6;
+}
+
+message DexOrderStreamMessage {
+  uint64 Slot = 1;
+  bytes Signature = 2;
+  uint32 Index = 3;
+
+  TransactionStatus Status = 4;
+  TransactionHeader Header = 5;
+
+  DexOrder Trade = 6;
+
+}
+
+message PoolLiquidityChangeStreamMessage {
+  uint64 Slot = 1;
+  bytes Signature = 2;
+  uint32 Index = 3;
+
+  TransactionStatus Status = 4;
+  TransactionHeader Header = 5;
+
+  PoolLiquidityChangeEvent PoolEvent = 6;
+}
