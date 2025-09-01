@@ -7,36 +7,35 @@ import "solana/dex_block_message.proto";
 import "solana/parsed_idl_block_message.proto";
 
 
-message DexTradeStreamMessage {
+message TransactionAttributes {
+  bytes Signature = 1;
+  uint32 Index = 2;
+
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+}
+
+message BlockAttributes {
   uint64 Slot = 1;
-  bytes Signature = 2;
-  uint32 Index = 3;
+}
 
-  TransactionStatus Status = 4;
-  TransactionHeader Header = 5;
+message DexTradeStreamMessage {
+  BlockAttributes Block = 1;
+  TransactionAttributes Transaction = 2;
 
-  DexTradeEvent Trade = 6;
+  DexTradeEvent Trade = 3;
 }
 
 message DexOrderStreamMessage {
-  uint64 Slot = 1;
-  bytes Signature = 2;
-  uint32 Index = 3;
+  BlockAttributes Block = 1;
+  TransactionAttributes Transaction = 2;
 
-  TransactionStatus Status = 4;
-  TransactionHeader Header = 5;
-
-  DexOrderEvent Order = 6;
-
+  DexOrderEvent Order = 3;
 }
 
 message PoolLiquidityChangeStreamMessage {
-  uint64 Slot = 1;
-  bytes Signature = 2;
-  uint32 Index = 3;
+  BlockAttributes Block = 1;
+  TransactionAttributes Transaction = 2;
 
-  TransactionStatus Status = 4;
-  TransactionHeader Header = 5;
-
-  PoolLiquidityChangeEvent PoolEvent = 6;
+  PoolLiquidityChangeEvent PoolEvent = 3;
 }
