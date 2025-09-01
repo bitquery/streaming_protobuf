@@ -26,7 +26,7 @@ message DexOrderStreamMessage {
   TransactionStatus Status = 4;
   TransactionHeader Header = 5;
 
-  DexOrder Trade = 6;
+  DexOrderEvent Order = 6;
 
 }
 
