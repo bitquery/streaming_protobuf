@@ -34,3 +34,10 @@ func (d BlockDescriptor) BlockHeight() int64 {
 func (descriptor *BlockMessageDescriptor) IsBroadcasted() bool {
 	return len(descriptor.TransactionHashes) > 0
 }
+
+func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
+	if descriptor.IsBroadcasted() || len(descriptor.BlockHash) == 0 {
+		return nil
+	}
+	return []byte(descriptor.BlockHash)
+}
