@@ -1,19 +1,17 @@
 syntax = "proto3";
-package solana_messages;
-option go_package = "streaming_processor_solana/solana_messages";
+package solana_corecast;
 
 import "solana/token_block_message.proto";
+import "solana/parsed_idl_block_message.proto";
 import "solana/block_message.proto";
 import "solana/dex_block_message.proto";
-import "solana/parsed_idl_block_message.proto";
-
 
 message TransactionAttributes {
   uint32 Index = 1;
   bytes Signature = 2;
 
-  TransactionStatus Status = 3;
-  TransactionHeader Header = 4;
+  solana_messages.TransactionStatus Status = 3;
+  solana_messages.TransactionHeader Header = 4;
 }
 
 message BlockAttributes {
@@ -24,34 +22,40 @@ message DexTradeStreamMessage {
   BlockAttributes Block = 1;
   TransactionAttributes Transaction = 2;
 
-  DexTradeEvent Trade = 3;
+  solana_messages.DexTradeEvent Trade = 3;
 }
 
 message DexOrderStreamMessage {
   BlockAttributes Block = 1;
   TransactionAttributes Transaction = 2;
 
-  DexOrderEvent Order = 3;
+  solana_messages.DexOrderEvent Order = 3;
 }
 
 message PoolLiquidityChangeStreamMessage {
   BlockAttributes Block = 1;
   TransactionAttributes Transaction = 2;
 
-  PoolLiquidityChangeEvent PoolEvent = 3;
+  solana_messages.PoolLiquidityChangeEvent PoolEvent = 3;
 }
-//
 
 message BalanceUpdateStreamMessage {
   BlockAttributes Block = 1;
   TransactionAttributes Transaction = 2;
 
-  CurrencyBalanceUpdate BalanceUpdate = 3;
+  solana_messages.CurrencyBalanceUpdate BalanceUpdate = 3;
 }
 
 message TransferStreamMessage {
   BlockAttributes Block = 1;
   TransactionAttributes Transaction = 2;
 
-  Transfer Transfer = 3;
+  solana_messages.Transfer Transfer = 3;
+}
+
+message ParsedTransactionStreamMessage
+{
+  BlockAttributes Block = 1;
+
+  solana_messages.ParsedIdlTransaction Transaction = 2;
 }
