@@ -1,0 +1,19 @@
+syntax = "proto3";
+package solana_corecast;
+
+import "solana/corecast/stream_message.proto";
+
+service DexStream {
+  rpc Trades (SubscribeTradesRequest) returns (stream DexTradeStreamMessage);
+  rpc Orders (SubscribeOrdersRequest) returns (stream DexOrderStreamMessage);
+  rpc Pools  (SubscribePoolsRequest)  returns (stream PoolLiquidityChangeStreamMessage);
+}
+
+
+message TradesFilter { repeated string program = 1; repeated string pool = 2; repeated string token = 3; repeated string trader = 4; }
+message OrdersFilter { repeated string program = 1; repeated string pool = 2; repeated string token = 3; repeated string trader = 4; }
+message PoolsFilter  { repeated string program = 1; repeated string pool = 2; repeated string token = 3; }
+
+message SubscribeTradesRequest { TradesFilter filter = 1; }
+message SubscribeOrdersRequest { OrdersFilter filter = 1; }
+message SubscribePoolsRequest  { PoolsFilter  filter = 1; }

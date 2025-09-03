@@ -1,4 +1,3 @@
-
 all: generate_evm generate_market generate_offchain generate_solana generate_ton generate_tron generate_utxo
 
 generate_evm:
@@ -18,6 +17,8 @@ generate_market:
 	--experimental_allow_proto3_optional \
 	--go_out=. \
 	--go_opt="Mmarket/marketdata.proto=market/messages;marketdata_messages" \
+	--go_opt="Mmarket/trades.proto=market/messages;marketdata_messages" \
+	--go_opt="Mmarket/price_index.proto=market/messages;marketdata_messages" \
 	$(shell find ./market -type f -name '*.proto')
 
 generate_offchain:
@@ -28,16 +29,39 @@ generate_offchain:
 	--go_opt="Moffchain/entities.proto=offchain/messages;entities_messages" \
 	$(shell find ./offchain -type f -name '*.proto')
 
- generate_solana:
+generate_solana:
 	protoc \
 	-I=. \
 	--experimental_allow_proto3_optional \
 	--go_out=. \
-	--go_opt="Msolana/block_message.proto=solana/messages;solana_messages" \
-	--go_opt="Msolana/dex_block_message.proto=solana/messages;solana_messages" \
-	--go_opt="Msolana/parsed_idl_block_message.proto=solana/messages;solana_messages" \
-	--go_opt="Msolana/token_block_message.proto=solana/messages;solana_messages" \
+	--go-grpc_out=. \
+	--go_opt=paths=source_relative \
+	--go-grpc_opt=paths=source_relative \
+	--go_opt="Msolana/block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go_opt="Msolana/dex_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go_opt="Msolana/parsed_idl_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go_opt="Msolana/token_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go_opt="Msolana/corecast/dex_stream.proto=solana/corecast/stream;solana_corecast" \
+	--go_opt="Msolana/corecast/transactions_stream.proto=solana/corecast/stream;solana_corecast" \
+	--go_opt="Msolana/corecast/stream_message.proto=solana/corecast/stream;solana_corecast" \
+	--go-grpc_opt="Msolana/block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go-grpc_opt="Msolana/dex_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go-grpc_opt="Msolana/parsed_idl_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go-grpc_opt="Msolana/token_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go-grpc_opt="Msolana/corecast/dex_stream.proto=solana/corecast/stream;solana_corecast" \
+	--go-grpc_opt="Msolana/corecast/transactions_stream.proto=solana/corecast/stream;solana_corecast" \
+	--go-grpc_opt="Msolana/corecast/stream_message.proto=solana/corecast/stream;solana_corecast" \
 	$(shell find ./solana -type f -name '*.proto')
+	@echo "-- reorganizing generated files into target folders --"
+	@mkdir -p solana/messages solana/corecast/stream
+	@for f in block_message dex_block_message parsed_idl_block_message token_block_message; do \
+	  if [ -f solana/$$f.pb.go ]; then mv -f solana/$$f.pb.go solana/messages/; fi; \
+	  if [ -f solana/$$f_grpc.pb.go ]; then mv -f solana/$$f_grpc.pb.go solana/messages/; fi; \
+	done
+	@for f in dex_stream transactions_stream stream_message; do \
+	  if [ -f solana/corecast/$$f.pb.go ]; then mv -f solana/corecast/$$f.pb.go solana/corecast/stream/; fi; \
+	  if [ -f solana/corecast/$$f*_grpc.pb.go ]; then mv -f solana/corecast/$$f*_grpc.pb.go solana/corecast/stream/; fi; \
+	done
 	
  generate_ton:
 	protoc \
@@ -49,7 +73,7 @@ generate_offchain:
 	--go_opt="Mton/event_message.proto=ton/messages;ton_messages" \
 	--go_opt="Mton/trace_message.proto=ton/messages;ton_messages" \
 	--go_opt="Mton/token_block_message.proto=ton/messages;ton_messages" \
-	$(shell find ./ton -type f -name '*.proto')	
+	$(shell find ./ton -type f -name '*.proto')
 	
  generate_tron:
 	protoc \
