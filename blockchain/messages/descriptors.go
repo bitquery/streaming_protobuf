@@ -1,6 +1,8 @@
 package blockchain_messages
 
 import (
+	"strconv"
+
 	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
 )
 
@@ -36,8 +38,44 @@ func (descriptor *BlockMessageDescriptor) IsBroadcasted() bool {
 }
 
 func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
-	if descriptor.IsBroadcasted() || len(descriptor.BlockHash) == 0 {
-		return nil
+	if descriptor.IsBroadcasted() {
+		var txIndex = -1
+		for _, txHash := range descriptor.TransactionHashes {
+			index := hexDigitToInt(txHash[len(txHash)-1])
+			if txIndex == -1 {
+				txIndex = index
+				continue
+			}
+			if txIndex != index {
+				return nil
+			}
+		}
+		if txIndex == -1 {
+			return nil
+		}
+		return []byte(strconv.Itoa(txIndex))
 	}
-	return []byte(descriptor.BlockHash)
+
+	if len(descriptor.BlockHash) > 0 {
+		return []byte(descriptor.BlockHash)
+	}
+
+	return nil
+
+}
+
+const BitMaskForTxHashCorrelationId = 3 // masks 2-bit field, 0 to 3 inclusive
+
+func hexDigitToInt(c byte) int {
+	switch {
+	case c >= '0' && c < '4':
+		return 0
+	case c >= '4' && c < '8':
+		return 1
+	case (c >= 'a' && c < 'c') || (c >= 'A' && c < 'C'):
+		return 2
+	default:
+		// Invalid hex digit — handle as needed
+		return 3
+	}
 }
