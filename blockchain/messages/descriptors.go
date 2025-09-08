@@ -64,7 +64,7 @@ func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
 
 }
 
-const BitMaskForTxHashCorrelationId = 3 // masks 2-bit field, 0 to 3 inclusive
+const BitMaskForTxHashCorrelationId = 0b11 // masks 2-bit field, 0 to 3 inclusive
 
 func hexDigitToInt(c byte) int {
 	switch {
