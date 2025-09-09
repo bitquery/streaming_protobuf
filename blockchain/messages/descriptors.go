@@ -37,8 +37,16 @@ func (descriptor *BlockMessageDescriptor) IsBroadcasted() bool {
 	return len(descriptor.TransactionHashes) > 0
 }
 
+const BitMaskForTxHashCorrelationId = 0b11 // masks 2-bit field, 0 to 3 inclusive
+
 func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
 	if descriptor.IsBroadcasted() {
+
+		if len(descriptor.TransactionHashes) == 1 {
+			txHash := descriptor.TransactionHashes[0]
+			return []byte(strconv.Itoa(hexDigitToInt(txHash[len(txHash)-1])))
+		}
+
 		var txIndex = -1
 		for _, txHash := range descriptor.TransactionHashes {
 			index := hexDigitToInt(txHash[len(txHash)-1])
@@ -64,15 +72,13 @@ func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
 
 }
 
-const BitMaskForTxHashCorrelationId = 0b11 // masks 2-bit field, 0 to 3 inclusive
-
 func hexDigitToInt(c byte) int {
-	switch {
-	case c >= '0' && c < '4':
+	switch c {
+	case '0', '4', '8', 'c', 'C':
 		return 0
-	case c >= '4' && c < '8':
+	case '1', '5', '9', 'd', 'D':
 		return 1
-	case (c >= 'a' && c < 'c') || (c >= 'A' && c < 'C'):
+	case '2', '6', 'a', 'A', 'e', 'E':
 		return 2
 	default:
 		// Invalid hex digit — handle as needed
