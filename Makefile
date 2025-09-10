@@ -10,6 +10,11 @@ generate_evm:
 	--go_opt="Mevm/parsed_abi_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/token_block_message.proto=evm/messages;evm_messages" \
 	$(shell find ./evm -type f -name '*.proto')
+	protoc \
+    	-I=. \
+    	--experimental_allow_proto3_optional \
+		--python_out="evm/python" \
+    	$(shell find ./evm -type f -name '*.proto')
 
 generate_market:
 	protoc \
@@ -20,6 +25,11 @@ generate_market:
 	--go_opt="Mmarket/trades.proto=market/messages;marketdata_messages" \
 	--go_opt="Mmarket/price_index.proto=market/messages;marketdata_messages" \
 	$(shell find ./market -type f -name '*.proto')
+	protoc \
+    	-I=. \
+    	--experimental_allow_proto3_optional \
+		--python_out="market/python" \
+    	$(shell find ./market -type f -name '*.proto')
 
 generate_offchain:
 	protoc \
@@ -28,6 +38,11 @@ generate_offchain:
 	--go_out=. \
 	--go_opt="Moffchain/entities.proto=offchain/messages;entities_messages" \
 	$(shell find ./offchain -type f -name '*.proto')
+	protoc \
+    	-I=. \
+    	--experimental_allow_proto3_optional \
+		--python_out="offchain/python" \
+    	$(shell find ./offchain -type f -name '*.proto')
 
 generate_solana:
 	protoc \
@@ -52,6 +67,11 @@ generate_solana:
 	--go-grpc_opt="Msolana/corecast/request.proto=solana/corecast/stream;solana_corecast" \
 	--go-grpc_opt="Msolana/corecast/stream_message.proto=solana/corecast/stream;solana_corecast" \
 	$(shell find ./solana -type f -name '*.proto' ! -name 'dex_stream.proto' ! -name 'transactions_stream.proto')
+	protoc \
+    	-I=. \
+    	--experimental_allow_proto3_optional \
+		--python_out="solana/python" \
+    	$(shell find ./solana -type f -name '*.proto' ! -name 'dex_stream.proto' ! -name 'transactions_stream.proto')
 	@echo "-- reorganizing generated files into target folders --"
 	@mkdir -p solana/messages solana/corecast/stream
 	@for f in block_message dex_block_message parsed_idl_block_message token_block_message; do \
@@ -75,7 +95,12 @@ generate_solana:
 	--go_opt="Mton/trace_message.proto=ton/messages;ton_messages" \
 	--go_opt="Mton/token_block_message.proto=ton/messages;ton_messages" \
 	$(shell find ./ton -type f -name '*.proto')
-	
+	protoc \
+		-I=. \
+		--experimental_allow_proto3_optional \
+		--python_out="ton/python" \
+		$(shell find ./ton -type f -name '*.proto')
+
  generate_tron:
 	protoc \
 	-I=. \
@@ -90,6 +115,11 @@ generate_solana:
 	--go_opt="Mtron/parsed_abi_block_message.proto=tron/messages;tron_messages" \
 	--go_opt="Mtron/token_block_message.proto=tron/messages;tron_messages" \
 	$(shell find ./tron -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--experimental_allow_proto3_optional \
+		--python_out="tron/python" \
+		$(shell find ./tron -type f -name '*.proto')
 
 generate_utxo:
 	protoc \
@@ -99,3 +129,8 @@ generate_utxo:
 	--go_opt="Mutxo/block_message.proto=utxo/messages;utxo_messages" \
 	--go_opt="Mutxo/parsed_block_message.proto=utxo/messages;utxo_messages" \
 	$(shell find ./utxo -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--experimental_allow_proto3_optional \
+		--python_out="utxo/python" \
+		$(shell find ./utxo -type f -name '*.proto')
