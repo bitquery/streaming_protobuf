@@ -1,0 +1,16 @@
+syntax = "proto3";
+package solana_corecast;
+
+import "solana/corecast/request.proto";
+import "solana/corecast/stream_message.proto";
+
+
+service CoreCast {
+  rpc DexTrades (SubscribeTradesRequest) returns (stream DexTradeStreamMessage);
+  rpc DexOrders (SubscribeOrdersRequest) returns (stream DexOrderStreamMessage);
+  rpc DexPools  (SubscribePoolsRequest)  returns (stream PoolLiquidityChangeStreamMessage);
+
+  rpc Transactions (SubscribeTransactionsRequest) returns (stream ParsedTransactionStreamMessage);
+  rpc Transfers    (SubscribeTransfersRequest)    returns (stream TransferStreamMessage);
+  rpc Balances     (SubscribeBalanceUpdateRequest) returns (stream BalanceUpdateStreamMessage);
+}

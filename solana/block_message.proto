@@ -1,7 +1,5 @@
 syntax = "proto3";
 package solana_messages;
-option go_package = "streaming_processor_solana/solana_messages";
-
 
 message Account {
     bytes Address = 1;

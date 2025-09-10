@@ -1,0 +1,42 @@
+syntax = "proto3";
+package solana_corecast;
+
+message SubscribeTradesRequest {
+  AddressFilter program = 1;
+  AddressFilter pool = 2;
+  AddressFilter token = 3;
+  AddressFilter trader = 4;
+}
+
+message SubscribeOrdersRequest {
+  AddressFilter program = 1;
+  AddressFilter pool = 2;
+  AddressFilter token = 3;
+  AddressFilter trader = 4;
+}
+
+message SubscribePoolsRequest  {
+  AddressFilter program = 1;
+  AddressFilter pool = 2;
+  AddressFilter token = 3;
+}
+
+message SubscribeTransactionsRequest {
+  AddressFilter signer = 1;
+}
+
+message SubscribeTransfersRequest {
+  AddressFilter sender = 1;
+  AddressFilter receiver = 2;
+  AddressFilter token = 3;
+}
+
+message SubscribeBalanceUpdateRequest {
+  AddressFilter address = 1;
+  AddressFilter token = 2;
+}
+
+
+message AddressFilter {
+  repeated string addresses = 1;
+}
