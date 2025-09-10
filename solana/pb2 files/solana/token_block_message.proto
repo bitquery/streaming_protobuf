@@ -1,0 +1,83 @@
+syntax = "proto3";
+package solana_messages;
+
+import "solana/block_message.proto";
+import "solana/parsed_idl_block_message.proto";
+
+message TokenCreator {
+  bytes Address = 1;
+  bool Verified = 2;
+  uint32 Share = 3;
+}
+
+message Currency {
+  string Name = 1;
+  uint32 Decimals = 2;
+  string Uri = 3;
+  string Symbol = 4;
+
+  bool Native = 5;
+  bool Wrapped = 6;
+  bool Fungible = 7;
+
+  string Key = 8;
+  uint32 SellerFeeBasisPoints = 9;
+  optional uint32 EditionNonce = 10;
+  optional string TokenStandard = 11;
+
+  bytes ProgramAddress = 12;
+  bytes MintAddress = 13;
+  bytes MetadataAddress = 14;
+  bytes UpdateAuthority = 15;
+  bytes CollectionAddress = 16;
+
+  bool VerifiedCollection = 17;
+  bool PrimarySaleHappened = 18;
+  bool IsMutable = 19;
+
+  repeated TokenCreator TokenCreators = 20;
+}
+
+
+message CurrencyBalanceUpdate {
+  BalanceUpdate BalanceUpdate = 1;
+  Currency Currency = 2;
+}
+
+message Transfer {
+  uint32 InstructionIndex = 1;
+
+  uint64 Amount = 2;
+
+  Account Sender = 3;
+  Account Receiver = 4;
+  Account Authority = 5;
+
+  Currency Currency = 6;
+
+  ParsedIdlInstruction Instruction = 7;
+}
+
+message InstructionBalanceUpdate {
+  uint32 InstructionIndex = 1;
+  repeated CurrencyBalanceUpdate TotalCurrencyBalanceUpdates = 2;
+  repeated CurrencyBalanceUpdate OwnCurrencyBalanceUpdates = 3;
+  repeated CurrencyBalanceUpdate TokenSupplyUpdates = 4;
+  ParsedIdlInstruction Instruction = 5;
+}
+
+message ParsedTokenTransaction {
+  uint32 Index = 1;
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated Transfer Transfers = 5;
+  repeated CurrencyBalanceUpdate    BalanceUpdates = 6;
+  repeated InstructionBalanceUpdate InstructionBalanceUpdates = 7;
+}
+
+message TokenBlockMessage {
+  BlockHeader Header = 1;
+  repeated ParsedTokenTransaction Transactions = 2;
+}
