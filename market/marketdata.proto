@@ -3,7 +3,7 @@ package marketdata_messages;
 
 
 message MarketdataMessage {
-  repeated Currency Currencies = 1;
+  repeated CurrencyPriceBucket Currencies = 1;
   string Source = 2; // cryptorank for example
 }
 
@@ -20,9 +20,12 @@ message Token {
   optional string Address = 4;
   optional string TokenId = 5; // For networks like TRON and TRC-10
   bool IsNative = 6;
+  string Name = 7;
+  string Symbol = 8;
+  string NetworkBid = 9;
 }
 
-message Currency {
+message CurrencyPriceBucket {
   repeated Token Tokens = 1;
   string Name = 2;
   string Symbol = 3;

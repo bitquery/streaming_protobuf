@@ -1,0 +1,112 @@
+syntax = "proto3";
+package marketdata_messages;
+
+import "market/marketdata.proto";
+
+message Currency {
+  string Id = 1;
+  string Name = 2;
+  string Symbol = 3;
+}
+
+message Market {
+  string Id = 1;
+  string Network = 2;
+  string NetworkBid = 3;
+  string Name = 4;
+  string Address = 5;
+  string Protocol = 6;
+  string ProtocolFamily = 7;
+  string Program = 8;
+}
+
+message Amounts {
+  float Base = 1;
+  float Quote = 2;
+  float Usd = 3;
+  float BaseAttributedToUsd = 4;
+}
+
+message Quote {
+  Currency QuoteCurrency = 1;
+  Amounts Amounts = 2;
+}
+
+
+message TimeInterval {
+  uint32 Duration = 1;
+  uint32 Start = 2;
+  uint32 End = 3;
+}
+
+message Ohlc {
+  float Open = 1;
+  float Close = 2;
+  float High = 3;
+  float Low = 4;
+  float Volume = 5;
+}
+
+message PriceByTimeInterval {
+  TimeInterval TimeInterval = 1;
+
+  Amounts Amounts = 2;
+
+  float MeanPrice = 3;
+
+  float SimpleMovingAverage = 4;
+  float WeightedSimpleMovingAverage = 5;
+  float ExponentialMovingAverage = 6;
+
+  Ohlc Ohlc = 7;
+
+}
+
+message PriceByVolume {
+  float TargetVolume = 1;
+
+  TimeInterval TimeInterval = 2;
+
+  Amounts Amounts = 3;
+
+  float MeanPrice = 4;
+}
+
+message EstimatedPrices {
+  float AdaptivePrice = 1;
+}
+
+message PriceUpdate {
+  repeated Quote Quotes = 1;
+  repeated PriceByTimeInterval PriceByTimeIntervals = 2;
+  repeated PriceByVolume PriceByVolumes = 3;
+  EstimatedPrices Estimates = 4;
+}
+
+message CurrencyUpdate {
+  Currency Currency = 1;
+  PriceUpdate PriceUpdate = 2;
+}
+
+message TokenUpdate {
+  Currency Currency = 1;
+  Token Token = 2;
+  PriceUpdate PriceUpdate = 3;
+}
+
+message PairUpdate {
+  Currency Currency = 1;
+  Currency QuoteCurrency = 2;
+  Token Token = 3;
+  Token QuoteToken = 4;
+  Market Market = 5;
+  PriceUpdate PriceUpdate = 6;
+  PriceUpdate PriceUpdateInQuoteTokens = 7;
+}
+
+message PriceIndexMessage {
+  uint64 Time = 1;
+  repeated CurrencyUpdate CurrencyUpdates = 2;
+  repeated TokenUpdate TokenUpdates = 3;
+  repeated PairUpdate PairUpdates = 4;
+}
