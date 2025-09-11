@@ -22,7 +22,8 @@ message SubscribePoolsRequest  {
 }
 
 message SubscribeTransactionsRequest {
-  AddressFilter signer = 1;
+  AddressFilter program = 1;
+  AddressFilter signer = 2;
 }
 
 message SubscribeTransfersRequest {
