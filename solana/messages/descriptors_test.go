@@ -24,7 +24,8 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("12-0"), descriptor.CorrelationId())
+	zero := descriptor.CorrelationId()
+	assert.Equal(t, "12-0", string(descriptor.CorrelationId())[0:4])
 
 	descriptor = &ExtendedBlockMessageDescriptor{
 		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
@@ -39,7 +40,7 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("12-1"), descriptor.CorrelationId())
+	assert.Equal(t, "12-1", string(descriptor.CorrelationId())[0:4])
 
 	descriptor = &ExtendedBlockMessageDescriptor{
 		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
@@ -54,7 +55,7 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("12-3"), descriptor.CorrelationId())
+	assert.Equal(t, "12-3", string(descriptor.CorrelationId())[0:4])
 
 	descriptor = &ExtendedBlockMessageDescriptor{
 		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
@@ -69,7 +70,8 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("12-0"), descriptor.CorrelationId())
+	assert.Equal(t, "12-0", string(descriptor.CorrelationId())[0:4])
+	assert.Equal(t, string(zero), string(descriptor.CorrelationId()))
 
 	descriptor = &ExtendedBlockMessageDescriptor{
 		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
@@ -105,7 +107,7 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("12-0"), descriptor.CorrelationId())
+	assert.Equal(t, "12-0", string(descriptor.CorrelationId())[0:4])
 
 	descriptor = &ExtendedBlockMessageDescriptor{
 		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
@@ -121,7 +123,7 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("12-1"), descriptor.CorrelationId())
+	assert.Equal(t, "12-1", string(descriptor.CorrelationId())[0:4])
 
 	descriptor = &ExtendedBlockMessageDescriptor{
 		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{

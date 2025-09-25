@@ -1,7 +1,9 @@
 package solana_messages
 
 import (
+	"encoding/binary"
 	"fmt"
+	"hash/fnv"
 
 	blockchain_messages "github.com/bitquery/streaming_protobuf/v2/blockchain/messages"
 )
@@ -51,5 +53,13 @@ func (descriptor *ExtendedBlockMessageDescriptor) CorrelationId() []byte {
 		return nil
 	}
 
-	return []byte(fmt.Sprintf("%d-%d", descriptor.BlockNumber, txIndex))
+	// we need suffix as Kafka MurMur cache is sensitive to string suffixes, it will not distribute even partitions
+	key := make([]byte, 12)
+	binary.BigEndian.PutUint64(key[0:8], descriptor.BlockNumber.Uint64())
+	binary.BigEndian.PutUint32(key[8:12], uint32(txIndex))
+
+	h := fnv.New32a()
+	h.Write(key)
+
+	return []byte(fmt.Sprintf("%d-%d-%04X", descriptor.BlockNumber, txIndex, h.Sum32()))
 }
