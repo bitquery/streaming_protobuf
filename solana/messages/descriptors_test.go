@@ -3,14 +3,20 @@ package solana_messages
 import (
 	"testing"
 
+	blockchain_messages "github.com/bitquery/streaming_protobuf/v2/blockchain/messages"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestOneCorrId(t *testing.T) {
-	t.Skip()
+
 	t.Parallel()
 
 	descriptor := &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{0, 1},
@@ -18,9 +24,14 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("0"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("12-0"), descriptor.CorrelationId())
 
 	descriptor = &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{100, 104},
@@ -28,9 +39,14 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("1"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("12-1"), descriptor.CorrelationId())
 
 	descriptor = &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{1000, 1004},
@@ -38,9 +54,14 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("3"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("12-3"), descriptor.CorrelationId())
 
 	descriptor = &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{1028, 1029},
@@ -48,9 +69,14 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("0"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("12-0"), descriptor.CorrelationId())
 
 	descriptor = &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{1028, 1129},
@@ -63,10 +89,14 @@ func TestOneCorrId(t *testing.T) {
 }
 
 func TestManyCorrId(t *testing.T) {
-	t.Skip()
 	t.Parallel()
 
 	descriptor := &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{0, 1},
@@ -75,9 +105,14 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("0"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("12-0"), descriptor.CorrelationId())
 
 	descriptor = &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{100, 104},
@@ -86,9 +121,14 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("1"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("12-1"), descriptor.CorrelationId())
 
 	descriptor = &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{100, 104},
@@ -100,6 +140,11 @@ func TestManyCorrId(t *testing.T) {
 	assert.Nil(t, descriptor.CorrelationId())
 
 	descriptor = &ExtendedBlockMessageDescriptor{
+		BlockMessageDescriptor: blockchain_messages.BlockMessageDescriptor{
+			BlockDescriptor: blockchain_messages.BlockDescriptor{
+				BlockNumber: 12,
+			},
+		},
 		Transactions: &Transactions{
 			IndexRanges: []IndexRange{
 				{100, 104},

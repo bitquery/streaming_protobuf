@@ -1,7 +1,7 @@
 package solana_messages
 
 import (
-	"strconv"
+	"fmt"
 
 	blockchain_messages "github.com/bitquery/streaming_protobuf/v2/blockchain/messages"
 )
@@ -24,7 +24,7 @@ const BucketSizeForCorrelationId = 64
 func (descriptor *ExtendedBlockMessageDescriptor) CorrelationId() []byte {
 
 	if descriptor.Transactions == nil || len(descriptor.Transactions.IndexRanges) == 0 {
-		return []byte("0")
+		return []byte(descriptor.BlockNumber.String())
 	}
 
 	var txIndex = -1
@@ -51,5 +51,5 @@ func (descriptor *ExtendedBlockMessageDescriptor) CorrelationId() []byte {
 		return nil
 	}
 
-	return []byte(strconv.Itoa(txIndex))
+	return []byte(fmt.Sprintf("%d-%d", descriptor.BlockNumber, txIndex))
 }
