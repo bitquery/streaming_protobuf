@@ -15,7 +15,7 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("0"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("alpha_1"), descriptor.CorrelationId())
 
 	descriptor = &BlockMessageDescriptor{
 		TransactionHashes: []string{
@@ -23,7 +23,7 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("1"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("beta_2"), descriptor.CorrelationId())
 
 	descriptor = &BlockMessageDescriptor{
 		TransactionHashes: []string{
@@ -31,7 +31,7 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("2"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("gamma_3"), descriptor.CorrelationId())
 
 	descriptor = &BlockMessageDescriptor{
 		TransactionHashes: []string{
@@ -39,7 +39,7 @@ func TestOneCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("3"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("delta_4"), descriptor.CorrelationId())
 }
 
 func TestManyCorrId(t *testing.T) {
@@ -53,7 +53,7 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("0"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("alpha_1"), descriptor.CorrelationId())
 
 	descriptor = &BlockMessageDescriptor{
 		TransactionHashes: []string{
@@ -73,7 +73,7 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("0"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("alpha_1"), descriptor.CorrelationId())
 
 	descriptor = &BlockMessageDescriptor{
 		TransactionHashes: []string{
@@ -82,7 +82,7 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("2"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("gamma_3"), descriptor.CorrelationId())
 
 	descriptor = &BlockMessageDescriptor{
 		TransactionHashes: []string{
@@ -91,7 +91,7 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("1"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("beta_2"), descriptor.CorrelationId())
 
 	descriptor = &BlockMessageDescriptor{
 		TransactionHashes: []string{
@@ -100,5 +100,5 @@ func TestManyCorrId(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []byte("2"), descriptor.CorrelationId())
+	assert.Equal(t, []byte("gamma_3"), descriptor.CorrelationId())
 }

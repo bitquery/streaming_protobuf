@@ -1,8 +1,6 @@
 package blockchain_messages
 
 import (
-	"strconv"
-
 	"github.com/bitquery/streaming_protobuf/v2/pkg/encoder"
 )
 
@@ -38,13 +36,14 @@ func (descriptor *BlockMessageDescriptor) IsBroadcasted() bool {
 }
 
 const BitMaskForTxHashCorrelationId = 0b11 // masks 2-bit field, 0 to 3 inclusive
+var BitMaskCorrelationKeys = [][]byte{[]byte("alpha_1"), []byte("beta_2"), []byte("gamma_3"), []byte("delta_4")}
 
 func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
 	if descriptor.IsBroadcasted() {
 
 		if len(descriptor.TransactionHashes) == 1 {
 			txHash := descriptor.TransactionHashes[0]
-			return []byte(strconv.Itoa(hexDigitToInt(txHash[len(txHash)-1])))
+			return BitMaskCorrelationKeys[hexDigitToInt(txHash[len(txHash)-1])]
 		}
 
 		var txIndex = -1
@@ -61,7 +60,7 @@ func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
 		if txIndex == -1 {
 			return nil
 		}
-		return []byte(strconv.Itoa(txIndex))
+		return BitMaskCorrelationKeys[txIndex]
 	}
 
 	if len(descriptor.BlockHash) > 0 {
