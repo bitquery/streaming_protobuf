@@ -143,6 +143,7 @@ message ParsedAbiTransaction {
   TransactionFee TransactionFee = 3;
   ParsedAbiTransactionStatus TransactionStatus = 4;
   repeated ParsedAbiCall Calls = 5;
+  Signature Signature = 6;
 }
 
 message MinerReward {
