@@ -34,7 +34,7 @@ message TokenTransfer {
   uint32 Index = 13;
 
   TransactionHeader TransactionHeader = 14;
-
+  Signature Signature = 15;
 }
 
 

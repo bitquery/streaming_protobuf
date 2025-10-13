@@ -61,6 +61,7 @@ message DexTrade {
   uint32 Index = 11;
 
   TransactionHeader TransactionHeader = 12;
+  Signature Signature = 13;
 }
 
 message DexBlockMessage {
