@@ -36,7 +36,7 @@ func (descriptor *BlockMessageDescriptor) IsBroadcasted() bool {
 }
 
 const BitMaskForTxHashCorrelationId = 0b11 // masks 2-bit field, 0 to 3 inclusive
-var BitMaskCorrelationKeys = [][]byte{[]byte("alpha_1"), []byte("beta_2"), []byte("gamma_3"), []byte("delta_4")}
+var BitMaskCorrelationKeys = [][]byte{[]byte("red_stream"), []byte("blue_stream"), []byte("green_stream"), []byte("yellow_stream")}
 
 func (descriptor *BlockMessageDescriptor) CorrelationId() []byte {
 	if descriptor.IsBroadcasted() {
