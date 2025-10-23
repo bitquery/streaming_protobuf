@@ -226,7 +226,8 @@ message Trace {
 
   repeated CaptureState CaptureStates = 5;
 
-  repeated BalanceUpdate BalanceUpdates = 6;
+  repeated TokenBalanceUpdate TokenBalanceUpdates = 6;
+  repeated NativeBalanceUpdate NativeBalanceUpdates = 7;
 }
 
 message AccessTuple {
@@ -287,11 +288,18 @@ message Token {
   bytes  TotalSupply = 4;
 }
 
-message BalanceUpdate {
+message TokenBalanceUpdate {
   Token Token = 1;
   bytes Address = 2;
   bytes  Id = 3;
   bytes PostBalance = 4;
+}
+
+message NativeBalanceUpdate {
+  bytes Address = 1;
+  bytes PreBalance = 2;
+  bytes PostBalance = 3;
+  int32 BalanceChangeReasonCode = 4;
 }
 
 message Transaction {
