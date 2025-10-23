@@ -280,9 +280,16 @@ message Blob {
   bytes BlobGasFeeCap = 5;
 }
 
+message Token {
+  bytes  Address = 1;
+  bool   Fungible = 2;
+  int32  Decimals = 3;
+  bytes  TotalSupply = 4;
+}
+
 message BalanceUpdate {
-  bytes Address = 1;
-  bytes TokenAddress = 2;
+  Token Token = 1;
+  bytes Address = 2;
   bytes  Id = 3;
   bytes PostBalance = 4;
 }
