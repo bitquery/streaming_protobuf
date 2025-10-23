@@ -288,11 +288,16 @@ message Token {
   bytes  TotalSupply = 4;
 }
 
+message TokenOwnership {
+  bytes Id = 1;
+  bool  Owns = 2;
+}
+
 message TokenBalanceUpdate {
   Token Token = 1;
   bytes Address = 2;
-  bytes  Id = 3;
   bytes PostBalance = 4;
+  TokenOwnership TokenOwnership = 5;
 }
 
 message NativeBalanceUpdate {
