@@ -144,6 +144,8 @@ message ParsedAbiTransaction {
   ParsedAbiTransactionStatus TransactionStatus = 4;
   repeated ParsedAbiCall Calls = 5;
   Signature Signature = 6;
+  repeated TokenBalanceUpdate TokenBalanceUpdates = 7;
+  repeated NativeBalanceUpdate NativeBalanceUpdates = 8;
 }
 
 message MinerReward {
