@@ -44,9 +44,11 @@ message TransactionBalances {
 }
 
 message TokenBalance {
-  bytes  Address = 3;
-  TokenInfo Currency = 4;
-  bytes  PostBalance = 5;
+  bytes  Address = 1;
+  TokenInfo Currency = 2;
+  bytes  PreBalance = 3;
+  bytes  PostBalance = 4;
+  int32 BalanceChangeReasonCode = 5;
   TokenOwnership TokenOwnership = 6;
 }
 
