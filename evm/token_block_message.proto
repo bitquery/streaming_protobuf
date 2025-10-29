@@ -50,6 +50,7 @@ message TokenBalance {
   bytes  PostBalance = 4;
   int32 BalanceChangeReasonCode = 5;
   TokenOwnership TokenOwnership = 6;
+  bytes  TotalSupply = 7;
 }
 
 message TokenBlockMessage {
