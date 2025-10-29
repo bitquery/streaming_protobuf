@@ -37,12 +37,25 @@ message TokenTransfer {
   Signature TransactionSignature = 15;
 }
 
+message TransactionBalances {
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+  repeated TokenBalance TokenBalances = 3;
+}
+
+message TokenBalance {
+  bytes  Address = 3;
+  TokenInfo Currency = 4;
+  bytes  PostBalance = 5;
+  TokenOwnership TokenOwnership = 6;
+}
 
 message TokenBlockMessage {
   Chain Chain = 1;
   BlockHeader Header = 2;
   repeated TokenTransfer Transfers = 5;
   optional BlockHeader L1Header = 6;
+  repeated TransactionBalances TransactionBalances = 7;
 }
 
 
