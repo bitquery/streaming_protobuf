@@ -17,7 +17,7 @@ message TokenInfo {
 }
 
 message TokenTransfer {
-  uint64 TransactionIndex = 1 [deprecated = true];
+  uint64 TransactionIndex = 1;
   uint64 CallIndex = 2;
   uint64 LogIndex = 3;
 
@@ -38,9 +38,10 @@ message TokenTransfer {
 }
 
 message TransactionBalances {
-  TransactionHeader TransactionHeader = 1;
-  Signature TransactionSignature = 2;
-  repeated TokenBalance TokenBalances = 3;
+  uint64 TransactionIndex = 1;
+  TransactionHeader TransactionHeader = 2;
+  Signature TransactionSignature = 3;
+  repeated TokenBalance TokenBalances = 4;
 }
 
 message TokenBalance {
