@@ -46,7 +46,7 @@ message TradeFee {
 
 message DexTrade {
 
-  uint64 TransactionIndex = 1 [deprecated = true];
+  uint64 TransactionIndex = 1 ;
   uint64 CallIndex = 2;
   uint64 LogIndex = 3;
   bool   HasLog = 4;
