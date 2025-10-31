@@ -195,10 +195,18 @@ message CaptureStateHeader {
   optional uint32 Index = 10;
 }
 
+message StorageChange {
+  bytes Address = 1;
+  bytes Slot = 2;
+  bytes Pre = 3;
+  bytes Post = 4;
+}
+
 message CaptureState {
   CaptureStateHeader CaptureStateHeader = 1;
   Log Log = 2;
   Store Store = 3;
+  StorageChange StorageChange = 4;
 }
 
 message Call {
@@ -228,6 +236,7 @@ message Trace {
 
   repeated TokenBalanceUpdate TokenBalanceUpdates = 6;
   repeated NativeBalanceUpdate NativeBalanceUpdates = 7;
+  repeated StorageChange StorageChanges = 8;
 }
 
 message AccessTuple {
