@@ -14,6 +14,7 @@ message TokenInfo {
   bool   HasURI = 8;
   bool   Fungible = 9;
   string  AssetId = 10;
+  int32   BalanceSlotIndex = 11;
 }
 
 message TokenTransfer {
