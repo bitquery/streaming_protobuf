@@ -4,33 +4,53 @@ package evm_messages;
 import "evm/block_message.proto";
 import "evm/token_block_message.proto";
 
-message PoolEvent {
+message PoolInfo {
+
   bytes SmartContract = 1;
 
-  string ProtocolName = 2;
-  string ProtocolFamily = 3;
-  string ProtocolVersion = 4; 
+  TokenInfo CurrencyA = 2;
+  TokenInfo CurrencyB = 3;
 
+  TokenInfo Pair  = 4;
 
-  Liquidity liquidity = 5;
-  message Liquidity {
-    TradeAsset TokenA = 1;
-    TradeAsset TokenB = 2;
-  }
+}
 
+message PoolLiquidity {
+  bytes AmountCurrencyA = 1;
+  bytes AmountCurrencyB = 2;
+}
 
-  PoolSlippage Slippage = 6;
-  message PoolSlippage {
-    uint32 BasisPoints = 1;
+message PoolPrice {
+  uint32 SlippageBasisPoints = 1;
+  bytes  MaxAmountIn = 2;
+  bytes  MinAmountOut = 3;
+  float  Price = 4;
+}
 
-    message Amounts {
-      uint64 MaxAmountA = 1;
-      uint64 MaxAmountB = 2;
-    }
+message PoolPriceTable {
 
-    Amounts AtoB = 2;
-    Amounts BtoA = 3;
-  }
+  repeated PoolPrice AtoBPrices = 1;
+  repeated PoolPrice BtoAPrices = 2;
+
+  float AtoBPrice = 3;
+  float BtoAPrice = 4;
+}
+
+message PoolLiquidityChangeEvent {
+
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+
+  uint64 CallIndex = 3;
+  uint64 LogIndex = 4;
+  bool   HasLog = 5;
+
+  DexInfo Dex = 6;
+  PoolInfo Pool = 7;
+
+  PoolLiquidity Liquidity = 8;
+  PoolPriceTable PoolPriceTable = 9;
+
 }
 
 
@@ -97,6 +117,7 @@ message DexTrade {
 message DexBlockMessage {
   Chain Chain = 1;
   BlockHeader Header = 2;
+  repeated PoolLiquidityChangeEvent PoolEvents = 4;
   repeated DexTrade Trades = 5;
   optional BlockHeader L1Header = 6;
 }
