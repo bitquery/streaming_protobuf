@@ -302,6 +302,7 @@ message Token {
 message TokenOwnership {
   bytes Id = 1;
   bool  Owns = 2;
+  string Uri = 3;
 }
 
 message TokenBalanceUpdate {
