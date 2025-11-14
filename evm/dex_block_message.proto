@@ -4,6 +4,36 @@ package evm_messages;
 import "evm/block_message.proto";
 import "evm/token_block_message.proto";
 
+message PoolEvent {
+  bytes SmartContract = 1;
+
+  string ProtocolName = 2;
+  string ProtocolFamily = 3;
+  string ProtocolVersion = 4; 
+
+
+  Liquidity liquidity = 5;
+  message Liquidity {
+    TradeAsset TokenA = 1;
+    TradeAsset TokenB = 2;
+  }
+
+
+  PoolSlippage Slippage = 6;
+  message PoolSlippage {
+    uint32 BasisPoints = 1;
+
+    message Amounts {
+      uint64 MaxAmountA = 1;
+      uint64 MaxAmountB = 2;
+    }
+
+    Amounts AtoB = 2;
+    Amounts BtoA = 3;
+  }
+}
+
+
 message DexInfo {
   bytes SmartContract = 1;
   bool  Delegated = 2;
