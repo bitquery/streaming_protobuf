@@ -20,8 +20,35 @@ lz4cat 000120696577_0x299f8fcfdeea511802fa48aa4f18a916b27a0de0aedff2332d306c2244
 ```
 
 
-## Building golang code
+## Building golang and python code
 
 ```bash
 make all
+```
+
+
+## Note on using python code in your project
+
+If you need to use protobuf generated files in your project, use git submodules, 
+like:
+
+```
+git submodule add https://github.com/bitquery/streaming_protobuf.git streaming_protobuf
+git submodule update --init --recursive
+```
+
+after that add symlinks to your project:
+
+```
+ln -s streaming_protobuf/tron/python/tron ./tron 
+ln -s streaming_protobuf/evm/python/evm ./evm 
+ln -s streaming_protobuf/solana/python/solana ./solana
+```
+
+commit submodules and links to git after that.
+
+To use protobuf you will need to install protobuf:
+
+```
+pip install protobuf==6.33.0
 ```
