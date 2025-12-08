@@ -52,3 +52,24 @@ To use protobuf you will need to install protobuf:
 ```
 pip install protobuf==6.33.0
 ```
+
+In code you do like this
+
+```
+
+    with open(local_path, "rb") as f:
+        compressed = f.read()
+    try:
+        decompressed = lz4.frame.decompress(compressed)
+    except Exception as e:
+        logger.error(f"Failed to decompress {local_path}: {e}")
+        return {}
+            
+    block = evm_message.BlockMessage()
+    try:
+        block.ParseFromString(decompressed)
+    except Exception as e:
+        logger.error(f"Failed to parse protobuf {local_path}: {e}")
+        return {}
+        
+```
