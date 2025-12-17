@@ -13,6 +13,8 @@ message PoolInfo {
 
   TokenInfo Pair  = 4;
 
+  bytes PoolId = 5;
+
 }
 
 message PoolLiquidity {
@@ -69,6 +71,8 @@ message DexInfo {
   TokenInfo Pair  = 9;
   repeated TokenInfo Currencies = 10;
   repeated TokenInfo UnderlyingCurrencies = 11;
+
+  bytes PoolId = 12;
 }
 
 message TradeAsset {
