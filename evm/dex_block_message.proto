@@ -115,7 +115,7 @@ message DexTrade {
   TransactionHeader TransactionHeader = 12;
   Signature TransactionSignature = 13;
 
-  PoolInfo Pool = 14;
+  bytes PoolId = 14;
 }
 
 message DexBlockMessage {
