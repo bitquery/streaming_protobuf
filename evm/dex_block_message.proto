@@ -121,7 +121,7 @@ message DexTrade {
 message DexBlockMessage {
   Chain Chain = 1;
   BlockHeader Header = 2;
-  repeated PoolLiquidityChangeEvent PoolEvents = 4;
+
   repeated DexTrade Trades = 5;
   optional BlockHeader L1Header = 6;
 }
