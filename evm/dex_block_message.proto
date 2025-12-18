@@ -48,11 +48,11 @@ message PoolLiquidityChangeEvent {
   bool   HasLog = 5;
 
   DexInfo Dex = 6;
-  PoolInfo Pool = 7;
 
   PoolLiquidity Liquidity = 8;
   PoolPriceTable PoolPriceTable = 9;
 
+  PoolInfo Pool = 11;
 }
 
 
@@ -71,8 +71,6 @@ message DexInfo {
   TokenInfo Pair  = 9;
   repeated TokenInfo Currencies = 10;
   repeated TokenInfo UnderlyingCurrencies = 11;
-
-  bytes PoolId = 12;
 }
 
 message TradeAsset {
@@ -116,6 +114,8 @@ message DexTrade {
 
   TransactionHeader TransactionHeader = 12;
   Signature TransactionSignature = 13;
+
+  PoolInfo Pool = 14;
 }
 
 message DexBlockMessage {
