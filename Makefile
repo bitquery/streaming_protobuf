@@ -6,6 +6,7 @@ generate_evm:
 	--go_out=. \
 	--go_opt="Mevm/block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/dex_block_message.proto=evm/messages;evm_messages" \
+	--go_opt="Mevm/dex_pool_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/parsed_abi_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/token_block_message.proto=evm/messages;evm_messages" \
 	$(shell find ./evm -type f -name '*.proto')
