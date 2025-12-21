@@ -1,0 +1,69 @@
+syntax = "proto3";
+package evm_messages;
+
+import "evm/block_message.proto";
+import "evm/dex_block_message.proto";
+import "evm/token_block_message.proto";
+
+message DexPoolBlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  repeated PoolLiquidityChangeEvent PoolEvents = 5;
+  optional BlockHeader L1Header = 6;
+}
+
+
+message PoolLiquidityChangeEvent {
+
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+
+  uint64 CallIndex = 3;
+  uint64 LogIndex = 4;
+  bool   HasLog = 5;
+
+  DexInfo Dex = 6;
+
+  PoolLiquidity Liquidity = 8;
+  PoolPriceTable PoolPriceTable = 9;
+
+  PoolInfo Pool = 11;
+}
+
+
+message PoolInfo {
+
+  bytes SmartContract = 1;
+
+  TokenInfo CurrencyA = 2;
+  TokenInfo CurrencyB = 3;
+
+  TokenInfo Pair  = 4;
+
+  bytes PoolId = 5;
+
+}
+
+
+message PoolLiquidity {
+  bytes AmountCurrencyA = 1;
+  bytes AmountCurrencyB = 2;
+}
+
+message PoolPrice {
+  uint32 SlippageBasisPoints = 1;
+  bytes  MaxAmountIn = 2;
+  bytes  MinAmountOut = 3;
+  float  Price = 4;
+}
+
+message PoolPriceTable {
+
+  repeated PoolPrice AtoBPrices = 1;
+  repeated PoolPrice BtoAPrices = 2;
+
+  float AtoBPrice = 3;
+  float BtoAPrice = 4;
+}
+
+

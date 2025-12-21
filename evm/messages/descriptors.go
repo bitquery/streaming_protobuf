@@ -9,6 +9,11 @@ type DexBlockMessageDescriptor struct {
 	TradesCount                                uint32
 }
 
+type DexPoolMessageDescriptor struct {
+	blockchain_messages.BlockMessageDescriptor `mapstructure:",squash"`
+	PoolEventsCount                            uint32
+}
+
 type ParsedAbiBlockMessageDescriptor struct {
 	blockchain_messages.BlockMessageDescriptor `mapstructure:",squash"`
 	MinerReward                                string
