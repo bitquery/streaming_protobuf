@@ -46,14 +46,14 @@ message PoolInfo {
 
 
 message PoolLiquidity {
-  bytes AmountCurrencyA = 1;
-  bytes AmountCurrencyB = 2;
+  float AmountCurrencyA = 1;
+  float AmountCurrencyB = 2;
 }
 
 message PoolPrice {
   uint32 SlippageBasisPoints = 1;
-  bytes  MaxAmountIn = 2;
-  bytes  MinAmountOut = 3;
+  float  MaxAmountIn = 2;
+  float  MinAmountOut = 3;
   float  Price = 4;
 }
 
