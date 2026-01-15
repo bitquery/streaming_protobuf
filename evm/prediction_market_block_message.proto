@@ -1,0 +1,110 @@
+syntax = "proto3";
+package evm_messages;
+
+import "evm/block_message.proto";
+import "evm/token_block_message.proto";
+
+message PredictionMarketBlockMessage {
+  Chain Chain = 1;
+  BlockHeader Header = 2;
+  optional BlockHeader L1Header = 3;
+  repeated PredictionManagementEvent ManagementEvents = 4;
+  repeated PredictionEmitEvent EmitEvents = 5;
+}
+
+message PredictionMarketplaceInfo {
+  string ProtocolName = 8;      // "Polymarket", "predict.fun"
+  string ProtocolFamily = 9;    // "Gnosis_CTF"
+  string ProtocolVersion = 10;  // ???
+}
+
+// https://gamma-api.polymarket.com/events?order=id&ascending=false&closed=false&limit=10&offset=0
+// 1 event owns multiple questions, 1 questions owns usually 1 condition,
+// 1 condition owns usually 1 market and multiple outcome tokens
+message PredictionManagementEvent {
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+  uint64 CallIndex = 3;
+  uint64 LogIndex = 4;
+
+  bytes EventId = 5;
+  string EventType = 6;	// CREATED, RESOLVED
+
+  PredictionMarketplaceInfo Marketplace = 7;
+  QuestionInfo Question = 8;
+
+  ConditionInfo Condition = 9; // new condition for CREATED event || resolved condition for RESOLVED event
+  OutcomeInfo Outcome = 10;    // winner for RESOLVED event [ one of condition.outcomes ]
+
+  MarketInfo Market = 11;
+  TokenInfo CollateralToken = 12; // USDC, USDT etc
+}
+
+message PredictionEmitEvent {
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+  uint64 CallIndex = 3;
+  uint64 LogIndex = 4;
+
+  bytes EventId = 5;
+  string EventType = 6 ;	// SPLIT, MERGE
+
+  PredictionMarketplaceInfo Marketplace = 7;
+
+  bytes QuestionId = 8;  // ? condition contains questionId
+
+  bytes ConditionId = 9;
+  repeated Partition partition = 10; // [[0], [1]] for YES/NO; possible [ [0,1], [2] ] /// merged or split outcome token indexes from condition
+
+  MarketInfo Market = 11;
+  TokenInfo CollateralToken = 12; // USDC, USDT etc
+
+  bytes Amount = 13; // Collateral amount for SPLIT || Outcome amount of each outcome token for MERGE
+}
+
+message Partition {
+  repeated uint32 indexes = 1;
+}
+
+message QuestionInfo {
+  bytes Id = 1;    // question id, "0x78784dce991b76362f0409fc26e2a16aa0e520da3d47d4389bc55580850ff4d6" for polymarket
+  bytes Data = 2; // string or HEX bytes ??
+  string URI = 3;
+
+  bytes Creator = 4;             // Address of question creator
+  uint64 CreatedAt = 5;
+  //uint64 UpdatedAt = 6;
+  uint64 ResolutionTime = 7;     // Expected resolution timestamp
+  uint64 Timeout = 8;            // Timeout for resolution
+
+  string ResolutionSource = 17; // "https://data.chain.link/streams/eth-usd",
+  string Image = 18; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
+}
+
+message ConditionInfo {
+  bytes Id = 1;           // condition id, "0x03a8a2d4ca694f0cfe9b700ed745a41694dfcfa40110ef68d08bf0d077f98acb" for polymarket
+  bytes QuestionId = 2;
+
+  bytes Creator = 3;  // Address that created the condition
+
+  repeated OutcomeInfo Outcomes = 4;
+}
+
+// https://gamma-api.polymarket.com/markets?active=true&order=id&ascending=false&closed=false&limit=3&offset=1
+message MarketInfo {
+  bytes Id = 1;         // 568668 for polymarket
+  bytes SmartContract = 3;
+
+  bytes Creator = 4; // Address that created the market
+  bytes Resolver = 5;
+  bytes Oracle = 6;
+
+  repeated TokenInfo CollateralTokens = 11; // USDC, USDT; usually one, but can be multiple
+}
+
+message OutcomeInfo {
+  optional bytes Id = 1;  // ERC1155 token ID for outcome token or other id: 30047082238364305580334875801842609424049121375805509630177240923852213311546
+  optional bytes SmartContract = 2;
+  uint32 Index = 3;       // index in ConditionInfo (0, 1...)
+  string Label = 4;       // for outcome: Yes, No, etc
+}

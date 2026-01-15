@@ -9,6 +9,7 @@ generate_evm:
 	--go_opt="Mevm/dex_pool_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/parsed_abi_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/token_block_message.proto=evm/messages;evm_messages" \
+	--go_opt="Mevm/prediction_market_block_message.proto=evm/messages;evm_messages" \
 	$(shell find ./evm -type f -name '*.proto')
 	protoc \
     	-I=. \
