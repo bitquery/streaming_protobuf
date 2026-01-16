@@ -11,8 +11,9 @@ message PredictionMarketBlockMessage {
   optional BlockHeader L1Header = 3;
 
   repeated PredictionManagementEvent ManagementEvents = 4;
-  repeated PredictionEmitEvent EmitEvents = 5;
-  repeated PredictionEmitEvent TradeEvents = 6;
+  repeated PredictionRecompositionEvent SplitEvents = 5;
+  repeated PredictionRecompositionEvent MergeEvents = 6;
+  repeated PredictionTradeEvent TradeEvents = 7;
 }
 
 message PredictionMarketplaceInfo {
@@ -34,7 +35,7 @@ message PredictionManagementEvent {
   PredictionInfo Prediction = 4;
 }
 
-message PredictionEmitEvent {
+message PredictionRecompositionEvent {
 
   TransactionHeader TransactionHeader = 1;
   Signature TransactionSignature = 2;
@@ -42,17 +43,23 @@ message PredictionEmitEvent {
   PredictionInfo Prediction = 4;
 
   repeated Partition Partitions = 5; // [[YES], [NO]]; possible [ [A,B], [C] ] /// merged or split outcome token indexes from condition
-  DealSide Holder = 6; // holder of collateral
+
+  bytes Holder = 6;
+
+  oneof Recomposition {
+    OutcomeRecomposition Merge = 7;
+    OutcomeRecomposition Split = 8;
+  }
+
+}
+
+message OutcomeRecomposition {
+  bytes Amount = 2;
+  bytes CollateralAmount = 3;
 }
 
 message Partition {
   repeated int32 OutcomeIndexes = 1;
-}
-
-message DealSide {
-  bytes Address = 1;
-  bytes Amount = 2;
-  TokenInfo Currency = 3;
 }
 
 message PredictionTradeEvent {
@@ -62,9 +69,14 @@ message PredictionTradeEvent {
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
-  DealSide Buyer = 5;
-  DealSide Seller = 6;
+  OutcomeTrade OutcomeTrade = 5;
+}
 
+message OutcomeTrade {
+  bytes Seller = 1; // maker in Polymarket
+  bytes Buyer = 2; // taker in Polymarket
+  bytes Amount = 3; // amount of Option tokens
+  bytes CollateralAmount = 4; // amount of paid collaterals ( usdt/usdc )
 }
 
 message PredictionInfo {
