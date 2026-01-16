@@ -3,67 +3,107 @@ package evm_messages;
 
 import "evm/block_message.proto";
 import "evm/token_block_message.proto";
+import "evm/parsed_abi_block_message.proto";
 
 message PredictionMarketBlockMessage {
   Chain Chain = 1;
   BlockHeader Header = 2;
   optional BlockHeader L1Header = 3;
+
   repeated PredictionManagementEvent ManagementEvents = 4;
   repeated PredictionEmitEvent EmitEvents = 5;
+  repeated PredictionEmitEvent TradeEvents = 6;
 }
 
 message PredictionMarketplaceInfo {
-  string ProtocolName = 8;      // "Polymarket", "predict.fun"
-  string ProtocolFamily = 9;    // "Gnosis_CTF"
-  string ProtocolVersion = 10;  // ???
+  bytes SmartContract = 1;      // marketplace contract address, UMA Adapter for polymarket: 0x65070BE91477460D8A7AeEb94ef92fe056C2f2A7
+
+  string ProtocolName = 2;      // "Polymarket", "predict.fun"
+  string ProtocolFamily = 3;    // "Gnosis_CTF"
+  string ProtocolVersion = 4;  // ???
 }
 
 // https://gamma-api.polymarket.com/events?order=id&ascending=false&closed=false&limit=10&offset=0
 // 1 event owns multiple questions, 1 questions owns usually 1 condition,
 // 1 condition owns usually 1 market and multiple outcome tokens
 message PredictionManagementEvent {
-  TransactionHeader TransactionHeader = 1;
-  Signature TransactionSignature = 2;
-  uint64 CallIndex = 3;
-  uint64 LogIndex = 4;
+  bytes SmartContract = 1;  // smart contract that emitted the event, CTF Exchange for polymarket: 0xC5d563A36AE78145C45a50134d48A1215220f80a, 0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E
 
-  bytes EventId = 5;
-  string EventType = 6;	// CREATED, RESOLVED
+  TransactionHeader TransactionHeader = 2;
+  Signature TransactionSignature = 3;
 
-  PredictionMarketplaceInfo Marketplace = 7;
-  QuestionInfo Question = 8;
+  ParsedAbiCallHeader CallHeader = 4;
+  ParsedAbiLogHeader LogHeader = 5;
 
-  ConditionInfo Condition = 9; // new condition for CREATED event || resolved condition for RESOLVED event
-  OutcomeInfo Outcome = 10;    // winner for RESOLVED event [ one of condition.outcomes ]
+  optional bytes EventId = 6; // ! possible confusion what eventId is for ! ; can be services without eventId
+  string EventType = 7;	// CREATED, RESOLVED
 
-  MarketInfo Market = 11;
-  TokenInfo CollateralToken = 12; // USDC, USDT etc
+  PredictionMarketplaceInfo Marketplace = 8;
+  QuestionInfo Question = 9;
+
+  ConditionInfo Condition = 10; // new condition for CREATED event || resolved condition for RESOLVED event
+  optional OutcomeInfo Outcome = 11;    // winner for RESOLVED event [ one of condition.outcomes ]
+
+  optional MarketInfo Market = 12;  // can be created after condition creation
+  optional TokenInfo CollateralToken = 13; // USDC, USDT etc
 }
 
 message PredictionEmitEvent {
-  TransactionHeader TransactionHeader = 1;
-  Signature TransactionSignature = 2;
-  uint64 CallIndex = 3;
-  uint64 LogIndex = 4;
+  bytes SmartContract = 1;
 
-  bytes EventId = 5;
-  string EventType = 6 ;	// SPLIT, MERGE
+  TransactionHeader TransactionHeader = 2;
+  Signature TransactionSignature = 3;
 
-  PredictionMarketplaceInfo Marketplace = 7;
+  uint64 CallIndex = 4;
+  uint64 LogIndex = 5;
 
-  bytes QuestionId = 8;  // ? condition contains questionId
+  optional bytes EventId = 6; // ! possible confusion what eventId is for !
 
-  bytes ConditionId = 9;
-  repeated Partition partition = 10; // [[0], [1]] for YES/NO; possible [ [0,1], [2] ] /// merged or split outcome token indexes from condition
+  string EventType = 7;	// SPLIT, MERGE
+  PredictionMarketplaceInfo Marketplace = 8;
 
-  MarketInfo Market = 11;
-  TokenInfo CollateralToken = 12; // USDC, USDT etc
+  bytes QuestionId = 9;  // ? condition contains questionId
 
-  bytes Amount = 13; // Collateral amount for SPLIT || Outcome amount of each outcome token for MERGE
+  bytes ConditionId = 10;
+  repeated Partition Partitions = 11; // [[YES], [NO]]; possible [ [A,B], [C] ] /// merged or split outcome token indexes from condition
+
+  MarketInfo Market = 12;
+  TokenInfo CollateralToken = 13; // USDC, USDT etc
+
+  bytes Amount = 14; // Collateral amount for SPLIT || Outcome amount of each outcome token for MERGE
+
+  bytes Holder = 15; // Address of the user performing the action
+}
+
+message PredictionTradeEvent {
+  bytes SmartContract = 1;
+
+  TransactionHeader TransactionHeader = 2;
+  Signature TransactionSignature = 3;
+
+  uint64 CallIndex = 4;
+  uint64 LogIndex = 5;
+
+  bytes EventId = 6; // ! possible confusion what eventId is for !
+
+  string EventType = 7;	// SPLIT, MERGE
+  PredictionMarketplaceInfo Marketplace = 8;
+
+  bytes QuestionId = 9;  // ? condition contains questionId
+
+  bytes ConditionId = 10;
+  OutcomeInfo Outcome = 11;
+  bytes Amount = 12; // Outcome token amount traded
+  bytes Maker = 13;
+
+  MarketInfo Market = 14;
+  TokenInfo CollateralToken = 15; // USDC, USDT etc
+  bytes AmountPaid = 16; // Collateral amount paid by taker
+  bytes Taker = 17;
 }
 
 message Partition {
-  repeated uint32 indexes = 1;
+  repeated OutcomeInfo outcome = 1;
 }
 
 message QuestionInfo {
@@ -93,7 +133,7 @@ message ConditionInfo {
 // https://gamma-api.polymarket.com/markets?active=true&order=id&ascending=false&closed=false&limit=3&offset=1
 message MarketInfo {
   bytes Id = 1;         // 568668 for polymarket
-  bytes SmartContract = 3;
+  reserved 3;           // possible market smartContract address
 
   bytes Creator = 4; // Address that created the market
   bytes Resolver = 5;
