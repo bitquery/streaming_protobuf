@@ -32,8 +32,8 @@ message PredictionManagementEvent {
   TransactionHeader TransactionHeader = 2;
   Signature TransactionSignature = 3;
 
-  ParsedAbiCallHeader CallHeader = 4;
-  ParsedAbiLogHeader LogHeader = 5;
+  uint64 CallIndex = 4;
+  uint64 LogIndex = 5;
 
   optional bytes EventId = 6; // ! possible confusion what eventId is for ! ; can be services without eventId
   string EventType = 7;	// CREATED, RESOLVED
@@ -43,9 +43,10 @@ message PredictionManagementEvent {
 
   ConditionInfo Condition = 10; // new condition for CREATED event || resolved condition for RESOLVED event
   optional OutcomeInfo Outcome = 11;    // winner for RESOLVED event [ one of condition.outcomes ]
+  optional TokenInfo OutcomeToken = 12; // outcome token for CREATED event
 
-  optional MarketInfo Market = 12;  // can be created after condition creation
-  optional TokenInfo CollateralToken = 13; // USDC, USDT etc
+  optional MarketInfo Market = 13;  // can be created after condition creation
+  optional TokenInfo CollateralToken = 14; // USDC, USDT etc
 }
 
 message PredictionEmitEvent {
@@ -93,17 +94,18 @@ message PredictionTradeEvent {
 
   bytes ConditionId = 10;
   OutcomeInfo Outcome = 11;
-  bytes Amount = 12; // Outcome token amount traded
-  bytes Maker = 13;
+  optional TokenInfo OutcomeToken = 12; // outcome token for CREATED event
+  bytes Amount = 13; // Outcome token amount traded
+  bytes Maker = 14;
 
-  MarketInfo Market = 14;
-  TokenInfo CollateralToken = 15; // USDC, USDT etc
-  bytes AmountPaid = 16; // Collateral amount paid by taker
-  bytes Taker = 17;
+  MarketInfo Market = 15;
+  TokenInfo CollateralToken = 16; // USDC, USDT etc
+  bytes AmountPaid = 17; // Collateral amount paid by taker
+  bytes Taker = 18;
 }
 
 message Partition {
-  repeated OutcomeInfo outcome = 1;
+  repeated OutcomeInfo Outcomes = 1;
 }
 
 message QuestionInfo {
@@ -144,7 +146,7 @@ message MarketInfo {
 
 message OutcomeInfo {
   optional bytes Id = 1;  // ERC1155 token ID for outcome token or other id: 30047082238364305580334875801842609424049121375805509630177240923852213311546
-  optional bytes SmartContract = 2;
+
   uint32 Index = 3;       // index in ConditionInfo (0, 1...)
   string Label = 4;       // for outcome: Yes, No, etc
 }
