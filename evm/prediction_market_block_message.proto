@@ -67,13 +67,14 @@ message PredictionEmitEvent {
 
   bytes ConditionId = 10;
   repeated Partition Partitions = 11; // [[YES], [NO]]; possible [ [A,B], [C] ] /// merged or split outcome token indexes from condition
+  TokenInfo OutcomeToken = 13;
 
-  MarketInfo Market = 12;
-  TokenInfo CollateralToken = 13; // USDC, USDT etc
+  MarketInfo Market = 14;
+  TokenInfo CollateralToken = 15; // USDC, USDT etc
 
-  bytes Amount = 14; // Collateral amount for SPLIT || Outcome amount of each outcome token for MERGE
+  bytes Amount = 16; // Collateral amount for SPLIT || Outcome amount of each outcome token for MERGE
 
-  bytes Holder = 15; // Address of the user performing the action
+  bytes Holder = 17; // Address of the user performing the action
 }
 
 message PredictionTradeEvent {
@@ -94,13 +95,13 @@ message PredictionTradeEvent {
 
   bytes ConditionId = 10;
   OutcomeInfo Outcome = 11;
-  optional TokenInfo OutcomeToken = 12; // outcome token for CREATED event
-  bytes Amount = 13; // Outcome token amount traded
+  TokenInfo OutcomeToken = 12; // outcome token for CREATED event
+  bytes OutcomeAmount = 13; // Outcome token amount traded
   bytes Maker = 14;
 
   MarketInfo Market = 15;
   TokenInfo CollateralToken = 16; // USDC, USDT etc
-  bytes AmountPaid = 17; // Collateral amount paid by taker
+  bytes CollateralAmount = 17; // Collateral amount paid by taker
   bytes Taker = 18;
 }
 
