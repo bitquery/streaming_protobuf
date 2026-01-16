@@ -27,86 +27,63 @@ message PredictionMarketplaceInfo {
 // 1 event owns multiple questions, 1 questions owns usually 1 condition,
 // 1 condition owns usually 1 market and multiple outcome tokens
 message PredictionManagementEvent {
-  bytes SmartContract = 1;  // smart contract that emitted the event, CTF Exchange for polymarket: 0xC5d563A36AE78145C45a50134d48A1215220f80a, 0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
 
-  TransactionHeader TransactionHeader = 2;
-  Signature TransactionSignature = 3;
-
-  uint64 CallIndex = 4;
-  uint64 LogIndex = 5;
-
-  optional bytes EventId = 6; // ! possible confusion what eventId is for ! ; can be services without eventId
-  string EventType = 7;	// CREATED, RESOLVED
-
-  PredictionMarketplaceInfo Marketplace = 8;
-  QuestionInfo Question = 9;
-
-  ConditionInfo Condition = 10; // new condition for CREATED event || resolved condition for RESOLVED event
-  optional OutcomeInfo Outcome = 11;    // winner for RESOLVED event [ one of condition.outcomes ]
-  optional TokenInfo OutcomeToken = 12; // outcome token for CREATED event
-
-  optional MarketInfo Market = 13;  // can be created after condition creation
-  optional TokenInfo CollateralToken = 14; // USDC, USDT etc
+  PredictionEvent Event = 3;
+  PredictionInfo Prediction = 4;
 }
 
 message PredictionEmitEvent {
-  bytes SmartContract = 1;
 
-  TransactionHeader TransactionHeader = 2;
-  Signature TransactionSignature = 3;
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+  PredictionEvent Event = 3;
+  PredictionInfo Prediction = 4;
 
-  uint64 CallIndex = 4;
-  uint64 LogIndex = 5;
-
-  optional bytes EventId = 6; // ! possible confusion what eventId is for !
-
-  string EventType = 7;	// SPLIT, MERGE
-  PredictionMarketplaceInfo Marketplace = 8;
-
-  bytes QuestionId = 9;  // ? condition contains questionId
-
-  bytes ConditionId = 10;
-  repeated Partition Partitions = 11; // [[YES], [NO]]; possible [ [A,B], [C] ] /// merged or split outcome token indexes from condition
-  TokenInfo OutcomeToken = 13;
-
-  MarketInfo Market = 14;
-  TokenInfo CollateralToken = 15; // USDC, USDT etc
-
-  bytes Amount = 16; // Collateral amount for SPLIT || Outcome amount of each outcome token for MERGE
-
-  bytes Holder = 17; // Address of the user performing the action
-}
-
-message PredictionTradeEvent {
-  bytes SmartContract = 1;
-
-  TransactionHeader TransactionHeader = 2;
-  Signature TransactionSignature = 3;
-
-  uint64 CallIndex = 4;
-  uint64 LogIndex = 5;
-
-  bytes EventId = 6; // ! possible confusion what eventId is for !
-
-  string EventType = 7;	// SPLIT, MERGE
-  PredictionMarketplaceInfo Marketplace = 8;
-
-  bytes QuestionId = 9;  // ? condition contains questionId
-
-  bytes ConditionId = 10;
-  OutcomeInfo Outcome = 11;
-  TokenInfo OutcomeToken = 12; // outcome token for CREATED event
-  bytes OutcomeAmount = 13; // Outcome token amount traded
-  bytes Maker = 14;
-
-  MarketInfo Market = 15;
-  TokenInfo CollateralToken = 16; // USDC, USDT etc
-  bytes CollateralAmount = 17; // Collateral amount paid by taker
-  bytes Taker = 18;
+  repeated Partition Partitions = 5; // [[YES], [NO]]; possible [ [A,B], [C] ] /// merged or split outcome token indexes from condition
+  DealSide Holder = 6; // holder of collateral
 }
 
 message Partition {
-  repeated OutcomeInfo Outcomes = 1;
+  repeated int32 OutcomeIndexes = 1;
+}
+
+message DealSide {
+  bytes Address = 1;
+  bytes Amount = 2;
+  TokenInfo Currency = 3;
+}
+
+message PredictionTradeEvent {
+  TransactionHeader TransactionHeader = 1;
+  Signature TransactionSignature = 2;
+
+  PredictionEvent Event = 3;
+  PredictionInfo Prediction = 4;
+
+  DealSide Buyer = 5;
+  DealSide Seller = 6;
+
+}
+
+message PredictionInfo {
+  PredictionMarketplaceInfo Marketplace = 1;
+  optional MarketInfo Market = 2;
+  QuestionInfo Question = 3;
+  ConditionInfo Condition = 4;
+  optional OutcomeInfo Outcome = 5;
+  optional bytes  EventId = 6;
+
+  optional TokenInfo OutcomeToken = 7; // outcome token for CREATED event
+  optional TokenInfo CollateralToken = 8; // USDC, USDT etc
+}
+
+message PredictionEvent {
+  bytes  SmartContract = 1;
+  uint64 CallIndex = 2;
+  uint64 LogIndex = 3;
+  string Type = 4;
 }
 
 message QuestionInfo {
@@ -116,38 +93,30 @@ message QuestionInfo {
 
   bytes Creator = 4;             // Address of question creator
   uint64 CreatedAt = 5;
-  //uint64 UpdatedAt = 6;
-  uint64 ResolutionTime = 7;     // Expected resolution timestamp
-  uint64 Timeout = 8;            // Timeout for resolution
+  uint64 ResolutionTime = 6;     // Expected resolution timestamp
+  uint64 Timeout = 7;            // Timeout for resolution
 
-  string ResolutionSource = 17; // "https://data.chain.link/streams/eth-usd",
-  string Image = 18; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
+  string ResolutionSource = 8; // "https://data.chain.link/streams/eth-usd",
+  string Image = 9; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
 }
 
 message ConditionInfo {
   bytes Id = 1;           // condition id, "0x03a8a2d4ca694f0cfe9b700ed745a41694dfcfa40110ef68d08bf0d077f98acb" for polymarket
   bytes QuestionId = 2;
-
   bytes Creator = 3;  // Address that created the condition
-
   repeated OutcomeInfo Outcomes = 4;
 }
 
 // https://gamma-api.polymarket.com/markets?active=true&order=id&ascending=false&closed=false&limit=3&offset=1
 message MarketInfo {
   bytes Id = 1;         // 568668 for polymarket
-  reserved 3;           // possible market smartContract address
-
-  bytes Creator = 4; // Address that created the market
-  bytes Resolver = 5;
-  bytes Oracle = 6;
-
-  repeated TokenInfo CollateralTokens = 11; // USDC, USDT; usually one, but can be multiple
+  bytes Creator = 2; // Address that created the market
+  bytes Resolver = 3;
+  bytes Oracle = 4;
 }
 
 message OutcomeInfo {
   optional bytes Id = 1;  // ERC1155 token ID for outcome token or other id: 30047082238364305580334875801842609424049121375805509630177240923852213311546
-
-  uint32 Index = 3;       // index in ConditionInfo (0, 1...)
-  string Label = 4;       // for outcome: Yes, No, etc
+  uint32 Index = 2;       // index in ConditionInfo (0, 1...)
+  string Label = 3;       // for outcome: Yes, No, etc
 }
