@@ -20,7 +20,10 @@ message PredictionMarketplaceInfo {
 
   string ProtocolName = 2;      // "Polymarket", "predict.fun"
   string ProtocolFamily = 3;    // "Gnosis_CTF"
-  string ProtocolVersion = 4;  // ???
+  string ProtocolVersion = 4;   // ???
+
+  bool Delegated = 5;           // For ProtocolImplementation interface
+  bytes DelegatedTo = 6;        // For ProtocolImplementation interface
 }
 
 // https://gamma-api.polymarket.com/events?order=id&ascending=false&closed=false&limit=10&offset=0
