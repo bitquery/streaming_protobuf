@@ -29,12 +29,19 @@ message PredictionMarketplaceInfo {
 // https://gamma-api.polymarket.com/events?order=id&ascending=false&closed=false&limit=10&offset=0
 // 1 EVENT owns multiple questions, QUESTION owns usually 1 condition and connected to 1 MARKET
 // 1 CONDITION owns usually multiple OUTCOME TOKENS (for now is 2)
+
+// Created / Resolved
 message PredictionManagementEvent {
   TransactionHeader TransactionHeader = 1;
   Signature TransactionSignature = 2;
 
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
+  string Description = 5;
+}
+
+message QuestionExtInfo {
+
 }
 
 message PredictionRecompositionEvent {
@@ -100,18 +107,16 @@ message PredictionEvent {
 
 message QuestionInfo {
   bytes Id = 1;    // question id, "0x78784dce991b76362f0409fc26e2a16aa0e520da3d47d4389bc55580850ff4d6" for polymarket
+  string Title = 2;
 
-  string URI = 2;
-  string Title = 3;
-  string Description = 4;
+  bytes Creator = 3;             // Address of question creator
+  uint64 CreatedAt = 4;
 
-  bytes Creator = 5;             // Address of question creator
-  uint64 CreatedAt = 6;
 
-  string ResolutionSource = 7; // "https://data.chain.link/streams/eth-usd",
-  string Image = 8; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
+  string ResolutionSource = 5; // "https://data.chain.link/streams/eth-usd",
+  string Image = 6; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
 
-  string MarketId = 9;  // https://gamma-api.polymarket.com/markets?active=true&order=id&ascending=false&closed=false&limit=2&offset=0
+  string MarketId = 7;  // https://gamma-api.polymarket.com/markets/{market_id} to get all the data
 }
 
 message ConditionInfo {
