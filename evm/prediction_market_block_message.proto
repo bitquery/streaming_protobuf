@@ -20,15 +20,15 @@ message PredictionMarketplaceInfo {
 
   string ProtocolName = 2;      // "Polymarket", "predict.fun"
   string ProtocolFamily = 3;    // "Gnosis_CTF"
-  string ProtocolVersion = 4;   // ???
+  string ProtocolVersion = 4;
 
   bool Delegated = 5;           // For ProtocolImplementation interface
   bytes DelegatedTo = 6;        // For ProtocolImplementation interface
 }
 
 // https://gamma-api.polymarket.com/events?order=id&ascending=false&closed=false&limit=10&offset=0
-// 1 event owns multiple questions, 1 questions owns usually 1 condition,
-// 1 condition owns usually 1 market and multiple outcome tokens
+// 1 EVENT owns multiple questions, QUESTION owns usually 1 condition and connected to 1 MARKET
+// 1 CONDITION owns usually multiple OUTCOME TOKENS (for now is 2)
 message PredictionManagementEvent {
   TransactionHeader TransactionHeader = 1;
   Signature TransactionSignature = 2;
@@ -44,7 +44,7 @@ message PredictionRecompositionEvent {
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
-  repeated Partition Partitions = 5; // [[YES], [NO]]; possible [ [A,B], [C] ] /// merged or split outcome token indexes from condition
+  repeated Partition Partitions = 5; // [[YES], [NO]]; possible [ [0,1], [2] ] /// merged or split outcome token indexes from condition
 
   bytes Holder = 6;
 
@@ -83,14 +83,12 @@ message OutcomeTrade {
 
 message PredictionInfo {
   PredictionMarketplaceInfo Marketplace = 1;
-  optional MarketInfo Market = 2;
-  QuestionInfo Question = 3;
-  ConditionInfo Condition = 4;
-  optional OutcomeInfo Outcome = 5;
-  optional bytes  EventId = 6;
+  QuestionInfo Question = 2;
+  ConditionInfo Condition = 3;
+  optional OutcomeInfo Outcome = 4;
 
-  optional TokenInfo OutcomeToken = 7; // outcome token for CREATED event
-  optional TokenInfo CollateralToken = 8; // USDC, USDT etc
+  optional TokenInfo OutcomeToken = 5; // outcome token for CREATED event
+  optional TokenInfo CollateralToken = 6; // USDC, USDT etc
 }
 
 message PredictionEvent {
@@ -102,16 +100,18 @@ message PredictionEvent {
 
 message QuestionInfo {
   bytes Id = 1;    // question id, "0x78784dce991b76362f0409fc26e2a16aa0e520da3d47d4389bc55580850ff4d6" for polymarket
-  bytes Data = 2; // string or HEX bytes ??
-  string URI = 3;
 
-  bytes Creator = 4;             // Address of question creator
-  uint64 CreatedAt = 5;
-  uint64 ResolutionTime = 6;     // Expected resolution timestamp
-  uint64 Timeout = 7;            // Timeout for resolution
+  string URI = 2;
+  string Title = 3;
+  string Description = 4;
 
-  string ResolutionSource = 8; // "https://data.chain.link/streams/eth-usd",
-  string Image = 9; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
+  bytes Creator = 5;             // Address of question creator
+  uint64 CreatedAt = 6;
+
+  string ResolutionSource = 7; // "https://data.chain.link/streams/eth-usd",
+  string Image = 8; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
+
+  string MarketId = 9;  // https://gamma-api.polymarket.com/markets?active=true&order=id&ascending=false&closed=false&limit=2&offset=0
 }
 
 message ConditionInfo {
@@ -119,14 +119,8 @@ message ConditionInfo {
   bytes QuestionId = 2;
   bytes Creator = 3;  // Address that created the condition
   repeated OutcomeInfo Outcomes = 4;
-}
 
-// https://gamma-api.polymarket.com/markets?active=true&order=id&ascending=false&closed=false&limit=3&offset=1
-message MarketInfo {
-  bytes Id = 1;         // 568668 for polymarket
-  bytes Creator = 2; // Address that created the market
-  bytes Resolver = 3;
-  bytes Oracle = 4;
+  bytes Oracle = 5;
 }
 
 message OutcomeInfo {
