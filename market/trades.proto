@@ -1,0 +1,72 @@
+syntax = "proto3";
+package marketdata_messages;
+
+import "market/marketdata.proto";
+import "market/price_index.proto";
+
+
+message Transaction {
+  string Hash = 1;
+  int32  Index = 2;
+  string From = 3;
+  string To = 4;
+}
+
+message Block {
+  int64  Height = 1;
+  int64  Slot = 2;
+}
+
+message Call {
+  int32  Depth = 1;
+  string CallPath = 2;
+
+  string SmartContract = 3;
+  string Method = 4;
+
+  string Caller = 5;
+}
+
+message Trader {
+  string Address = 1;
+}
+
+message Pool {
+  string Address = 1;
+}
+
+message Asset {
+  Token Token = 1;
+  Currency Currency = 2;
+
+  double Amount = 3;
+  double Usd = 4;
+}
+
+enum TradeDirection {
+  Buy = 0;
+  Sell = 1;
+}
+
+message TradeInfo {
+  TradeDirection TradeDirection = 1;
+}
+
+message Trade {
+  Market      Market = 1;
+
+  Transaction Transaction = 2;
+  Block       Block = 3;
+  Call        Call = 4;
+
+  Trader      Trader = 5;
+  Pool        Pool = 6;
+  Asset       Quote = 7;
+  Asset       Base = 8;
+  TradeInfo   TradeInfo = 9;
+}
+
+message TradesMessage {
+  uint64 Time = 1;
+  repeated Trade Trades = 2;
+}
