@@ -117,10 +117,9 @@ message QuestionInfo {
 message ConditionInfo {
   bytes Id = 1;           // condition id, "0x03a8a2d4ca694f0cfe9b700ed745a41694dfcfa40110ef68d08bf0d077f98acb" for polymarket
   bytes QuestionId = 2;
-  bytes Creator = 3;  // Address that created the condition
-  repeated OutcomeInfo Outcomes = 4;
+  repeated OutcomeInfo Outcomes = 3;
 
-  bytes Oracle = 5;
+  bytes Oracle = 4;
 }
 
 message OutcomeInfo {
