@@ -22,8 +22,8 @@ message PredictionMarketplaceInfo {
   string ProtocolFamily = 3;    // "Gnosis_CTF"
   string ProtocolVersion = 4;
 
-  bool Delegated = 5;           // For ProtocolImplementation interface
-  bytes DelegatedTo = 6;        // For ProtocolImplementation interface
+  bool Delegated = 5;
+  bytes DelegatedTo = 6;
 }
 
 // https://gamma-api.polymarket.com/events?order=id&ascending=false&closed=false&limit=10&offset=0
@@ -38,10 +38,6 @@ message PredictionManagementEvent {
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
   string Description = 5;
-}
-
-message QuestionExtInfo {
-
 }
 
 message PredictionRecompositionEvent {
@@ -63,8 +59,8 @@ message PredictionRecompositionEvent {
 }
 
 message OutcomeRecomposition {
-  bytes Amount = 2;
-  bytes CollateralAmount = 3;
+  bytes Amount = 1;
+  bytes CollateralAmount = 2;
 }
 
 message Partition {
@@ -78,14 +74,14 @@ message PredictionTradeEvent {
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
-  OutcomeTrade OutcomeTrade = 5;
+  OutcomeTradeOrder Order = 5;
 }
 
-message OutcomeTrade {
+message OutcomeTradeOrder {
   bytes Seller = 1; // maker in Polymarket
   bytes Buyer = 2; // taker in Polymarket
   bytes Amount = 3; // amount of Option tokens
-  bytes CollateralAmount = 4; // amount of paid collaterals ( usdt/usdc )
+  bytes CollateralAmount = 4; // amount of paid collaterals ( USDC )
 }
 
 message PredictionInfo {
@@ -95,7 +91,7 @@ message PredictionInfo {
   optional OutcomeInfo Outcome = 4;
 
   optional TokenInfo OutcomeToken = 5; // outcome token for CREATED event
-  optional TokenInfo CollateralToken = 6; // USDC, USDT etc
+  optional TokenInfo CollateralToken = 6; // USDC
 }
 
 message PredictionEvent {
