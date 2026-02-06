@@ -74,10 +74,10 @@ message PredictionTradeEvent {
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
-  OutcomeTradeOrder Order = 5;
+  OutcomeTrade OutcomeTrade = 5;
 }
 
-message OutcomeTradeOrder {
+message OutcomeTrade {
   bytes Seller = 1; // maker in Polymarket
   bytes Buyer = 2; // taker in Polymarket
   bytes Amount = 3; // amount of Option tokens
