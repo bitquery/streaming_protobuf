@@ -52,7 +52,12 @@ message PredictionSettlementEvent {
   repeated int32 IndexSets = 5; // indexes of Outcome tokens for split/merge in ConditionInfo, e.g. [0] for "Yes", [1] for "No", [0, 1] for split into both "Yes" and "No"
 
   bytes Holder = 6;
-  OutcomeSettlement Amounts = 7;
+  oneof Settlement {
+    OutcomeSettlement Merge = 7;
+    OutcomeSettlement Split = 8;
+    OutcomeSettlement Redemption = 9;
+  }
+
 
 }
 
