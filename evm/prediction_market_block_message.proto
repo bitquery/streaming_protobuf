@@ -10,8 +10,8 @@ message PredictionMarketBlockMessage {
   optional BlockHeader L1Header = 3;
 
   repeated PredictionManagementEvent ManagementEvents = 4;
-  repeated PredictionRecompositionEvent SplitEvents = 5;
-  repeated PredictionRecompositionEvent MergeEvents = 6;
+  repeated PredictionSettlementEvent SplitEvents = 5;
+  repeated PredictionSettlementEvent MergeEvents = 6;
   repeated PredictionTradeEvent TradeEvents = 7;
 }
 
@@ -40,32 +40,30 @@ message PredictionManagementEvent {
   string Description = 5;
 }
 
-message PredictionRecompositionEvent {
+message PredictionSettlementEvent {
 
   TransactionHeader TransactionHeader = 1;
   Signature TransactionSignature = 2;
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
-  repeated Partition Partitions = 5; // [[YES], [NO]]; possible [ [0,1], [2] ] /// merged or split outcome token indexes from condition
+  repeated int32 IndexSets = 5; // bitmask values (2^index) identifying specific market outcomes (e.g., 1 for YES, 2 for NO)
 
   bytes Holder = 6;
 
-  oneof Recomposition {
-    OutcomeRecomposition Merge = 7;
-    OutcomeRecomposition Split = 8;
+  oneof Settlement {
+    OutcomeSettlement Merge = 7;
+    OutcomeSettlement Split = 8;
+    OutcomeSettlement Redemption = 9;
   }
 
 }
 
-message OutcomeRecomposition {
+message OutcomeSettlement {
   bytes Amount = 1;
   bytes CollateralAmount = 2;
 }
 
-message Partition {
-  repeated int32 OutcomeIndexes = 1;
-}
 
 message PredictionTradeEvent {
   TransactionHeader TransactionHeader = 1;
@@ -82,6 +80,7 @@ message OutcomeTrade {
   bytes Buyer = 2; // taker in Polymarket
   bytes Amount = 3; // amount of Option tokens
   bytes CollateralAmount = 4; // amount of paid collaterals ( USDC )
+  bool IsOutcomeBuy = 5; // true if Buyer takes Outcome token for Colleteral
 }
 
 message PredictionInfo {
@@ -90,7 +89,7 @@ message PredictionInfo {
   ConditionInfo Condition = 3;
   optional OutcomeInfo Outcome = 4;
 
-  optional TokenInfo OutcomeToken = 5; // outcome token for CREATED event
+  optional TokenInfo OutcomeToken = 5; // traded outcome token for TRADE event || outcome token for RESOLVED event (empty if no winner)
   optional TokenInfo CollateralToken = 6; // USDC
 }
 
