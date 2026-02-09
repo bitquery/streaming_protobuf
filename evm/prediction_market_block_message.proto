@@ -9,10 +9,12 @@ message PredictionMarketBlockMessage {
   BlockHeader Header = 2;
   optional BlockHeader L1Header = 3;
 
-  repeated PredictionManagementEvent ManagementEvents = 4;
-  repeated PredictionSettlementEvent SplitEvents = 5;
-  repeated PredictionSettlementEvent MergeEvents = 6;
-  repeated PredictionTradeEvent TradeEvents = 7;
+  repeated PredictionTradeEvent TradeEvents = 4;
+  repeated PredictionManagementEvent ManagementEvents = 5;
+
+  repeated PredictionSettlementEvent SplitEvents = 6;
+  repeated PredictionSettlementEvent MergeEvents = 7;
+  repeated PredictionSettlementEvent RedemptionEvents = 8;
 }
 
 message PredictionMarketplaceInfo {
@@ -47,15 +49,10 @@ message PredictionSettlementEvent {
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
-  repeated int32 IndexSets = 5; // bitmask values (2^index) identifying specific market outcomes (e.g., 1 for YES, 2 for NO)
+  repeated int32 IndexSets = 5; // indexes of Outcome tokens for split/merge in ConditionInfo, e.g. [0] for "Yes", [1] for "No", [0, 1] for split into both "Yes" and "No"
 
   bytes Holder = 6;
-
-  oneof Settlement {
-    OutcomeSettlement Merge = 7;
-    OutcomeSettlement Split = 8;
-    OutcomeSettlement Redemption = 9;
-  }
+  OutcomeSettlement Amounts = 7;
 
 }
 
