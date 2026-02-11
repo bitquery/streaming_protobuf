@@ -26,7 +26,7 @@ from evm import block_message_pb2 as evm_dot_block__message__pb2
 from evm import token_block_message_pb2 as evm_dot_token__block__message__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n)evm/prediction_market_block_message.proto\x12\x0c\x65vm_messages\x1a\x17\x65vm/block_message.proto\x1a\x1d\x65vm/token_block_message.proto\"\xe7\x03\n\x1cPredictionMarketBlockMessage\x12\"\n\x05\x43hain\x18\x01 \x01(\x0b\x32\x13.evm_messages.Chain\x12)\n\x06Header\x18\x02 \x01(\x0b\x32\x19.evm_messages.BlockHeader\x12\x30\n\x08L1Header\x18\x03 \x01(\x0b\x32\x19.evm_messages.BlockHeaderH\x00\x88\x01\x01\x12\x37\n\x0bTradeEvents\x18\x04 \x03(\x0b\x32\".evm_messages.PredictionTradeEvent\x12\x41\n\x10ManagementEvents\x18\x05 \x03(\x0b\x32\'.evm_messages.PredictionManagementEvent\x12<\n\x0bSplitEvents\x18\x06 \x03(\x0b\x32\'.evm_messages.PredictionSettlementEvent\x12<\n\x0bMergeEvents\x18\x07 \x03(\x0b\x32\'.evm_messages.PredictionSettlementEvent\x12\x41\n\x10RedemptionEvents\x18\x08 \x03(\x0b\x32\'.evm_messages.PredictionSettlementEventB\x0b\n\t_L1Header\"\xa1\x01\n\x19PredictionMarketplaceInfo\x12\x15\n\rSmartContract\x18\x01 \x01(\x0c\x12\x14\n\x0cProtocolName\x18\x02 \x01(\t\x12\x16\n\x0eProtocolFamily\x18\x03 \x01(\t\x12\x17\n\x0fProtocolVersion\x18\x04 \x01(\t\x12\x11\n\tDelegated\x18\x05 \x01(\x08\x12\x13\n\x0b\x44\x65legatedTo\x18\x06 \x01(\x0c\"\x83\x02\n\x19PredictionManagementEvent\x12:\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32\x1f.evm_messages.TransactionHeader\x12\x35\n\x14TransactionSignature\x18\x02 \x01(\x0b\x32\x17.evm_messages.Signature\x12,\n\x05\x45vent\x18\x03 \x01(\x0b\x32\x1d.evm_messages.PredictionEvent\x12\x30\n\nPrediction\x18\x04 \x01(\x0b\x32\x1c.evm_messages.PredictionInfo\x12\x13\n\x0b\x44\x65scription\x18\x05 \x01(\t\"\xba\x03\n\x19PredictionSettlementEvent\x12:\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32\x1f.evm_messages.TransactionHeader\x12\x35\n\x14TransactionSignature\x18\x02 \x01(\x0b\x32\x17.evm_messages.Signature\x12,\n\x05\x45vent\x18\x03 \x01(\x0b\x32\x1d.evm_messages.PredictionEvent\x12\x30\n\nPrediction\x18\x04 \x01(\x0b\x32\x1c.evm_messages.PredictionInfo\x12\x11\n\tIndexSets\x18\x05 \x03(\x05\x12\x0e\n\x06Holder\x18\x06 \x01(\x0c\x12\x30\n\x05Merge\x18\x07 \x01(\x0b\x32\x1f.evm_messages.OutcomeSettlementH\x00\x12\x30\n\x05Split\x18\x08 \x01(\x0b\x32\x1f.evm_messages.OutcomeSettlementH\x00\x12\x35\n\nRedemption\x18\t \x01(\x0b\x32\x1f.evm_messages.OutcomeSettlementH\x00\x42\x0c\n\nSettlement\"=\n\x11OutcomeSettlement\x12\x0e\n\x06\x41mount\x18\x01 \x01(\x0c\x12\x18\n\x10\x43ollateralAmount\x18\x02 \x01(\x0c\"\x9b\x02\n\x14PredictionTradeEvent\x12:\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32\x1f.evm_messages.TransactionHeader\x12\x35\n\x14TransactionSignature\x18\x02 \x01(\x0b\x32\x17.evm_messages.Signature\x12,\n\x05\x45vent\x18\x03 \x01(\x0b\x32\x1d.evm_messages.PredictionEvent\x12\x30\n\nPrediction\x18\x04 \x01(\x0b\x32\x1c.evm_messages.PredictionInfo\x12\x30\n\x0cOutcomeTrade\x18\x05 \x01(\x0b\x32\x1a.evm_messages.OutcomeTrade\"m\n\x0cOutcomeTrade\x12\x0e\n\x06Seller\x18\x01 \x01(\x0c\x12\r\n\x05\x42uyer\x18\x02 \x01(\x0c\x12\x0e\n\x06\x41mount\x18\x03 \x01(\x0c\x12\x18\n\x10\x43ollateralAmount\x18\x04 \x01(\x0c\x12\x14\n\x0cIsOutcomeBuy\x18\x05 \x01(\x08\"\xf9\x02\n\x0ePredictionInfo\x12<\n\x0bMarketplace\x18\x01 \x01(\x0b\x32\'.evm_messages.PredictionMarketplaceInfo\x12,\n\x08Question\x18\x02 \x01(\x0b\x32\x1a.evm_messages.QuestionInfo\x12.\n\tCondition\x18\x03 \x01(\x0b\x32\x1b.evm_messages.ConditionInfo\x12/\n\x07Outcome\x18\x04 \x01(\x0b\x32\x19.evm_messages.OutcomeInfoH\x00\x88\x01\x01\x12\x32\n\x0cOutcomeToken\x18\x05 \x01(\x0b\x32\x17.evm_messages.TokenInfoH\x01\x88\x01\x01\x12\x35\n\x0f\x43ollateralToken\x18\x06 \x01(\x0b\x32\x17.evm_messages.TokenInfoH\x02\x88\x01\x01\x42\n\n\x08_OutcomeB\x0f\n\r_OutcomeTokenB\x12\n\x10_CollateralToken\"[\n\x0fPredictionEvent\x12\x15\n\rSmartContract\x18\x01 \x01(\x0c\x12\x11\n\tCallIndex\x18\x02 \x01(\x04\x12\x10\n\x08LogIndex\x18\x03 \x01(\x04\x12\x0c\n\x04Type\x18\x04 \x01(\t\"w\n\x0cQuestionInfo\x12\n\n\x02Id\x18\x01 \x01(\x0c\x12\x10\n\x08MarketId\x18\x02 \x01(\t\x12\r\n\x05Title\x18\x03 \x01(\t\x12\x11\n\tCreatedAt\x18\x04 \x01(\x04\x12\x18\n\x10ResolutionSource\x18\x05 \x01(\t\x12\r\n\x05Image\x18\x06 \x01(\t\"l\n\rConditionInfo\x12\n\n\x02Id\x18\x01 \x01(\x0c\x12\x12\n\nQuestionId\x18\x02 \x01(\x0c\x12+\n\x08Outcomes\x18\x03 \x03(\x0b\x32\x19.evm_messages.OutcomeInfo\x12\x0e\n\x06Oracle\x18\x04 \x01(\x0c\"C\n\x0bOutcomeInfo\x12\x0f\n\x02Id\x18\x01 \x01(\x0cH\x00\x88\x01\x01\x12\r\n\x05Index\x18\x02 \x01(\r\x12\r\n\x05Label\x18\x03 \x01(\tB\x05\n\x03_Idb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n)evm/prediction_market_block_message.proto\x12\x0c\x65vm_messages\x1a\x17\x65vm/block_message.proto\x1a\x1d\x65vm/token_block_message.proto\"\xeb\x02\n\x1cPredictionMarketBlockMessage\x12\"\n\x05\x43hain\x18\x01 \x01(\x0b\x32\x13.evm_messages.Chain\x12)\n\x06Header\x18\x02 \x01(\x0b\x32\x19.evm_messages.BlockHeader\x12\x30\n\x08L1Header\x18\x03 \x01(\x0b\x32\x19.evm_messages.BlockHeaderH\x00\x88\x01\x01\x12\x37\n\x0bTradeEvents\x18\x04 \x03(\x0b\x32\".evm_messages.PredictionTradeEvent\x12\x41\n\x10ManagementEvents\x18\x05 \x03(\x0b\x32\'.evm_messages.PredictionManagementEvent\x12\x41\n\x10SettlementEvents\x18\x06 \x03(\x0b\x32\'.evm_messages.PredictionSettlementEventB\x0b\n\t_L1Header\"\xa1\x01\n\x19PredictionMarketplaceInfo\x12\x15\n\rSmartContract\x18\x01 \x01(\x0c\x12\x14\n\x0cProtocolName\x18\x02 \x01(\t\x12\x16\n\x0eProtocolFamily\x18\x03 \x01(\t\x12\x17\n\x0fProtocolVersion\x18\x04 \x01(\t\x12\x11\n\tDelegated\x18\x05 \x01(\x08\x12\x13\n\x0b\x44\x65legatedTo\x18\x06 \x01(\x0c\"\x83\x02\n\x19PredictionManagementEvent\x12:\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32\x1f.evm_messages.TransactionHeader\x12\x35\n\x14TransactionSignature\x18\x02 \x01(\x0b\x32\x17.evm_messages.Signature\x12,\n\x05\x45vent\x18\x03 \x01(\x0b\x32\x1d.evm_messages.PredictionEvent\x12\x30\n\nPrediction\x18\x04 \x01(\x0b\x32\x1c.evm_messages.PredictionInfo\x12\x13\n\x0b\x44\x65scription\x18\x05 \x01(\t\"\xc3\x02\n\x19PredictionSettlementEvent\x12:\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32\x1f.evm_messages.TransactionHeader\x12\x35\n\x14TransactionSignature\x18\x02 \x01(\x0b\x32\x17.evm_messages.Signature\x12,\n\x05\x45vent\x18\x03 \x01(\x0b\x32\x1d.evm_messages.PredictionEvent\x12\x30\n\nPrediction\x18\x04 \x01(\x0b\x32\x1c.evm_messages.PredictionInfo\x12\x11\n\tIndexSets\x18\x05 \x03(\x05\x12\x0e\n\x06Holder\x18\x06 \x01(\x0c\x12\x30\n\x07\x41mounts\x18\x07 \x01(\x0b\x32\x1f.evm_messages.OutcomeSettlement\"=\n\x11OutcomeSettlement\x12\x0e\n\x06\x41mount\x18\x01 \x01(\x0c\x12\x18\n\x10\x43ollateralAmount\x18\x02 \x01(\x0c\"\x9b\x02\n\x14PredictionTradeEvent\x12:\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32\x1f.evm_messages.TransactionHeader\x12\x35\n\x14TransactionSignature\x18\x02 \x01(\x0b\x32\x17.evm_messages.Signature\x12,\n\x05\x45vent\x18\x03 \x01(\x0b\x32\x1d.evm_messages.PredictionEvent\x12\x30\n\nPrediction\x18\x04 \x01(\x0b\x32\x1c.evm_messages.PredictionInfo\x12\x30\n\x0cOutcomeTrade\x18\x05 \x01(\x0b\x32\x1a.evm_messages.OutcomeTrade\"\x91\x01\n\x0cOutcomeTrade\x12\x0e\n\x06Seller\x18\x01 \x01(\x0c\x12\r\n\x05\x42uyer\x18\x02 \x01(\x0c\x12\x0e\n\x06\x41mount\x18\x03 \x01(\x0c\x12\x18\n\x10\x43ollateralAmount\x18\x04 \x01(\x0c\x12\x14\n\x0cIsOutcomeBuy\x18\x05 \x01(\x08\x12\x11\n\tFeeAmount\x18\x06 \x01(\x0c\x12\x0f\n\x07OrderId\x18\x07 \x01(\x0c\"\xf9\x02\n\x0ePredictionInfo\x12<\n\x0bMarketplace\x18\x01 \x01(\x0b\x32\'.evm_messages.PredictionMarketplaceInfo\x12,\n\x08Question\x18\x02 \x01(\x0b\x32\x1a.evm_messages.QuestionInfo\x12.\n\tCondition\x18\x03 \x01(\x0b\x32\x1b.evm_messages.ConditionInfo\x12/\n\x07Outcome\x18\x04 \x01(\x0b\x32\x19.evm_messages.OutcomeInfoH\x00\x88\x01\x01\x12\x32\n\x0cOutcomeToken\x18\x05 \x01(\x0b\x32\x17.evm_messages.TokenInfoH\x01\x88\x01\x01\x12\x35\n\x0f\x43ollateralToken\x18\x06 \x01(\x0b\x32\x17.evm_messages.TokenInfoH\x02\x88\x01\x01\x42\n\n\x08_OutcomeB\x0f\n\r_OutcomeTokenB\x12\n\x10_CollateralToken\"[\n\x0fPredictionEvent\x12\x15\n\rSmartContract\x18\x01 \x01(\x0c\x12\x11\n\tCallIndex\x18\x02 \x01(\x04\x12\x10\n\x08LogIndex\x18\x03 \x01(\x04\x12\x0c\n\x04Type\x18\x04 \x01(\t\"w\n\x0cQuestionInfo\x12\n\n\x02Id\x18\x01 \x01(\x0c\x12\x10\n\x08MarketId\x18\x02 \x01(\t\x12\r\n\x05Title\x18\x03 \x01(\t\x12\x11\n\tCreatedAt\x18\x04 \x01(\x04\x12\x18\n\x10ResolutionSource\x18\x05 \x01(\t\x12\r\n\x05Image\x18\x06 \x01(\t\"l\n\rConditionInfo\x12\n\n\x02Id\x18\x01 \x01(\x0c\x12\x12\n\nQuestionId\x18\x02 \x01(\x0c\x12+\n\x08Outcomes\x18\x03 \x03(\x0b\x32\x19.evm_messages.OutcomeInfo\x12\x0e\n\x06Oracle\x18\x04 \x01(\x0c\"C\n\x0bOutcomeInfo\x12\x0f\n\x02Id\x18\x01 \x01(\x0cH\x00\x88\x01\x01\x12\r\n\x05Index\x18\x02 \x01(\r\x12\r\n\x05Label\x18\x03 \x01(\tB\x05\n\x03_Idb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,27 +34,27 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'evm.prediction_market_block
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_PREDICTIONMARKETBLOCKMESSAGE']._serialized_start=116
-  _globals['_PREDICTIONMARKETBLOCKMESSAGE']._serialized_end=603
-  _globals['_PREDICTIONMARKETPLACEINFO']._serialized_start=606
-  _globals['_PREDICTIONMARKETPLACEINFO']._serialized_end=767
-  _globals['_PREDICTIONMANAGEMENTEVENT']._serialized_start=770
-  _globals['_PREDICTIONMANAGEMENTEVENT']._serialized_end=1029
-  _globals['_PREDICTIONSETTLEMENTEVENT']._serialized_start=1032
-  _globals['_PREDICTIONSETTLEMENTEVENT']._serialized_end=1474
-  _globals['_OUTCOMESETTLEMENT']._serialized_start=1476
-  _globals['_OUTCOMESETTLEMENT']._serialized_end=1537
-  _globals['_PREDICTIONTRADEEVENT']._serialized_start=1540
-  _globals['_PREDICTIONTRADEEVENT']._serialized_end=1823
-  _globals['_OUTCOMETRADE']._serialized_start=1825
-  _globals['_OUTCOMETRADE']._serialized_end=1934
-  _globals['_PREDICTIONINFO']._serialized_start=1937
-  _globals['_PREDICTIONINFO']._serialized_end=2314
-  _globals['_PREDICTIONEVENT']._serialized_start=2316
-  _globals['_PREDICTIONEVENT']._serialized_end=2407
-  _globals['_QUESTIONINFO']._serialized_start=2409
-  _globals['_QUESTIONINFO']._serialized_end=2528
-  _globals['_CONDITIONINFO']._serialized_start=2530
-  _globals['_CONDITIONINFO']._serialized_end=2638
-  _globals['_OUTCOMEINFO']._serialized_start=2640
-  _globals['_OUTCOMEINFO']._serialized_end=2707
+  _globals['_PREDICTIONMARKETBLOCKMESSAGE']._serialized_end=479
+  _globals['_PREDICTIONMARKETPLACEINFO']._serialized_start=482
+  _globals['_PREDICTIONMARKETPLACEINFO']._serialized_end=643
+  _globals['_PREDICTIONMANAGEMENTEVENT']._serialized_start=646
+  _globals['_PREDICTIONMANAGEMENTEVENT']._serialized_end=905
+  _globals['_PREDICTIONSETTLEMENTEVENT']._serialized_start=908
+  _globals['_PREDICTIONSETTLEMENTEVENT']._serialized_end=1231
+  _globals['_OUTCOMESETTLEMENT']._serialized_start=1233
+  _globals['_OUTCOMESETTLEMENT']._serialized_end=1294
+  _globals['_PREDICTIONTRADEEVENT']._serialized_start=1297
+  _globals['_PREDICTIONTRADEEVENT']._serialized_end=1580
+  _globals['_OUTCOMETRADE']._serialized_start=1583
+  _globals['_OUTCOMETRADE']._serialized_end=1728
+  _globals['_PREDICTIONINFO']._serialized_start=1731
+  _globals['_PREDICTIONINFO']._serialized_end=2108
+  _globals['_PREDICTIONEVENT']._serialized_start=2110
+  _globals['_PREDICTIONEVENT']._serialized_end=2201
+  _globals['_QUESTIONINFO']._serialized_start=2203
+  _globals['_QUESTIONINFO']._serialized_end=2322
+  _globals['_CONDITIONINFO']._serialized_start=2324
+  _globals['_CONDITIONINFO']._serialized_end=2432
+  _globals['_OUTCOMEINFO']._serialized_start=2434
+  _globals['_OUTCOMEINFO']._serialized_end=2501
 # @@protoc_insertion_point(module_scope)

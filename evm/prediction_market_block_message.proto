@@ -11,10 +11,7 @@ message PredictionMarketBlockMessage {
 
   repeated PredictionTradeEvent TradeEvents = 4;
   repeated PredictionManagementEvent ManagementEvents = 5;
-
-  repeated PredictionSettlementEvent SplitEvents = 6;
-  repeated PredictionSettlementEvent MergeEvents = 7;
-  repeated PredictionSettlementEvent RedemptionEvents = 8;
+  repeated PredictionSettlementEvent SettlementEvents = 6;
 }
 
 message PredictionMarketplaceInfo {
@@ -52,13 +49,7 @@ message PredictionSettlementEvent {
   repeated int32 IndexSets = 5; // indexes of Outcome tokens for split/merge in ConditionInfo, e.g. [0] for "Yes", [1] for "No", [0, 1] for split into both "Yes" and "No"
 
   bytes Holder = 6;
-  oneof Settlement {
-    OutcomeSettlement Merge = 7;
-    OutcomeSettlement Split = 8;
-    OutcomeSettlement Redemption = 9;
-  }
-
-
+  OutcomeSettlement Amounts = 7; // for split: amount of received outcome tokens and paid collateral, for merge: amount of paid outcome tokens and received collateral, for redemption: amount of paid outcome tokens and received collateral
 }
 
 message OutcomeSettlement {
@@ -80,9 +71,14 @@ message PredictionTradeEvent {
 message OutcomeTrade {
   bytes Seller = 1; // maker in Polymarket
   bytes Buyer = 2; // taker in Polymarket
+
   bytes Amount = 3; // amount of Option tokens
   bytes CollateralAmount = 4; // amount of paid collaterals ( USDC )
+
   bool IsOutcomeBuy = 5; // true if Buyer takes Outcome token for Colleteral
+
+  bytes FeeAmount = 6; // amount of fee paid to protocol
+  bytes OrderId = 7;
 }
 
 message PredictionInfo {
