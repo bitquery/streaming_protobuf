@@ -2,6 +2,7 @@ syntax = "proto3";
 package evm_messages;
 
 import "evm/block_message.proto";
+import "evm/dex_block_message.proto";
 import "evm/token_block_message.proto";
 
 message PredictionMarketBlockMessage {
@@ -77,7 +78,7 @@ message OutcomeTrade {
 
   bool IsOutcomeBuy = 5; // true if Buyer takes Outcome token for Colleteral
 
-  bytes FeeAmount = 6; // amount of fee paid to protocol
+  TradeFee Fee = 6;
   bytes OrderId = 7;
 }
 
