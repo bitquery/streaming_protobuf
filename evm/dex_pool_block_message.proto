@@ -28,6 +28,8 @@ message PoolLiquidityChangeEvent {
   PoolPriceTable PoolPriceTable = 9;
 
   PoolInfo Pool = 11;
+
+  uint64 TransactionIndex = 12;
 }
 
 

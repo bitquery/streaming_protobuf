@@ -38,6 +38,8 @@ message PredictionManagementEvent {
   PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
   string Description = 5;
+
+  uint64 TransactionIndex = 6;
 }
 
 message PredictionSettlementEvent {
@@ -51,6 +53,8 @@ message PredictionSettlementEvent {
 
   bytes Holder = 6;
   OutcomeSettlement Amounts = 7; // for split: amount of received outcome tokens and paid collateral, for merge: amount of paid outcome tokens and received collateral, for redemption: amount of paid outcome tokens and received collateral
+
+  uint64 TransactionIndex = 8;
 }
 
 message OutcomeSettlement {
@@ -67,6 +71,8 @@ message PredictionTradeEvent {
   PredictionInfo Prediction = 4;
 
   OutcomeTrade OutcomeTrade = 5;
+
+  uint64 TransactionIndex = 6;
 }
 
 message OutcomeTrade {
