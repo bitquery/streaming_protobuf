@@ -116,6 +116,7 @@ message QuestionInfo {
   string ResolutionSource = 5; // "https://data.chain.link/streams/eth-usd",
   string Image = 6; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
 
+  string EventId = 7;
 }
 
 message ConditionInfo {
