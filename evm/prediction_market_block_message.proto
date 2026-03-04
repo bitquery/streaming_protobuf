@@ -46,7 +46,7 @@ message PredictionManagementEvent {
 }
 
 message GroupInfo {
-  string Id = 1;
+  bytes Id = 1;
   string Title = 2;
   string Description = 3;
 }
