@@ -35,17 +35,17 @@ message PredictionManagementEvent {
   TransactionHeader TransactionHeader = 1;
   Signature TransactionSignature = 2;
 
-  PredictionEvent PredictionEvent = 3;
+  PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
   string Description = 5;
 
   uint64 TransactionIndex = 6;
 
-  EventInfo Event = 7;
+  GroupInfo Group = 7;
 
 }
 
-message EventInfo {
+message GroupInfo {
   string Id = 1;
   string Title = 2;
   string Description = 3;
@@ -55,7 +55,7 @@ message PredictionSettlementEvent {
 
   TransactionHeader TransactionHeader = 1;
   Signature TransactionSignature = 2;
-  PredictionEvent PredictionEvent = 3;
+  PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
   repeated int32 IndexSets = 5; // indexes of Outcome tokens for split/merge in ConditionInfo, e.g. [0] for "Yes", [1] for "No", [0, 1] for split into both "Yes" and "No"
@@ -76,7 +76,7 @@ message PredictionTradeEvent {
   TransactionHeader TransactionHeader = 1;
   Signature TransactionSignature = 2;
 
-  PredictionEvent PredictionEvent = 3;
+  PredictionEvent Event = 3;
   PredictionInfo Prediction = 4;
 
   OutcomeTrade OutcomeTrade = 5;
@@ -125,7 +125,7 @@ message QuestionInfo {
   string ResolutionSource = 5; // "https://data.chain.link/streams/eth-usd",
   string Image = 6; // https://polymarket-upload.s3.us-east-2.amazonaws.com/ETH+fullsize.jpg
 
-  string EventId = 7;
+  string GroupId = 7;
 }
 
 message ConditionInfo {
