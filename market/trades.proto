@@ -1,5 +1,42 @@
 syntax = "proto3";
 package marketdata_messages;
 
-import "market/marketdata.proto";
+import "market/price_index.proto";
+import "market/trader.proto";
+import "market/pool.proto";
+import "market/transaction.proto";
 
+enum Side {
+  Buy = 0;
+  Sell = 1;
+}
+
+message Trade {
+  PairUpdate Pair = 1;
+
+  TradeAmounts Amounts = 2;
+  TradeAmounts AmountsInUsd = 3;
+
+  float        Price = 4; // = Base / Quote
+  float        PriceInUsd = 5; // = Base / ( Quote * Pair.PriceUpdate.Estimates.AdaptivePrice )
+
+  Trader       Trader = 6;
+
+  TradeTransaction Transaction = 7;
+
+  Pool Pool = 8;
+
+  Side Side = 9;
+}
+
+
+
+message TradeAmounts {
+  float Base = 1;
+  float Quote = 2;
+}
+
+message TradesMessage {
+  uint64 Time = 1;
+  repeated Trade Trades = 2;
+}
