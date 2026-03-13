@@ -1,0 +1,7 @@
+syntax = "proto3";
+package marketdata_messages;
+
+
+message Pool {
+  string Address = 1;
+}

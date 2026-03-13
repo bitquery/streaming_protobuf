@@ -1,0 +1,31 @@
+syntax = "proto3";
+package marketdata_messages;
+
+message Chain {
+  string Name = 1;
+  string Type = 2;
+  string Id = 3;
+}
+
+message Block {
+  uint64 Height = 1;
+  uint64 Slot = 2;
+  uint64 Timestamp = 3;
+
+  string Hash = 4;
+}
+
+message TransactionHeader {
+  uint32 Index = 1;
+  string Hash = 2;
+  string Sender = 3;
+  string To = 4;
+  string FeePayer = 5;
+  float Fee = 6;
+}
+
+message TradeTransaction {
+  Chain Chain = 1;
+  Block Block = 2;
+  TransactionHeader TransactionHeader = 3;
+}

@@ -24,6 +24,9 @@ generate_market:
 	--go_opt="Mmarket/trades.proto=market/messages;marketdata_messages" \
 	--go_opt="Mmarket/price_index.proto=market/messages;marketdata_messages" \
 	--go_opt="Mmarket/trades.proto=market/messages;marketdata_messages" \
+	--go_opt="Mmarket/trader.proto=market/messages;marketdata_messages" \
+	--go_opt="Mmarket/pool.proto=market/messages;marketdata_messages" \
+	--go_opt="Mmarket/transaction.proto=market/messages;marketdata_messages" \
 	$(shell find ./market -type f -name '*.proto')
 	protoc \
     	-I=. \
