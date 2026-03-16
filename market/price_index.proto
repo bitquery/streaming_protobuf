@@ -83,15 +83,26 @@ message PriceUpdate {
   EstimatedPrices Estimates = 4;
 }
 
+message MarketCapUpdate {
+  float totalSupply = 1;
+  float fullyDilutedValuationUsd = 2; // Fully diluted valuation (FDV) is a market cap if the max supply was in circulation
+
+  optional float circulatingSupply = 3;
+  optional float maxSupply = 4;
+  optional float marketCap = 5;
+}
+
 message CurrencyUpdate {
   Currency Currency = 1;
   PriceUpdate PriceUpdate = 2;
+  optional MarketCapUpdate MarketCapUpdate = 3;
 }
 
 message TokenUpdate {
   Currency Currency = 1;
   Token Token = 2;
   PriceUpdate PriceUpdate = 3;
+  optional MarketCapUpdate MarketCapUpdate = 4;
 }
 
 message PairUpdate {
@@ -102,6 +113,7 @@ message PairUpdate {
   Market Market = 5;
   PriceUpdate PriceUpdate = 6;
   PriceUpdate PriceUpdateInQuoteTokens = 7;
+  optional MarketCapUpdate MarketCapUpdate = 8;
 }
 
 message PriceIndexMessage {
