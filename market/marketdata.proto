@@ -31,11 +31,16 @@ message CurrencyPriceBucket {
   string Symbol = 3;
   string OriginalId = 4;
   PriceBucket Bucket = 6;
+
+  double CirculatingSupply = 7;
+  double TotalSupply = 8;
+  double MaxSupply = 9;
 }
 
 message Price {
   uint64 Time = 1;
   double Usd = 2;
+  double MarketCap = 3;
 }
 
 message PriceBucket {
