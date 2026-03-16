@@ -23,6 +23,10 @@ message Token {
   string Name = 7;
   string Symbol = 8;
   string NetworkBid = 9;
+
+  double CirculatingSupply = 10;
+  double TotalSupply = 11;
+  double MaxSupply = 12;
 }
 
 message CurrencyPriceBucket {
@@ -36,6 +40,7 @@ message CurrencyPriceBucket {
 message Price {
   uint64 Time = 1;
   double Usd = 2;
+  double MarketCap = 3;
 }
 
 message PriceBucket {
