@@ -84,12 +84,12 @@ message PriceUpdate {
 }
 
 message MarketCapUpdate {
-  double totalSupply = 1;
-  double marketCap = 2;
-  double fullyDilutedValuationUsd = 3; // Fully diluted valuation (FDV) is a market cap if the max supply was in circulation
+  double TotalSupply = 1;
+  double MarketCap = 2;
+  double FullyDilutedValuationUsd = 3; // Fully diluted valuation (FDV) is a market cap if the max supply was in circulation
 
-  optional double circulatingSupply = 4;
-  optional double maxSupply = 5;
+  optional double CirculatingSupply = 4;
+  optional double MaxSupply = 5;
 }
 
 message CurrencyUpdate {
