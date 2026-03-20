@@ -15,6 +15,7 @@ message TokenInfo {
   bool   Fungible = 9;
   string  AssetId = 10;
   int32   BalanceSlotIndex = 11;
+  bytes   TotalSupply = 12;
 }
 
 message TokenTransfer {
