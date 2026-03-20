@@ -40,6 +40,8 @@ message Currency {
   bytes MintAuthority = 22;
 
   bool Parsed = 23;
+
+  uint64 TotalSupply = 24;
 }
 
 
