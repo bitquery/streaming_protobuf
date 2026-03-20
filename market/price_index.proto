@@ -11,12 +11,12 @@ message Currency {
 
 message Market {
   string Id = 1;
-  string Network = 2;
+  string Network = 2; // LowCardinality string in clickhouse
   string NetworkBid = 3;
   string Name = 4;
   string Address = 5;
-  string Protocol = 6;
-  string ProtocolFamily = 7;
+  string Protocol = 6; // LowCardinality string in clickhouse
+  string ProtocolFamily = 7; // LowCardinality string in clickhouse
   string Program = 8;
 }
 
