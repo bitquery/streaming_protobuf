@@ -107,8 +107,8 @@ message TokenUpdate {
 }
 
 message Ranking {
-  uint32 position = 1;
-  float  weight = 2;
+  uint32 Position = 1;
+  float  Weight = 2;
 }
 
 message PairUpdate {
