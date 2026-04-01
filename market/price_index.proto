@@ -103,6 +103,12 @@ message TokenUpdate {
   Token Token = 2;
   PriceUpdate PriceUpdate = 3;
   optional MarketCapUpdate MarketCapUpdate = 4;
+  Ranking Ranking = 5;
+}
+
+message Ranking {
+  uint32 position = 1;
+  float  weight = 2;
 }
 
 message PairUpdate {
@@ -114,6 +120,7 @@ message PairUpdate {
   PriceUpdate PriceUpdate = 6;
   PriceUpdate PriceUpdateInQuoteTokens = 7;
   optional MarketCapUpdate MarketCapUpdate = 8;
+  Ranking Ranking = 9;
 }
 
 message PriceIndexMessage {
