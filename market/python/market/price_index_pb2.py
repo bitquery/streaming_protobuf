@@ -23,45 +23,46 @@ _sym_db = _symbol_database.Default()
 
 
 from market import marketdata_pb2 as market_dot_marketdata__pb2
+from market import pool_pb2 as market_dot_pool__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18market/price_index.proto\x12\x13marketdata_messages\x1a\x17market/marketdata.proto\"4\n\x08\x43urrency\x12\n\n\x02Id\x18\x01 \x01(\t\x12\x0c\n\x04Name\x18\x02 \x01(\t\x12\x0e\n\x06Symbol\x18\x03 \x01(\t\"\x93\x01\n\x06Market\x12\n\n\x02Id\x18\x01 \x01(\t\x12\x0f\n\x07Network\x18\x02 \x01(\t\x12\x12\n\nNetworkBid\x18\x03 \x01(\t\x12\x0c\n\x04Name\x18\x04 \x01(\t\x12\x0f\n\x07\x41\x64\x64ress\x18\x05 \x01(\t\x12\x10\n\x08Protocol\x18\x06 \x01(\t\x12\x16\n\x0eProtocolFamily\x18\x07 \x01(\t\x12\x0f\n\x07Program\x18\x08 \x01(\t\"P\n\x07\x41mounts\x12\x0c\n\x04\x42\x61se\x18\x01 \x01(\x02\x12\r\n\x05Quote\x18\x02 \x01(\x02\x12\x0b\n\x03Usd\x18\x03 \x01(\x02\x12\x1b\n\x13\x42\x61seAttributedToUsd\x18\x04 \x01(\x02\"l\n\x05Quote\x12\x34\n\rQuoteCurrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12-\n\x07\x41mounts\x18\x02 \x01(\x0b\x32\x1c.marketdata_messages.Amounts\"<\n\x0cTimeInterval\x12\x10\n\x08\x44uration\x18\x01 \x01(\r\x12\r\n\x05Start\x18\x02 \x01(\r\x12\x0b\n\x03\x45nd\x18\x03 \x01(\r\"N\n\x04Ohlc\x12\x0c\n\x04Open\x18\x01 \x01(\x02\x12\r\n\x05\x43lose\x18\x02 \x01(\x02\x12\x0c\n\x04High\x18\x03 \x01(\x02\x12\x0b\n\x03Low\x18\x04 \x01(\x02\x12\x0e\n\x06Volume\x18\x05 \x01(\x02\"\x9d\x02\n\x13PriceByTimeInterval\x12\x37\n\x0cTimeInterval\x18\x01 \x01(\x0b\x32!.marketdata_messages.TimeInterval\x12-\n\x07\x41mounts\x18\x02 \x01(\x0b\x32\x1c.marketdata_messages.Amounts\x12\x11\n\tMeanPrice\x18\x03 \x01(\x02\x12\x1b\n\x13SimpleMovingAverage\x18\x04 \x01(\x02\x12#\n\x1bWeightedSimpleMovingAverage\x18\x05 \x01(\x02\x12 \n\x18\x45xponentialMovingAverage\x18\x06 \x01(\x02\x12\'\n\x04Ohlc\x18\x07 \x01(\x0b\x32\x19.marketdata_messages.Ohlc\"\xa0\x01\n\rPriceByVolume\x12\x14\n\x0cTargetVolume\x18\x01 \x01(\x02\x12\x37\n\x0cTimeInterval\x18\x02 \x01(\x0b\x32!.marketdata_messages.TimeInterval\x12-\n\x07\x41mounts\x18\x03 \x01(\x0b\x32\x1c.marketdata_messages.Amounts\x12\x11\n\tMeanPrice\x18\x04 \x01(\x02\"(\n\x0f\x45stimatedPrices\x12\x15\n\rAdaptivePrice\x18\x01 \x01(\x02\"\xf6\x01\n\x0bPriceUpdate\x12*\n\x06Quotes\x18\x01 \x03(\x0b\x32\x1a.marketdata_messages.Quote\x12\x46\n\x14PriceByTimeIntervals\x18\x02 \x03(\x0b\x32(.marketdata_messages.PriceByTimeInterval\x12:\n\x0ePriceByVolumes\x18\x03 \x03(\x0b\x32\".marketdata_messages.PriceByVolume\x12\x37\n\tEstimates\x18\x04 \x01(\x0b\x32$.marketdata_messages.EstimatedPrices\"\xb7\x01\n\x0fMarketCapUpdate\x12\x13\n\x0bTotalSupply\x18\x01 \x01(\x01\x12\x11\n\tMarketCap\x18\x02 \x01(\x01\x12 \n\x18\x46ullyDilutedValuationUsd\x18\x03 \x01(\x01\x12\x1e\n\x11\x43irculatingSupply\x18\x04 \x01(\x01H\x00\x88\x01\x01\x12\x16\n\tMaxSupply\x18\x05 \x01(\x01H\x01\x88\x01\x01\x42\x14\n\x12_CirculatingSupplyB\x0c\n\n_MaxSupply\"\xd0\x01\n\x0e\x43urrencyUpdate\x12/\n\x08\x43urrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12\x35\n\x0bPriceUpdate\x18\x02 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x0fMarketCapUpdate\x18\x03 \x01(\x0b\x32$.marketdata_messages.MarketCapUpdateH\x00\x88\x01\x01\x42\x12\n\x10_MarketCapUpdate\"\xa7\x02\n\x0bTokenUpdate\x12/\n\x08\x43urrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12)\n\x05Token\x18\x02 \x01(\x0b\x32\x1a.marketdata_messages.Token\x12\x35\n\x0bPriceUpdate\x18\x03 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x0fMarketCapUpdate\x18\x04 \x01(\x0b\x32$.marketdata_messages.MarketCapUpdateH\x00\x88\x01\x01\x12-\n\x07Ranking\x18\x05 \x01(\x0b\x32\x1c.marketdata_messages.RankingB\x12\n\x10_MarketCapUpdate\"+\n\x07Ranking\x12\x10\n\x08Position\x18\x01 \x01(\r\x12\x0e\n\x06Weight\x18\x02 \x01(\x02\"\xfd\x03\n\nPairUpdate\x12/\n\x08\x43urrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12\x34\n\rQuoteCurrency\x18\x02 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12)\n\x05Token\x18\x03 \x01(\x0b\x32\x1a.marketdata_messages.Token\x12.\n\nQuoteToken\x18\x04 \x01(\x0b\x32\x1a.marketdata_messages.Token\x12+\n\x06Market\x18\x05 \x01(\x0b\x32\x1b.marketdata_messages.Market\x12\x35\n\x0bPriceUpdate\x18\x06 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x18PriceUpdateInQuoteTokens\x18\x07 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x0fMarketCapUpdate\x18\x08 \x01(\x0b\x32$.marketdata_messages.MarketCapUpdateH\x00\x88\x01\x01\x12-\n\x07Ranking\x18\t \x01(\x0b\x32\x1c.marketdata_messages.RankingB\x12\n\x10_MarketCapUpdate\"\xcd\x01\n\x11PriceIndexMessage\x12\x0c\n\x04Time\x18\x01 \x01(\x04\x12<\n\x0f\x43urrencyUpdates\x18\x02 \x03(\x0b\x32#.marketdata_messages.CurrencyUpdate\x12\x36\n\x0cTokenUpdates\x18\x03 \x03(\x0b\x32 .marketdata_messages.TokenUpdate\x12\x34\n\x0bPairUpdates\x18\x04 \x03(\x0b\x32\x1f.marketdata_messages.PairUpdateb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18market/price_index.proto\x12\x13marketdata_messages\x1a\x17market/marketdata.proto\x1a\x11market/pool.proto\"4\n\x08\x43urrency\x12\n\n\x02Id\x18\x01 \x01(\t\x12\x0c\n\x04Name\x18\x02 \x01(\t\x12\x0e\n\x06Symbol\x18\x03 \x01(\t\"\x93\x01\n\x06Market\x12\n\n\x02Id\x18\x01 \x01(\t\x12\x0f\n\x07Network\x18\x02 \x01(\t\x12\x12\n\nNetworkBid\x18\x03 \x01(\t\x12\x0c\n\x04Name\x18\x04 \x01(\t\x12\x0f\n\x07\x41\x64\x64ress\x18\x05 \x01(\t\x12\x10\n\x08Protocol\x18\x06 \x01(\t\x12\x16\n\x0eProtocolFamily\x18\x07 \x01(\t\x12\x0f\n\x07Program\x18\x08 \x01(\t\"P\n\x07\x41mounts\x12\x0c\n\x04\x42\x61se\x18\x01 \x01(\x02\x12\r\n\x05Quote\x18\x02 \x01(\x02\x12\x0b\n\x03Usd\x18\x03 \x01(\x02\x12\x1b\n\x13\x42\x61seAttributedToUsd\x18\x04 \x01(\x02\"l\n\x05Quote\x12\x34\n\rQuoteCurrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12-\n\x07\x41mounts\x18\x02 \x01(\x0b\x32\x1c.marketdata_messages.Amounts\"<\n\x0cTimeInterval\x12\x10\n\x08\x44uration\x18\x01 \x01(\r\x12\r\n\x05Start\x18\x02 \x01(\r\x12\x0b\n\x03\x45nd\x18\x03 \x01(\r\"N\n\x04Ohlc\x12\x0c\n\x04Open\x18\x01 \x01(\x02\x12\r\n\x05\x43lose\x18\x02 \x01(\x02\x12\x0c\n\x04High\x18\x03 \x01(\x02\x12\x0b\n\x03Low\x18\x04 \x01(\x02\x12\x0e\n\x06Volume\x18\x05 \x01(\x02\"\x9d\x02\n\x13PriceByTimeInterval\x12\x37\n\x0cTimeInterval\x18\x01 \x01(\x0b\x32!.marketdata_messages.TimeInterval\x12-\n\x07\x41mounts\x18\x02 \x01(\x0b\x32\x1c.marketdata_messages.Amounts\x12\x11\n\tMeanPrice\x18\x03 \x01(\x02\x12\x1b\n\x13SimpleMovingAverage\x18\x04 \x01(\x02\x12#\n\x1bWeightedSimpleMovingAverage\x18\x05 \x01(\x02\x12 \n\x18\x45xponentialMovingAverage\x18\x06 \x01(\x02\x12\'\n\x04Ohlc\x18\x07 \x01(\x0b\x32\x19.marketdata_messages.Ohlc\"\xa0\x01\n\rPriceByVolume\x12\x14\n\x0cTargetVolume\x18\x01 \x01(\x02\x12\x37\n\x0cTimeInterval\x18\x02 \x01(\x0b\x32!.marketdata_messages.TimeInterval\x12-\n\x07\x41mounts\x18\x03 \x01(\x0b\x32\x1c.marketdata_messages.Amounts\x12\x11\n\tMeanPrice\x18\x04 \x01(\x02\"(\n\x0f\x45stimatedPrices\x12\x15\n\rAdaptivePrice\x18\x01 \x01(\x02\"\xf6\x01\n\x0bPriceUpdate\x12*\n\x06Quotes\x18\x01 \x03(\x0b\x32\x1a.marketdata_messages.Quote\x12\x46\n\x14PriceByTimeIntervals\x18\x02 \x03(\x0b\x32(.marketdata_messages.PriceByTimeInterval\x12:\n\x0ePriceByVolumes\x18\x03 \x03(\x0b\x32\".marketdata_messages.PriceByVolume\x12\x37\n\tEstimates\x18\x04 \x01(\x0b\x32$.marketdata_messages.EstimatedPrices\"\xb7\x01\n\x0fMarketCapUpdate\x12\x13\n\x0bTotalSupply\x18\x01 \x01(\x01\x12\x11\n\tMarketCap\x18\x02 \x01(\x01\x12 \n\x18\x46ullyDilutedValuationUsd\x18\x03 \x01(\x01\x12\x1e\n\x11\x43irculatingSupply\x18\x04 \x01(\x01H\x00\x88\x01\x01\x12\x16\n\tMaxSupply\x18\x05 \x01(\x01H\x01\x88\x01\x01\x42\x14\n\x12_CirculatingSupplyB\x0c\n\n_MaxSupply\"\xd0\x01\n\x0e\x43urrencyUpdate\x12/\n\x08\x43urrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12\x35\n\x0bPriceUpdate\x18\x02 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x0fMarketCapUpdate\x18\x03 \x01(\x0b\x32$.marketdata_messages.MarketCapUpdateH\x00\x88\x01\x01\x42\x12\n\x10_MarketCapUpdate\"\xa7\x02\n\x0bTokenUpdate\x12/\n\x08\x43urrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12)\n\x05Token\x18\x02 \x01(\x0b\x32\x1a.marketdata_messages.Token\x12\x35\n\x0bPriceUpdate\x18\x03 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x0fMarketCapUpdate\x18\x04 \x01(\x0b\x32$.marketdata_messages.MarketCapUpdateH\x00\x88\x01\x01\x12-\n\x07Ranking\x18\x05 \x01(\x0b\x32\x1c.marketdata_messages.RankingB\x12\n\x10_MarketCapUpdate\"+\n\x07Ranking\x12\x10\n\x08Position\x18\x01 \x01(\r\x12\x0e\n\x06Weight\x18\x02 \x01(\x02\"\xa6\x04\n\nPairUpdate\x12/\n\x08\x43urrency\x18\x01 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12\x34\n\rQuoteCurrency\x18\x02 \x01(\x0b\x32\x1d.marketdata_messages.Currency\x12)\n\x05Token\x18\x03 \x01(\x0b\x32\x1a.marketdata_messages.Token\x12.\n\nQuoteToken\x18\x04 \x01(\x0b\x32\x1a.marketdata_messages.Token\x12+\n\x06Market\x18\x05 \x01(\x0b\x32\x1b.marketdata_messages.Market\x12\x35\n\x0bPriceUpdate\x18\x06 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x18PriceUpdateInQuoteTokens\x18\x07 \x01(\x0b\x32 .marketdata_messages.PriceUpdate\x12\x42\n\x0fMarketCapUpdate\x18\x08 \x01(\x0b\x32$.marketdata_messages.MarketCapUpdateH\x00\x88\x01\x01\x12-\n\x07Ranking\x18\t \x01(\x0b\x32\x1c.marketdata_messages.Ranking\x12\'\n\x04Pool\x18\n \x01(\x0b\x32\x19.marketdata_messages.PoolB\x12\n\x10_MarketCapUpdate\"\xcd\x01\n\x11PriceIndexMessage\x12\x0c\n\x04Time\x18\x01 \x01(\x04\x12<\n\x0f\x43urrencyUpdates\x18\x02 \x03(\x0b\x32#.marketdata_messages.CurrencyUpdate\x12\x36\n\x0cTokenUpdates\x18\x03 \x03(\x0b\x32 .marketdata_messages.TokenUpdate\x12\x34\n\x0bPairUpdates\x18\x04 \x03(\x0b\x32\x1f.marketdata_messages.PairUpdateb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'market.price_index_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_CURRENCY']._serialized_start=74
-  _globals['_CURRENCY']._serialized_end=126
-  _globals['_MARKET']._serialized_start=129
-  _globals['_MARKET']._serialized_end=276
-  _globals['_AMOUNTS']._serialized_start=278
-  _globals['_AMOUNTS']._serialized_end=358
-  _globals['_QUOTE']._serialized_start=360
-  _globals['_QUOTE']._serialized_end=468
-  _globals['_TIMEINTERVAL']._serialized_start=470
-  _globals['_TIMEINTERVAL']._serialized_end=530
-  _globals['_OHLC']._serialized_start=532
-  _globals['_OHLC']._serialized_end=610
-  _globals['_PRICEBYTIMEINTERVAL']._serialized_start=613
-  _globals['_PRICEBYTIMEINTERVAL']._serialized_end=898
-  _globals['_PRICEBYVOLUME']._serialized_start=901
-  _globals['_PRICEBYVOLUME']._serialized_end=1061
-  _globals['_ESTIMATEDPRICES']._serialized_start=1063
-  _globals['_ESTIMATEDPRICES']._serialized_end=1103
-  _globals['_PRICEUPDATE']._serialized_start=1106
-  _globals['_PRICEUPDATE']._serialized_end=1352
-  _globals['_MARKETCAPUPDATE']._serialized_start=1355
-  _globals['_MARKETCAPUPDATE']._serialized_end=1538
-  _globals['_CURRENCYUPDATE']._serialized_start=1541
-  _globals['_CURRENCYUPDATE']._serialized_end=1749
-  _globals['_TOKENUPDATE']._serialized_start=1752
-  _globals['_TOKENUPDATE']._serialized_end=2047
-  _globals['_RANKING']._serialized_start=2049
-  _globals['_RANKING']._serialized_end=2092
-  _globals['_PAIRUPDATE']._serialized_start=2095
-  _globals['_PAIRUPDATE']._serialized_end=2604
-  _globals['_PRICEINDEXMESSAGE']._serialized_start=2607
-  _globals['_PRICEINDEXMESSAGE']._serialized_end=2812
+  _globals['_CURRENCY']._serialized_start=93
+  _globals['_CURRENCY']._serialized_end=145
+  _globals['_MARKET']._serialized_start=148
+  _globals['_MARKET']._serialized_end=295
+  _globals['_AMOUNTS']._serialized_start=297
+  _globals['_AMOUNTS']._serialized_end=377
+  _globals['_QUOTE']._serialized_start=379
+  _globals['_QUOTE']._serialized_end=487
+  _globals['_TIMEINTERVAL']._serialized_start=489
+  _globals['_TIMEINTERVAL']._serialized_end=549
+  _globals['_OHLC']._serialized_start=551
+  _globals['_OHLC']._serialized_end=629
+  _globals['_PRICEBYTIMEINTERVAL']._serialized_start=632
+  _globals['_PRICEBYTIMEINTERVAL']._serialized_end=917
+  _globals['_PRICEBYVOLUME']._serialized_start=920
+  _globals['_PRICEBYVOLUME']._serialized_end=1080
+  _globals['_ESTIMATEDPRICES']._serialized_start=1082
+  _globals['_ESTIMATEDPRICES']._serialized_end=1122
+  _globals['_PRICEUPDATE']._serialized_start=1125
+  _globals['_PRICEUPDATE']._serialized_end=1371
+  _globals['_MARKETCAPUPDATE']._serialized_start=1374
+  _globals['_MARKETCAPUPDATE']._serialized_end=1557
+  _globals['_CURRENCYUPDATE']._serialized_start=1560
+  _globals['_CURRENCYUPDATE']._serialized_end=1768
+  _globals['_TOKENUPDATE']._serialized_start=1771
+  _globals['_TOKENUPDATE']._serialized_end=2066
+  _globals['_RANKING']._serialized_start=2068
+  _globals['_RANKING']._serialized_end=2111
+  _globals['_PAIRUPDATE']._serialized_start=2114
+  _globals['_PAIRUPDATE']._serialized_end=2664
+  _globals['_PRICEINDEXMESSAGE']._serialized_start=2667
+  _globals['_PRICEINDEXMESSAGE']._serialized_end=2872
 # @@protoc_insertion_point(module_scope)

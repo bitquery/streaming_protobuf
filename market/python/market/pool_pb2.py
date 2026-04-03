@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11market/pool.proto\x12\x13marketdata_messages\"\x17\n\x04Pool\x12\x0f\n\x07\x41\x64\x64ress\x18\x01 \x01(\tb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11market/pool.proto\x12\x13marketdata_messages\"/\n\x04Pool\x12\x0f\n\x07\x41\x64\x64ress\x18\x01 \x01(\t\x12\x0f\n\x02Id\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x05\n\x03_Idb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,5 +32,5 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'market.pool_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_POOL']._serialized_start=42
-  _globals['_POOL']._serialized_end=65
+  _globals['_POOL']._serialized_end=89
 # @@protoc_insertion_point(module_scope)

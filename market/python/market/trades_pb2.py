@@ -28,19 +28,19 @@ from market import pool_pb2 as market_dot_pool__pb2
 from market import transaction_pb2 as market_dot_transaction__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13market/trades.proto\x12\x13marketdata_messages\x1a\x18market/price_index.proto\x1a\x13market/trader.proto\x1a\x11market/pool.proto\x1a\x18market/transaction.proto\"\x81\x03\n\x05Trade\x12-\n\x04Pair\x18\x01 \x01(\x0b\x32\x1f.marketdata_messages.PairUpdate\x12\x32\n\x07\x41mounts\x18\x02 \x01(\x0b\x32!.marketdata_messages.TradeAmounts\x12\x37\n\x0c\x41mountsInUsd\x18\x03 \x01(\x0b\x32!.marketdata_messages.TradeAmounts\x12\r\n\x05Price\x18\x04 \x01(\x02\x12\x12\n\nPriceInUsd\x18\x05 \x01(\x02\x12+\n\x06Trader\x18\x06 \x01(\x0b\x32\x1b.marketdata_messages.Trader\x12:\n\x0bTransaction\x18\x07 \x01(\x0b\x32%.marketdata_messages.TradeTransaction\x12\'\n\x04Pool\x18\x08 \x01(\x0b\x32\x19.marketdata_messages.Pool\x12\'\n\x04Side\x18\t \x01(\x0e\x32\x19.marketdata_messages.Side\"+\n\x0cTradeAmounts\x12\x0c\n\x04\x42\x61se\x18\x01 \x01(\x02\x12\r\n\x05Quote\x18\x02 \x01(\x02\"I\n\rTradesMessage\x12\x0c\n\x04Time\x18\x01 \x01(\x04\x12*\n\x06Trades\x18\x02 \x03(\x0b\x32\x1a.marketdata_messages.Trade*\x19\n\x04Side\x12\x07\n\x03\x42uy\x10\x00\x12\x08\n\x04Sell\x10\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x13market/trades.proto\x12\x13marketdata_messages\x1a\x18market/price_index.proto\x1a\x13market/trader.proto\x1a\x11market/pool.proto\x1a\x18market/transaction.proto\"\xd8\x02\n\x05Trade\x12-\n\x04Pair\x18\x01 \x01(\x0b\x32\x1f.marketdata_messages.PairUpdate\x12\x32\n\x07\x41mounts\x18\x02 \x01(\x0b\x32!.marketdata_messages.TradeAmounts\x12\x37\n\x0c\x41mountsInUsd\x18\x03 \x01(\x0b\x32!.marketdata_messages.TradeAmounts\x12\r\n\x05Price\x18\x04 \x01(\x02\x12\x12\n\nPriceInUsd\x18\x05 \x01(\x02\x12+\n\x06Trader\x18\x06 \x01(\x0b\x32\x1b.marketdata_messages.Trader\x12:\n\x0bTransaction\x18\x07 \x01(\x0b\x32%.marketdata_messages.TradeTransaction\x12\'\n\x04Side\x18\t \x01(\x0e\x32\x19.marketdata_messages.Side\"+\n\x0cTradeAmounts\x12\x0c\n\x04\x42\x61se\x18\x01 \x01(\x02\x12\r\n\x05Quote\x18\x02 \x01(\x02\"I\n\rTradesMessage\x12\x0c\n\x04Time\x18\x01 \x01(\x04\x12*\n\x06Trades\x18\x02 \x03(\x0b\x32\x1a.marketdata_messages.Trade*\x19\n\x04Side\x12\x07\n\x03\x42uy\x10\x00\x12\x08\n\x04Sell\x10\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'market.trades_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_SIDE']._serialized_start=644
-  _globals['_SIDE']._serialized_end=669
+  _globals['_SIDE']._serialized_start=603
+  _globals['_SIDE']._serialized_end=628
   _globals['_TRADE']._serialized_start=137
-  _globals['_TRADE']._serialized_end=522
-  _globals['_TRADEAMOUNTS']._serialized_start=524
-  _globals['_TRADEAMOUNTS']._serialized_end=567
-  _globals['_TRADESMESSAGE']._serialized_start=569
-  _globals['_TRADESMESSAGE']._serialized_end=642
+  _globals['_TRADE']._serialized_end=481
+  _globals['_TRADEAMOUNTS']._serialized_start=483
+  _globals['_TRADEAMOUNTS']._serialized_end=526
+  _globals['_TRADESMESSAGE']._serialized_start=528
+  _globals['_TRADESMESSAGE']._serialized_end=601
 # @@protoc_insertion_point(module_scope)
