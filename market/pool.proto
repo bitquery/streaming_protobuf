@@ -4,4 +4,5 @@ package marketdata_messages;
 
 message Pool {
   string Address = 1;
+  optional string Id = 2;
 }

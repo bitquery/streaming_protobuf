@@ -24,8 +24,6 @@ message Trade {
 
   TradeTransaction Transaction = 7;
 
-  Pool Pool = 8;
-
   Side Side = 9; // LowCardinality string in clickhouse
 }
 

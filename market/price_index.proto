@@ -2,6 +2,7 @@ syntax = "proto3";
 package marketdata_messages;
 
 import "market/marketdata.proto";
+import "market/pool.proto";
 
 message Currency {
   string Id = 1;
@@ -121,6 +122,7 @@ message PairUpdate {
   PriceUpdate PriceUpdateInQuoteTokens = 7;
   optional MarketCapUpdate MarketCapUpdate = 8;
   Ranking Ranking = 9;
+  Pool Pool = 10;
 }
 
 message PriceIndexMessage {
