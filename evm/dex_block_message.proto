@@ -3,7 +3,7 @@ package evm_messages;
 
 import "evm/block_message.proto";
 import "evm/token_block_message.proto";
-
+import "evm/parsed_abi_block_message.proto";
 
 message DexInfo {
   bytes SmartContract = 1;
@@ -65,6 +65,7 @@ message DexTrade {
   Signature TransactionSignature = 13;
 
   bytes PoolId = 14;
+  TransactionFee TransactionFee = 15;
 }
 
 message DexBlockMessage {
