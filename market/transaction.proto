@@ -21,7 +21,7 @@ message TransactionHeader {
   string Sender = 3;
   string To = 4;
   string FeePayer = 5;
-  float Fee = 6;
+  double Fee = 6;
 }
 
 message TradeTransaction {
