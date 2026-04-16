@@ -5,7 +5,8 @@ generate_evm:
 	-I=. \
 	--go_out=. \
 	--go-vtproto_out=. \
-	--go-vtproto_opt=features=marshal+unmarshal+size \
+	--go-vtproto_opt=features=marshal+unmarshal+size+pool \
+	--go-vtproto_opt=pool=evm/messages.* \
 	--go_opt="Mevm/block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/dex_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/dex_pool_block_message.proto=evm/messages;evm_messages" \

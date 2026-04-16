@@ -11,6 +11,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"
 	math "math"
+	sync "sync"
 )
 
 const (
@@ -460,6 +461,162 @@ func (m *PoolPriceTable) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+var vtprotoPool_DexPoolBlockMessage = sync.Pool{
+	New: func() interface{} {
+		return &DexPoolBlockMessage{}
+	},
+}
+
+func (m *DexPoolBlockMessage) ResetVT() {
+	if m != nil {
+		m.Chain.ReturnToVTPool()
+		m.Header.ReturnToVTPool()
+		for _, mm := range m.PoolEvents {
+			mm.ResetVT()
+		}
+		f0 := m.PoolEvents[:0]
+		m.L1Header.ReturnToVTPool()
+		m.Reset()
+		m.PoolEvents = f0
+	}
+}
+func (m *DexPoolBlockMessage) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_DexPoolBlockMessage.Put(m)
+	}
+}
+func DexPoolBlockMessageFromVTPool() *DexPoolBlockMessage {
+	return vtprotoPool_DexPoolBlockMessage.Get().(*DexPoolBlockMessage)
+}
+
+var vtprotoPool_PoolLiquidityChangeEvent = sync.Pool{
+	New: func() interface{} {
+		return &PoolLiquidityChangeEvent{}
+	},
+}
+
+func (m *PoolLiquidityChangeEvent) ResetVT() {
+	if m != nil {
+		m.TransactionHeader.ReturnToVTPool()
+		m.TransactionSignature.ReturnToVTPool()
+		m.Dex.ReturnToVTPool()
+		m.Liquidity.ReturnToVTPool()
+		m.PoolPriceTable.ReturnToVTPool()
+		m.Pool.ReturnToVTPool()
+		m.Reset()
+	}
+}
+func (m *PoolLiquidityChangeEvent) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PoolLiquidityChangeEvent.Put(m)
+	}
+}
+func PoolLiquidityChangeEventFromVTPool() *PoolLiquidityChangeEvent {
+	return vtprotoPool_PoolLiquidityChangeEvent.Get().(*PoolLiquidityChangeEvent)
+}
+
+var vtprotoPool_PoolInfo = sync.Pool{
+	New: func() interface{} {
+		return &PoolInfo{}
+	},
+}
+
+func (m *PoolInfo) ResetVT() {
+	if m != nil {
+		f0 := m.SmartContract[:0]
+		m.CurrencyA.ReturnToVTPool()
+		m.CurrencyB.ReturnToVTPool()
+		m.Pair.ReturnToVTPool()
+		f1 := m.PoolId[:0]
+		m.Reset()
+		m.SmartContract = f0
+		m.PoolId = f1
+	}
+}
+func (m *PoolInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PoolInfo.Put(m)
+	}
+}
+func PoolInfoFromVTPool() *PoolInfo {
+	return vtprotoPool_PoolInfo.Get().(*PoolInfo)
+}
+
+var vtprotoPool_PoolLiquidity = sync.Pool{
+	New: func() interface{} {
+		return &PoolLiquidity{}
+	},
+}
+
+func (m *PoolLiquidity) ResetVT() {
+	if m != nil {
+		m.Reset()
+	}
+}
+func (m *PoolLiquidity) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PoolLiquidity.Put(m)
+	}
+}
+func PoolLiquidityFromVTPool() *PoolLiquidity {
+	return vtprotoPool_PoolLiquidity.Get().(*PoolLiquidity)
+}
+
+var vtprotoPool_PoolPrice = sync.Pool{
+	New: func() interface{} {
+		return &PoolPrice{}
+	},
+}
+
+func (m *PoolPrice) ResetVT() {
+	if m != nil {
+		m.Reset()
+	}
+}
+func (m *PoolPrice) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PoolPrice.Put(m)
+	}
+}
+func PoolPriceFromVTPool() *PoolPrice {
+	return vtprotoPool_PoolPrice.Get().(*PoolPrice)
+}
+
+var vtprotoPool_PoolPriceTable = sync.Pool{
+	New: func() interface{} {
+		return &PoolPriceTable{}
+	},
+}
+
+func (m *PoolPriceTable) ResetVT() {
+	if m != nil {
+		for _, mm := range m.AtoBPrices {
+			mm.ResetVT()
+		}
+		f0 := m.AtoBPrices[:0]
+		for _, mm := range m.BtoAPrices {
+			mm.ResetVT()
+		}
+		f1 := m.BtoAPrices[:0]
+		m.Reset()
+		m.AtoBPrices = f0
+		m.BtoAPrices = f1
+	}
+}
+func (m *PoolPriceTable) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PoolPriceTable.Put(m)
+	}
+}
+func PoolPriceTableFromVTPool() *PoolPriceTable {
+	return vtprotoPool_PoolPriceTable.Get().(*PoolPriceTable)
+}
 func (m *DexPoolBlockMessage) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -689,7 +846,7 @@ func (m *DexPoolBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Chain == nil {
-				m.Chain = &Chain{}
+				m.Chain = ChainFromVTPool()
 			}
 			if err := m.Chain.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -725,7 +882,7 @@ func (m *DexPoolBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &BlockHeader{}
+				m.Header = BlockHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -760,7 +917,14 @@ func (m *DexPoolBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PoolEvents = append(m.PoolEvents, &PoolLiquidityChangeEvent{})
+			if len(m.PoolEvents) == cap(m.PoolEvents) {
+				m.PoolEvents = append(m.PoolEvents, &PoolLiquidityChangeEvent{})
+			} else {
+				m.PoolEvents = m.PoolEvents[:len(m.PoolEvents)+1]
+				if m.PoolEvents[len(m.PoolEvents)-1] == nil {
+					m.PoolEvents[len(m.PoolEvents)-1] = &PoolLiquidityChangeEvent{}
+				}
+			}
 			if err := m.PoolEvents[len(m.PoolEvents)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -795,7 +959,7 @@ func (m *DexPoolBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1Header == nil {
-				m.L1Header = &BlockHeader{}
+				m.L1Header = BlockHeaderFromVTPool()
 			}
 			if err := m.L1Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -882,7 +1046,7 @@ func (m *PoolLiquidityChangeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -918,7 +1082,7 @@ func (m *PoolLiquidityChangeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionSignature == nil {
-				m.TransactionSignature = &Signature{}
+				m.TransactionSignature = SignatureFromVTPool()
 			}
 			if err := m.TransactionSignature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1012,7 +1176,7 @@ func (m *PoolLiquidityChangeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Dex == nil {
-				m.Dex = &DexInfo{}
+				m.Dex = DexInfoFromVTPool()
 			}
 			if err := m.Dex.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1048,7 +1212,7 @@ func (m *PoolLiquidityChangeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Liquidity == nil {
-				m.Liquidity = &PoolLiquidity{}
+				m.Liquidity = PoolLiquidityFromVTPool()
 			}
 			if err := m.Liquidity.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1084,7 +1248,7 @@ func (m *PoolLiquidityChangeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.PoolPriceTable == nil {
-				m.PoolPriceTable = &PoolPriceTable{}
+				m.PoolPriceTable = PoolPriceTableFromVTPool()
 			}
 			if err := m.PoolPriceTable.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1120,7 +1284,7 @@ func (m *PoolLiquidityChangeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Pool == nil {
-				m.Pool = &PoolInfo{}
+				m.Pool = PoolInfoFromVTPool()
 			}
 			if err := m.Pool.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1260,7 +1424,7 @@ func (m *PoolInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CurrencyA == nil {
-				m.CurrencyA = &TokenInfo{}
+				m.CurrencyA = TokenInfoFromVTPool()
 			}
 			if err := m.CurrencyA.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1296,7 +1460,7 @@ func (m *PoolInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CurrencyB == nil {
-				m.CurrencyB = &TokenInfo{}
+				m.CurrencyB = TokenInfoFromVTPool()
 			}
 			if err := m.CurrencyB.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1332,7 +1496,7 @@ func (m *PoolInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Pair == nil {
-				m.Pair = &TokenInfo{}
+				m.Pair = TokenInfoFromVTPool()
 			}
 			if err := m.Pair.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1628,7 +1792,14 @@ func (m *PoolPriceTable) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AtoBPrices = append(m.AtoBPrices, &PoolPrice{})
+			if len(m.AtoBPrices) == cap(m.AtoBPrices) {
+				m.AtoBPrices = append(m.AtoBPrices, &PoolPrice{})
+			} else {
+				m.AtoBPrices = m.AtoBPrices[:len(m.AtoBPrices)+1]
+				if m.AtoBPrices[len(m.AtoBPrices)-1] == nil {
+					m.AtoBPrices[len(m.AtoBPrices)-1] = &PoolPrice{}
+				}
+			}
 			if err := m.AtoBPrices[len(m.AtoBPrices)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1662,7 +1833,14 @@ func (m *PoolPriceTable) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BtoAPrices = append(m.BtoAPrices, &PoolPrice{})
+			if len(m.BtoAPrices) == cap(m.BtoAPrices) {
+				m.BtoAPrices = append(m.BtoAPrices, &PoolPrice{})
+			} else {
+				m.BtoAPrices = m.BtoAPrices[:len(m.BtoAPrices)+1]
+				if m.BtoAPrices[len(m.BtoAPrices)-1] == nil {
+					m.BtoAPrices[len(m.BtoAPrices)-1] = &PoolPrice{}
+				}
+			}
 			if err := m.BtoAPrices[len(m.BtoAPrices)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}

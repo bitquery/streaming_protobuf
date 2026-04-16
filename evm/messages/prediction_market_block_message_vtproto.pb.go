@@ -9,6 +9,7 @@ import (
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"
+	sync "sync"
 )
 
 const (
@@ -1031,6 +1032,361 @@ func (m *OutcomeInfo) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+var vtprotoPool_PredictionMarketBlockMessage = sync.Pool{
+	New: func() interface{} {
+		return &PredictionMarketBlockMessage{}
+	},
+}
+
+func (m *PredictionMarketBlockMessage) ResetVT() {
+	if m != nil {
+		m.Chain.ReturnToVTPool()
+		m.Header.ReturnToVTPool()
+		m.L1Header.ReturnToVTPool()
+		for _, mm := range m.TradeEvents {
+			mm.ResetVT()
+		}
+		f0 := m.TradeEvents[:0]
+		for _, mm := range m.ManagementEvents {
+			mm.ResetVT()
+		}
+		f1 := m.ManagementEvents[:0]
+		for _, mm := range m.SettlementEvents {
+			mm.ResetVT()
+		}
+		f2 := m.SettlementEvents[:0]
+		m.Reset()
+		m.TradeEvents = f0
+		m.ManagementEvents = f1
+		m.SettlementEvents = f2
+	}
+}
+func (m *PredictionMarketBlockMessage) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PredictionMarketBlockMessage.Put(m)
+	}
+}
+func PredictionMarketBlockMessageFromVTPool() *PredictionMarketBlockMessage {
+	return vtprotoPool_PredictionMarketBlockMessage.Get().(*PredictionMarketBlockMessage)
+}
+
+var vtprotoPool_PredictionMarketplaceInfo = sync.Pool{
+	New: func() interface{} {
+		return &PredictionMarketplaceInfo{}
+	},
+}
+
+func (m *PredictionMarketplaceInfo) ResetVT() {
+	if m != nil {
+		f0 := m.SmartContract[:0]
+		f1 := m.DelegatedTo[:0]
+		m.Reset()
+		m.SmartContract = f0
+		m.DelegatedTo = f1
+	}
+}
+func (m *PredictionMarketplaceInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PredictionMarketplaceInfo.Put(m)
+	}
+}
+func PredictionMarketplaceInfoFromVTPool() *PredictionMarketplaceInfo {
+	return vtprotoPool_PredictionMarketplaceInfo.Get().(*PredictionMarketplaceInfo)
+}
+
+var vtprotoPool_PredictionManagementEvent = sync.Pool{
+	New: func() interface{} {
+		return &PredictionManagementEvent{}
+	},
+}
+
+func (m *PredictionManagementEvent) ResetVT() {
+	if m != nil {
+		m.TransactionHeader.ReturnToVTPool()
+		m.TransactionSignature.ReturnToVTPool()
+		m.Event.ReturnToVTPool()
+		m.Prediction.ReturnToVTPool()
+		m.Group.ReturnToVTPool()
+		m.Reset()
+	}
+}
+func (m *PredictionManagementEvent) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PredictionManagementEvent.Put(m)
+	}
+}
+func PredictionManagementEventFromVTPool() *PredictionManagementEvent {
+	return vtprotoPool_PredictionManagementEvent.Get().(*PredictionManagementEvent)
+}
+
+var vtprotoPool_GroupInfo = sync.Pool{
+	New: func() interface{} {
+		return &GroupInfo{}
+	},
+}
+
+func (m *GroupInfo) ResetVT() {
+	if m != nil {
+		f0 := m.Id[:0]
+		m.Reset()
+		m.Id = f0
+	}
+}
+func (m *GroupInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_GroupInfo.Put(m)
+	}
+}
+func GroupInfoFromVTPool() *GroupInfo {
+	return vtprotoPool_GroupInfo.Get().(*GroupInfo)
+}
+
+var vtprotoPool_PredictionSettlementEvent = sync.Pool{
+	New: func() interface{} {
+		return &PredictionSettlementEvent{}
+	},
+}
+
+func (m *PredictionSettlementEvent) ResetVT() {
+	if m != nil {
+		m.TransactionHeader.ReturnToVTPool()
+		m.TransactionSignature.ReturnToVTPool()
+		m.Event.ReturnToVTPool()
+		m.Prediction.ReturnToVTPool()
+		f0 := m.IndexSets[:0]
+		f1 := m.Holder[:0]
+		m.Amounts.ReturnToVTPool()
+		m.Reset()
+		m.IndexSets = f0
+		m.Holder = f1
+	}
+}
+func (m *PredictionSettlementEvent) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PredictionSettlementEvent.Put(m)
+	}
+}
+func PredictionSettlementEventFromVTPool() *PredictionSettlementEvent {
+	return vtprotoPool_PredictionSettlementEvent.Get().(*PredictionSettlementEvent)
+}
+
+var vtprotoPool_OutcomeSettlement = sync.Pool{
+	New: func() interface{} {
+		return &OutcomeSettlement{}
+	},
+}
+
+func (m *OutcomeSettlement) ResetVT() {
+	if m != nil {
+		f0 := m.Amount[:0]
+		f1 := m.CollateralAmount[:0]
+		m.Reset()
+		m.Amount = f0
+		m.CollateralAmount = f1
+	}
+}
+func (m *OutcomeSettlement) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_OutcomeSettlement.Put(m)
+	}
+}
+func OutcomeSettlementFromVTPool() *OutcomeSettlement {
+	return vtprotoPool_OutcomeSettlement.Get().(*OutcomeSettlement)
+}
+
+var vtprotoPool_PredictionTradeEvent = sync.Pool{
+	New: func() interface{} {
+		return &PredictionTradeEvent{}
+	},
+}
+
+func (m *PredictionTradeEvent) ResetVT() {
+	if m != nil {
+		m.TransactionHeader.ReturnToVTPool()
+		m.TransactionSignature.ReturnToVTPool()
+		m.Event.ReturnToVTPool()
+		m.Prediction.ReturnToVTPool()
+		m.OutcomeTrade.ReturnToVTPool()
+		m.Reset()
+	}
+}
+func (m *PredictionTradeEvent) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PredictionTradeEvent.Put(m)
+	}
+}
+func PredictionTradeEventFromVTPool() *PredictionTradeEvent {
+	return vtprotoPool_PredictionTradeEvent.Get().(*PredictionTradeEvent)
+}
+
+var vtprotoPool_OutcomeTrade = sync.Pool{
+	New: func() interface{} {
+		return &OutcomeTrade{}
+	},
+}
+
+func (m *OutcomeTrade) ResetVT() {
+	if m != nil {
+		f0 := m.Seller[:0]
+		f1 := m.Buyer[:0]
+		f2 := m.Amount[:0]
+		f3 := m.CollateralAmount[:0]
+		m.Fee.ReturnToVTPool()
+		f4 := m.OrderId[:0]
+		m.Reset()
+		m.Seller = f0
+		m.Buyer = f1
+		m.Amount = f2
+		m.CollateralAmount = f3
+		m.OrderId = f4
+	}
+}
+func (m *OutcomeTrade) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_OutcomeTrade.Put(m)
+	}
+}
+func OutcomeTradeFromVTPool() *OutcomeTrade {
+	return vtprotoPool_OutcomeTrade.Get().(*OutcomeTrade)
+}
+
+var vtprotoPool_PredictionInfo = sync.Pool{
+	New: func() interface{} {
+		return &PredictionInfo{}
+	},
+}
+
+func (m *PredictionInfo) ResetVT() {
+	if m != nil {
+		m.Marketplace.ReturnToVTPool()
+		m.Question.ReturnToVTPool()
+		m.Condition.ReturnToVTPool()
+		m.Outcome.ReturnToVTPool()
+		m.OutcomeToken.ReturnToVTPool()
+		m.CollateralToken.ReturnToVTPool()
+		m.Reset()
+	}
+}
+func (m *PredictionInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PredictionInfo.Put(m)
+	}
+}
+func PredictionInfoFromVTPool() *PredictionInfo {
+	return vtprotoPool_PredictionInfo.Get().(*PredictionInfo)
+}
+
+var vtprotoPool_PredictionEvent = sync.Pool{
+	New: func() interface{} {
+		return &PredictionEvent{}
+	},
+}
+
+func (m *PredictionEvent) ResetVT() {
+	if m != nil {
+		f0 := m.SmartContract[:0]
+		m.Reset()
+		m.SmartContract = f0
+	}
+}
+func (m *PredictionEvent) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_PredictionEvent.Put(m)
+	}
+}
+func PredictionEventFromVTPool() *PredictionEvent {
+	return vtprotoPool_PredictionEvent.Get().(*PredictionEvent)
+}
+
+var vtprotoPool_QuestionInfo = sync.Pool{
+	New: func() interface{} {
+		return &QuestionInfo{}
+	},
+}
+
+func (m *QuestionInfo) ResetVT() {
+	if m != nil {
+		f0 := m.Id[:0]
+		f1 := m.GroupId[:0]
+		m.Reset()
+		m.Id = f0
+		m.GroupId = f1
+	}
+}
+func (m *QuestionInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_QuestionInfo.Put(m)
+	}
+}
+func QuestionInfoFromVTPool() *QuestionInfo {
+	return vtprotoPool_QuestionInfo.Get().(*QuestionInfo)
+}
+
+var vtprotoPool_ConditionInfo = sync.Pool{
+	New: func() interface{} {
+		return &ConditionInfo{}
+	},
+}
+
+func (m *ConditionInfo) ResetVT() {
+	if m != nil {
+		f0 := m.Id[:0]
+		f1 := m.QuestionId[:0]
+		for _, mm := range m.Outcomes {
+			mm.ResetVT()
+		}
+		f2 := m.Outcomes[:0]
+		f3 := m.Oracle[:0]
+		m.Reset()
+		m.Id = f0
+		m.QuestionId = f1
+		m.Outcomes = f2
+		m.Oracle = f3
+	}
+}
+func (m *ConditionInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ConditionInfo.Put(m)
+	}
+}
+func ConditionInfoFromVTPool() *ConditionInfo {
+	return vtprotoPool_ConditionInfo.Get().(*ConditionInfo)
+}
+
+var vtprotoPool_OutcomeInfo = sync.Pool{
+	New: func() interface{} {
+		return &OutcomeInfo{}
+	},
+}
+
+func (m *OutcomeInfo) ResetVT() {
+	if m != nil {
+		f0 := m.Id[:0]
+		m.Reset()
+		m.Id = f0
+	}
+}
+func (m *OutcomeInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_OutcomeInfo.Put(m)
+	}
+}
+func OutcomeInfoFromVTPool() *OutcomeInfo {
+	return vtprotoPool_OutcomeInfo.Get().(*OutcomeInfo)
+}
 func (m *PredictionMarketBlockMessage) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -1498,7 +1854,7 @@ func (m *PredictionMarketBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Chain == nil {
-				m.Chain = &Chain{}
+				m.Chain = ChainFromVTPool()
 			}
 			if err := m.Chain.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1534,7 +1890,7 @@ func (m *PredictionMarketBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &BlockHeader{}
+				m.Header = BlockHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1570,7 +1926,7 @@ func (m *PredictionMarketBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1Header == nil {
-				m.L1Header = &BlockHeader{}
+				m.L1Header = BlockHeaderFromVTPool()
 			}
 			if err := m.L1Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1605,7 +1961,14 @@ func (m *PredictionMarketBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.TradeEvents = append(m.TradeEvents, &PredictionTradeEvent{})
+			if len(m.TradeEvents) == cap(m.TradeEvents) {
+				m.TradeEvents = append(m.TradeEvents, &PredictionTradeEvent{})
+			} else {
+				m.TradeEvents = m.TradeEvents[:len(m.TradeEvents)+1]
+				if m.TradeEvents[len(m.TradeEvents)-1] == nil {
+					m.TradeEvents[len(m.TradeEvents)-1] = &PredictionTradeEvent{}
+				}
+			}
 			if err := m.TradeEvents[len(m.TradeEvents)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1639,7 +2002,14 @@ func (m *PredictionMarketBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ManagementEvents = append(m.ManagementEvents, &PredictionManagementEvent{})
+			if len(m.ManagementEvents) == cap(m.ManagementEvents) {
+				m.ManagementEvents = append(m.ManagementEvents, &PredictionManagementEvent{})
+			} else {
+				m.ManagementEvents = m.ManagementEvents[:len(m.ManagementEvents)+1]
+				if m.ManagementEvents[len(m.ManagementEvents)-1] == nil {
+					m.ManagementEvents[len(m.ManagementEvents)-1] = &PredictionManagementEvent{}
+				}
+			}
 			if err := m.ManagementEvents[len(m.ManagementEvents)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1673,7 +2043,14 @@ func (m *PredictionMarketBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SettlementEvents = append(m.SettlementEvents, &PredictionSettlementEvent{})
+			if len(m.SettlementEvents) == cap(m.SettlementEvents) {
+				m.SettlementEvents = append(m.SettlementEvents, &PredictionSettlementEvent{})
+			} else {
+				m.SettlementEvents = m.SettlementEvents[:len(m.SettlementEvents)+1]
+				if m.SettlementEvents[len(m.SettlementEvents)-1] == nil {
+					m.SettlementEvents[len(m.SettlementEvents)-1] = &PredictionSettlementEvent{}
+				}
+			}
 			if err := m.SettlementEvents[len(m.SettlementEvents)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1994,7 +2371,7 @@ func (m *PredictionManagementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2030,7 +2407,7 @@ func (m *PredictionManagementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionSignature == nil {
-				m.TransactionSignature = &Signature{}
+				m.TransactionSignature = SignatureFromVTPool()
 			}
 			if err := m.TransactionSignature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2066,7 +2443,7 @@ func (m *PredictionManagementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Event == nil {
-				m.Event = &PredictionEvent{}
+				m.Event = PredictionEventFromVTPool()
 			}
 			if err := m.Event.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2102,7 +2479,7 @@ func (m *PredictionManagementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Prediction == nil {
-				m.Prediction = &PredictionInfo{}
+				m.Prediction = PredictionInfoFromVTPool()
 			}
 			if err := m.Prediction.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2189,7 +2566,7 @@ func (m *PredictionManagementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Group == nil {
-				m.Group = &GroupInfo{}
+				m.Group = GroupInfoFromVTPool()
 			}
 			if err := m.Group.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2425,7 +2802,7 @@ func (m *PredictionSettlementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2461,7 +2838,7 @@ func (m *PredictionSettlementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionSignature == nil {
-				m.TransactionSignature = &Signature{}
+				m.TransactionSignature = SignatureFromVTPool()
 			}
 			if err := m.TransactionSignature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2497,7 +2874,7 @@ func (m *PredictionSettlementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Event == nil {
-				m.Event = &PredictionEvent{}
+				m.Event = PredictionEventFromVTPool()
 			}
 			if err := m.Event.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2533,7 +2910,7 @@ func (m *PredictionSettlementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Prediction == nil {
-				m.Prediction = &PredictionInfo{}
+				m.Prediction = PredictionInfoFromVTPool()
 			}
 			if err := m.Prediction.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2591,7 +2968,7 @@ func (m *PredictionSettlementEvent) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 				elementCount = count
-				if elementCount != 0 && len(m.IndexSets) == 0 {
+				if elementCount != 0 && len(m.IndexSets) == 0 && cap(m.IndexSets) < elementCount {
 					m.IndexSets = make([]int32, 0, elementCount)
 				}
 				for iNdEx < postIndex {
@@ -2679,7 +3056,7 @@ func (m *PredictionSettlementEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Amounts == nil {
-				m.Amounts = &OutcomeSettlement{}
+				m.Amounts = OutcomeSettlementFromVTPool()
 			}
 			if err := m.Amounts.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2904,7 +3281,7 @@ func (m *PredictionTradeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2940,7 +3317,7 @@ func (m *PredictionTradeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionSignature == nil {
-				m.TransactionSignature = &Signature{}
+				m.TransactionSignature = SignatureFromVTPool()
 			}
 			if err := m.TransactionSignature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2976,7 +3353,7 @@ func (m *PredictionTradeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Event == nil {
-				m.Event = &PredictionEvent{}
+				m.Event = PredictionEventFromVTPool()
 			}
 			if err := m.Event.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3012,7 +3389,7 @@ func (m *PredictionTradeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Prediction == nil {
-				m.Prediction = &PredictionInfo{}
+				m.Prediction = PredictionInfoFromVTPool()
 			}
 			if err := m.Prediction.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3048,7 +3425,7 @@ func (m *PredictionTradeEvent) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.OutcomeTrade == nil {
-				m.OutcomeTrade = &OutcomeTrade{}
+				m.OutcomeTrade = OutcomeTradeFromVTPool()
 			}
 			if err := m.OutcomeTrade.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3310,7 +3687,7 @@ func (m *OutcomeTrade) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Fee == nil {
-				m.Fee = &TradeFee{}
+				m.Fee = TradeFeeFromVTPool()
 			}
 			if err := m.Fee.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3431,7 +3808,7 @@ func (m *PredictionInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Marketplace == nil {
-				m.Marketplace = &PredictionMarketplaceInfo{}
+				m.Marketplace = PredictionMarketplaceInfoFromVTPool()
 			}
 			if err := m.Marketplace.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3467,7 +3844,7 @@ func (m *PredictionInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Question == nil {
-				m.Question = &QuestionInfo{}
+				m.Question = QuestionInfoFromVTPool()
 			}
 			if err := m.Question.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3503,7 +3880,7 @@ func (m *PredictionInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Condition == nil {
-				m.Condition = &ConditionInfo{}
+				m.Condition = ConditionInfoFromVTPool()
 			}
 			if err := m.Condition.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3539,7 +3916,7 @@ func (m *PredictionInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Outcome == nil {
-				m.Outcome = &OutcomeInfo{}
+				m.Outcome = OutcomeInfoFromVTPool()
 			}
 			if err := m.Outcome.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3575,7 +3952,7 @@ func (m *PredictionInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.OutcomeToken == nil {
-				m.OutcomeToken = &TokenInfo{}
+				m.OutcomeToken = TokenInfoFromVTPool()
 			}
 			if err := m.OutcomeToken.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3611,7 +3988,7 @@ func (m *PredictionInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CollateralToken == nil {
-				m.CollateralToken = &TokenInfo{}
+				m.CollateralToken = TokenInfoFromVTPool()
 			}
 			if err := m.CollateralToken.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -4186,7 +4563,14 @@ func (m *ConditionInfo) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Outcomes = append(m.Outcomes, &OutcomeInfo{})
+			if len(m.Outcomes) == cap(m.Outcomes) {
+				m.Outcomes = append(m.Outcomes, &OutcomeInfo{})
+			} else {
+				m.Outcomes = m.Outcomes[:len(m.Outcomes)+1]
+				if m.Outcomes[len(m.Outcomes)-1] == nil {
+					m.Outcomes[len(m.Outcomes)-1] = &OutcomeInfo{}
+				}
+			}
 			if err := m.Outcomes[len(m.Outcomes)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}

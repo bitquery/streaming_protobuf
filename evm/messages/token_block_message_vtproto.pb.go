@@ -9,6 +9,7 @@ import (
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"
+	sync "sync"
 )
 
 const (
@@ -518,6 +519,159 @@ func (m *TokenBlockMessage) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+var vtprotoPool_TokenInfo = sync.Pool{
+	New: func() interface{} {
+		return &TokenInfo{}
+	},
+}
+
+func (m *TokenInfo) ResetVT() {
+	if m != nil {
+		f0 := m.SmartContract[:0]
+		f1 := m.DelegatedTo[:0]
+		f2 := m.TotalSupply[:0]
+		m.Reset()
+		m.SmartContract = f0
+		m.DelegatedTo = f1
+		m.TotalSupply = f2
+	}
+}
+func (m *TokenInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TokenInfo.Put(m)
+	}
+}
+func TokenInfoFromVTPool() *TokenInfo {
+	return vtprotoPool_TokenInfo.Get().(*TokenInfo)
+}
+
+var vtprotoPool_TokenTransfer = sync.Pool{
+	New: func() interface{} {
+		return &TokenTransfer{}
+	},
+}
+
+func (m *TokenTransfer) ResetVT() {
+	if m != nil {
+		f0 := m.Sender[:0]
+		f1 := m.Receiver[:0]
+		f2 := m.Amount[:0]
+		f3 := m.Id[:0]
+		m.Currency.ReturnToVTPool()
+		f4 := m.Data[:0]
+		m.TransactionHeader.ReturnToVTPool()
+		m.TransactionSignature.ReturnToVTPool()
+		m.Reset()
+		m.Sender = f0
+		m.Receiver = f1
+		m.Amount = f2
+		m.Id = f3
+		m.Data = f4
+	}
+}
+func (m *TokenTransfer) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TokenTransfer.Put(m)
+	}
+}
+func TokenTransferFromVTPool() *TokenTransfer {
+	return vtprotoPool_TokenTransfer.Get().(*TokenTransfer)
+}
+
+var vtprotoPool_TransactionBalances = sync.Pool{
+	New: func() interface{} {
+		return &TransactionBalances{}
+	},
+}
+
+func (m *TransactionBalances) ResetVT() {
+	if m != nil {
+		m.TransactionHeader.ReturnToVTPool()
+		m.TransactionSignature.ReturnToVTPool()
+		for _, mm := range m.TokenBalances {
+			mm.ResetVT()
+		}
+		f0 := m.TokenBalances[:0]
+		m.Reset()
+		m.TokenBalances = f0
+	}
+}
+func (m *TransactionBalances) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TransactionBalances.Put(m)
+	}
+}
+func TransactionBalancesFromVTPool() *TransactionBalances {
+	return vtprotoPool_TransactionBalances.Get().(*TransactionBalances)
+}
+
+var vtprotoPool_TokenBalance = sync.Pool{
+	New: func() interface{} {
+		return &TokenBalance{}
+	},
+}
+
+func (m *TokenBalance) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		m.Currency.ReturnToVTPool()
+		f1 := m.PreBalance[:0]
+		f2 := m.PostBalance[:0]
+		m.TokenOwnership.ReturnToVTPool()
+		f3 := m.TotalSupply[:0]
+		m.Reset()
+		m.Address = f0
+		m.PreBalance = f1
+		m.PostBalance = f2
+		m.TotalSupply = f3
+	}
+}
+func (m *TokenBalance) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TokenBalance.Put(m)
+	}
+}
+func TokenBalanceFromVTPool() *TokenBalance {
+	return vtprotoPool_TokenBalance.Get().(*TokenBalance)
+}
+
+var vtprotoPool_TokenBlockMessage = sync.Pool{
+	New: func() interface{} {
+		return &TokenBlockMessage{}
+	},
+}
+
+func (m *TokenBlockMessage) ResetVT() {
+	if m != nil {
+		m.Chain.ReturnToVTPool()
+		m.Header.ReturnToVTPool()
+		for _, mm := range m.Transfers {
+			mm.ResetVT()
+		}
+		f0 := m.Transfers[:0]
+		m.L1Header.ReturnToVTPool()
+		for _, mm := range m.TransactionBalances {
+			mm.ResetVT()
+		}
+		f1 := m.TransactionBalances[:0]
+		m.Reset()
+		m.Transfers = f0
+		m.TransactionBalances = f1
+	}
+}
+func (m *TokenBlockMessage) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TokenBlockMessage.Put(m)
+	}
+}
+func TokenBlockMessageFromVTPool() *TokenBlockMessage {
+	return vtprotoPool_TokenBlockMessage.Get().(*TokenBlockMessage)
+}
 func (m *TokenInfo) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -1393,7 +1547,7 @@ func (m *TokenTransfer) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Currency == nil {
-				m.Currency = &TokenInfo{}
+				m.Currency = TokenInfoFromVTPool()
 			}
 			if err := m.Currency.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1502,7 +1656,7 @@ func (m *TokenTransfer) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1538,7 +1692,7 @@ func (m *TokenTransfer) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionSignature == nil {
-				m.TransactionSignature = &Signature{}
+				m.TransactionSignature = SignatureFromVTPool()
 			}
 			if err := m.TransactionSignature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1644,7 +1798,7 @@ func (m *TransactionBalances) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1680,7 +1834,7 @@ func (m *TransactionBalances) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionSignature == nil {
-				m.TransactionSignature = &Signature{}
+				m.TransactionSignature = SignatureFromVTPool()
 			}
 			if err := m.TransactionSignature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1715,7 +1869,14 @@ func (m *TransactionBalances) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.TokenBalances = append(m.TokenBalances, &TokenBalance{})
+			if len(m.TokenBalances) == cap(m.TokenBalances) {
+				m.TokenBalances = append(m.TokenBalances, &TokenBalance{})
+			} else {
+				m.TokenBalances = m.TokenBalances[:len(m.TokenBalances)+1]
+				if m.TokenBalances[len(m.TokenBalances)-1] == nil {
+					m.TokenBalances[len(m.TokenBalances)-1] = &TokenBalance{}
+				}
+			}
 			if err := m.TokenBalances[len(m.TokenBalances)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1835,7 +1996,7 @@ func (m *TokenBalance) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Currency == nil {
-				m.Currency = &TokenInfo{}
+				m.Currency = TokenInfoFromVTPool()
 			}
 			if err := m.Currency.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1958,7 +2119,7 @@ func (m *TokenBalance) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TokenOwnership == nil {
-				m.TokenOwnership = &TokenOwnership{}
+				m.TokenOwnership = TokenOwnershipFromVTPool()
 			}
 			if err := m.TokenOwnership.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2079,7 +2240,7 @@ func (m *TokenBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Chain == nil {
-				m.Chain = &Chain{}
+				m.Chain = ChainFromVTPool()
 			}
 			if err := m.Chain.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2115,7 +2276,7 @@ func (m *TokenBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &BlockHeader{}
+				m.Header = BlockHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2150,7 +2311,14 @@ func (m *TokenBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Transfers = append(m.Transfers, &TokenTransfer{})
+			if len(m.Transfers) == cap(m.Transfers) {
+				m.Transfers = append(m.Transfers, &TokenTransfer{})
+			} else {
+				m.Transfers = m.Transfers[:len(m.Transfers)+1]
+				if m.Transfers[len(m.Transfers)-1] == nil {
+					m.Transfers[len(m.Transfers)-1] = &TokenTransfer{}
+				}
+			}
 			if err := m.Transfers[len(m.Transfers)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2185,7 +2353,7 @@ func (m *TokenBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1Header == nil {
-				m.L1Header = &BlockHeader{}
+				m.L1Header = BlockHeaderFromVTPool()
 			}
 			if err := m.L1Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2220,7 +2388,14 @@ func (m *TokenBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.TransactionBalances = append(m.TransactionBalances, &TransactionBalances{})
+			if len(m.TransactionBalances) == cap(m.TransactionBalances) {
+				m.TransactionBalances = append(m.TransactionBalances, &TransactionBalances{})
+			} else {
+				m.TransactionBalances = m.TransactionBalances[:len(m.TransactionBalances)+1]
+				if m.TransactionBalances[len(m.TransactionBalances)-1] == nil {
+					m.TransactionBalances[len(m.TransactionBalances)-1] = &TransactionBalances{}
+				}
+			}
 			if err := m.TransactionBalances[len(m.TransactionBalances)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}

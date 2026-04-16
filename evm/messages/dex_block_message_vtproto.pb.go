@@ -9,6 +9,7 @@ import (
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"
+	sync "sync"
 )
 
 const (
@@ -586,6 +587,200 @@ func (m *DexBlockMessage) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+var vtprotoPool_DexInfo = sync.Pool{
+	New: func() interface{} {
+		return &DexInfo{}
+	},
+}
+
+func (m *DexInfo) ResetVT() {
+	if m != nil {
+		f0 := m.SmartContract[:0]
+		f1 := m.DelegatedTo[:0]
+		f2 := m.OwnerAddress[:0]
+		f3 := m.FeeRecipient[:0]
+		m.Pair.ReturnToVTPool()
+		for _, mm := range m.Currencies {
+			mm.ResetVT()
+		}
+		f4 := m.Currencies[:0]
+		for _, mm := range m.UnderlyingCurrencies {
+			mm.ResetVT()
+		}
+		f5 := m.UnderlyingCurrencies[:0]
+		m.Reset()
+		m.SmartContract = f0
+		m.DelegatedTo = f1
+		m.OwnerAddress = f2
+		m.FeeRecipient = f3
+		m.Currencies = f4
+		m.UnderlyingCurrencies = f5
+	}
+}
+func (m *DexInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_DexInfo.Put(m)
+	}
+}
+func DexInfoFromVTPool() *DexInfo {
+	return vtprotoPool_DexInfo.Get().(*DexInfo)
+}
+
+var vtprotoPool_TradeAsset = sync.Pool{
+	New: func() interface{} {
+		return &TradeAsset{}
+	},
+}
+
+func (m *TradeAsset) ResetVT() {
+	if m != nil {
+		m.Currency.ReturnToVTPool()
+		f0 := m.Amount[:0]
+		f1 := m.Id[:0]
+		f2 := m.Data[:0]
+		m.Reset()
+		m.Amount = f0
+		m.Id = f1
+		m.Data = f2
+	}
+}
+func (m *TradeAsset) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TradeAsset.Put(m)
+	}
+}
+func TradeAssetFromVTPool() *TradeAsset {
+	return vtprotoPool_TradeAsset.Get().(*TradeAsset)
+}
+
+var vtprotoPool_TradeSide = sync.Pool{
+	New: func() interface{} {
+		return &TradeSide{}
+	},
+}
+
+func (m *TradeSide) ResetVT() {
+	if m != nil {
+		f0 := m.Seller[:0]
+		f1 := m.Buyer[:0]
+		f2 := m.OrderId[:0]
+		for _, mm := range m.Assets {
+			mm.ResetVT()
+		}
+		f3 := m.Assets[:0]
+		m.Reset()
+		m.Seller = f0
+		m.Buyer = f1
+		m.OrderId = f2
+		m.Assets = f3
+	}
+}
+func (m *TradeSide) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TradeSide.Put(m)
+	}
+}
+func TradeSideFromVTPool() *TradeSide {
+	return vtprotoPool_TradeSide.Get().(*TradeSide)
+}
+
+var vtprotoPool_TradeFee = sync.Pool{
+	New: func() interface{} {
+		return &TradeFee{}
+	},
+}
+
+func (m *TradeFee) ResetVT() {
+	if m != nil {
+		m.Currency.ReturnToVTPool()
+		f0 := m.Amount[:0]
+		f1 := m.Id[:0]
+		f2 := m.Payer[:0]
+		f3 := m.Recipient[:0]
+		m.Reset()
+		m.Amount = f0
+		m.Id = f1
+		m.Payer = f2
+		m.Recipient = f3
+	}
+}
+func (m *TradeFee) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TradeFee.Put(m)
+	}
+}
+func TradeFeeFromVTPool() *TradeFee {
+	return vtprotoPool_TradeFee.Get().(*TradeFee)
+}
+
+var vtprotoPool_DexTrade = sync.Pool{
+	New: func() interface{} {
+		return &DexTrade{}
+	},
+}
+
+func (m *DexTrade) ResetVT() {
+	if m != nil {
+		m.Dex.ReturnToVTPool()
+		m.Buy.ReturnToVTPool()
+		m.Sell.ReturnToVTPool()
+		f0 := m.Sender[:0]
+		for _, mm := range m.Fees {
+			mm.ResetVT()
+		}
+		f1 := m.Fees[:0]
+		m.TransactionHeader.ReturnToVTPool()
+		m.TransactionSignature.ReturnToVTPool()
+		f2 := m.PoolId[:0]
+		m.TransactionFee.ReturnToVTPool()
+		m.Reset()
+		m.Sender = f0
+		m.Fees = f1
+		m.PoolId = f2
+	}
+}
+func (m *DexTrade) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_DexTrade.Put(m)
+	}
+}
+func DexTradeFromVTPool() *DexTrade {
+	return vtprotoPool_DexTrade.Get().(*DexTrade)
+}
+
+var vtprotoPool_DexBlockMessage = sync.Pool{
+	New: func() interface{} {
+		return &DexBlockMessage{}
+	},
+}
+
+func (m *DexBlockMessage) ResetVT() {
+	if m != nil {
+		m.Chain.ReturnToVTPool()
+		m.Header.ReturnToVTPool()
+		for _, mm := range m.Trades {
+			mm.ResetVT()
+		}
+		f0 := m.Trades[:0]
+		m.L1Header.ReturnToVTPool()
+		m.Reset()
+		m.Trades = f0
+	}
+}
+func (m *DexBlockMessage) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_DexBlockMessage.Put(m)
+	}
+}
+func DexBlockMessageFromVTPool() *DexBlockMessage {
+	return vtprotoPool_DexBlockMessage.Get().(*DexBlockMessage)
+}
 func (m *DexInfo) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -1136,7 +1331,7 @@ func (m *DexInfo) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Pair == nil {
-				m.Pair = &TokenInfo{}
+				m.Pair = TokenInfoFromVTPool()
 			}
 			if err := m.Pair.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1171,7 +1366,14 @@ func (m *DexInfo) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Currencies = append(m.Currencies, &TokenInfo{})
+			if len(m.Currencies) == cap(m.Currencies) {
+				m.Currencies = append(m.Currencies, &TokenInfo{})
+			} else {
+				m.Currencies = m.Currencies[:len(m.Currencies)+1]
+				if m.Currencies[len(m.Currencies)-1] == nil {
+					m.Currencies[len(m.Currencies)-1] = &TokenInfo{}
+				}
+			}
 			if err := m.Currencies[len(m.Currencies)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1205,7 +1407,14 @@ func (m *DexInfo) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.UnderlyingCurrencies = append(m.UnderlyingCurrencies, &TokenInfo{})
+			if len(m.UnderlyingCurrencies) == cap(m.UnderlyingCurrencies) {
+				m.UnderlyingCurrencies = append(m.UnderlyingCurrencies, &TokenInfo{})
+			} else {
+				m.UnderlyingCurrencies = m.UnderlyingCurrencies[:len(m.UnderlyingCurrencies)+1]
+				if m.UnderlyingCurrencies[len(m.UnderlyingCurrencies)-1] == nil {
+					m.UnderlyingCurrencies[len(m.UnderlyingCurrencies)-1] = &TokenInfo{}
+				}
+			}
 			if err := m.UnderlyingCurrencies[len(m.UnderlyingCurrencies)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1291,7 +1500,7 @@ func (m *TradeAsset) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Currency == nil {
-				m.Currency = &TokenInfo{}
+				m.Currency = TokenInfoFromVTPool()
 			}
 			if err := m.Currency.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1613,7 +1822,14 @@ func (m *TradeSide) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Assets = append(m.Assets, &TradeAsset{})
+			if len(m.Assets) == cap(m.Assets) {
+				m.Assets = append(m.Assets, &TradeAsset{})
+			} else {
+				m.Assets = m.Assets[:len(m.Assets)+1]
+				if m.Assets[len(m.Assets)-1] == nil {
+					m.Assets[len(m.Assets)-1] = &TradeAsset{}
+				}
+			}
 			if err := m.Assets[len(m.Assets)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1699,7 +1915,7 @@ func (m *TradeFee) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Currency == nil {
-				m.Currency = &TokenInfo{}
+				m.Currency = TokenInfoFromVTPool()
 			}
 			if err := m.Currency.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1999,7 +2215,7 @@ func (m *DexTrade) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Dex == nil {
-				m.Dex = &DexInfo{}
+				m.Dex = DexInfoFromVTPool()
 			}
 			if err := m.Dex.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2035,7 +2251,7 @@ func (m *DexTrade) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Buy == nil {
-				m.Buy = &TradeSide{}
+				m.Buy = TradeSideFromVTPool()
 			}
 			if err := m.Buy.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2071,7 +2287,7 @@ func (m *DexTrade) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Sell == nil {
-				m.Sell = &TradeSide{}
+				m.Sell = TradeSideFromVTPool()
 			}
 			if err := m.Sell.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2160,7 +2376,14 @@ func (m *DexTrade) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Fees = append(m.Fees, &TradeFee{})
+			if len(m.Fees) == cap(m.Fees) {
+				m.Fees = append(m.Fees, &TradeFee{})
+			} else {
+				m.Fees = m.Fees[:len(m.Fees)+1]
+				if m.Fees[len(m.Fees)-1] == nil {
+					m.Fees[len(m.Fees)-1] = &TradeFee{}
+				}
+			}
 			if err := m.Fees[len(m.Fees)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2214,7 +2437,7 @@ func (m *DexTrade) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2250,7 +2473,7 @@ func (m *DexTrade) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionSignature == nil {
-				m.TransactionSignature = &Signature{}
+				m.TransactionSignature = SignatureFromVTPool()
 			}
 			if err := m.TransactionSignature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2320,7 +2543,7 @@ func (m *DexTrade) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionFee == nil {
-				m.TransactionFee = &TransactionFee{}
+				m.TransactionFee = TransactionFeeFromVTPool()
 			}
 			if err := m.TransactionFee.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2407,7 +2630,7 @@ func (m *DexBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Chain == nil {
-				m.Chain = &Chain{}
+				m.Chain = ChainFromVTPool()
 			}
 			if err := m.Chain.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2443,7 +2666,7 @@ func (m *DexBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &BlockHeader{}
+				m.Header = BlockHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2478,7 +2701,14 @@ func (m *DexBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Trades = append(m.Trades, &DexTrade{})
+			if len(m.Trades) == cap(m.Trades) {
+				m.Trades = append(m.Trades, &DexTrade{})
+			} else {
+				m.Trades = m.Trades[:len(m.Trades)+1]
+				if m.Trades[len(m.Trades)-1] == nil {
+					m.Trades[len(m.Trades)-1] = &DexTrade{}
+				}
+			}
 			if err := m.Trades[len(m.Trades)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2513,7 +2743,7 @@ func (m *DexBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1Header == nil {
-				m.L1Header = &BlockHeader{}
+				m.L1Header = BlockHeaderFromVTPool()
 			}
 			if err := m.L1Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err

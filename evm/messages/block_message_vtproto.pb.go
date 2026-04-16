@@ -9,6 +9,7 @@ import (
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"
+	sync "sync"
 )
 
 const (
@@ -2651,6 +2652,979 @@ func (m *BlockMessage) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+var vtprotoPool_AddressCode = sync.Pool{
+	New: func() interface{} {
+		return &AddressCode{}
+	},
+}
+
+func (m *AddressCode) ResetVT() {
+	if m != nil {
+		f0 := m.Hash[:0]
+		m.Reset()
+		m.Hash = f0
+	}
+}
+func (m *AddressCode) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_AddressCode.Put(m)
+	}
+}
+func AddressCodeFromVTPool() *AddressCode {
+	return vtprotoPool_AddressCode.Get().(*AddressCode)
+}
+
+var vtprotoPool_BlockHeader = sync.Pool{
+	New: func() interface{} {
+		return &BlockHeader{}
+	},
+}
+
+func (m *BlockHeader) ResetVT() {
+	if m != nil {
+		f0 := m.Hash[:0]
+		f1 := m.ParentHash[:0]
+		f2 := m.UncleHash[:0]
+		f3 := m.Root[:0]
+		f4 := m.TxHash[:0]
+		f5 := m.ReceiptHash[:0]
+		f6 := m.MixDigest[:0]
+		f7 := m.Coinbase[:0]
+		f8 := m.Bloom[:0]
+		f9 := m.Extra[:0]
+		f10 := m.Difficulty[:0]
+		f11 := m.Number[:0]
+		f12 := m.BaseFee[:0]
+		f13 := m.BatcherAddr[:0]
+		f14 := m.L1FeeOverhead[:0]
+		f15 := m.L1FeeScalar[:0]
+		m.Reset()
+		m.Hash = f0
+		m.ParentHash = f1
+		m.UncleHash = f2
+		m.Root = f3
+		m.TxHash = f4
+		m.ReceiptHash = f5
+		m.MixDigest = f6
+		m.Coinbase = f7
+		m.Bloom = f8
+		m.Extra = f9
+		m.Difficulty = f10
+		m.Number = f11
+		m.BaseFee = f12
+		m.BatcherAddr = f13
+		m.L1FeeOverhead = f14
+		m.L1FeeScalar = f15
+	}
+}
+func (m *BlockHeader) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_BlockHeader.Put(m)
+	}
+}
+func BlockHeaderFromVTPool() *BlockHeader {
+	return vtprotoPool_BlockHeader.Get().(*BlockHeader)
+}
+
+var vtprotoPool_BlockResult = sync.Pool{
+	New: func() interface{} {
+		return &BlockResult{}
+	},
+}
+
+func (m *BlockResult) ResetVT() {
+	if m != nil {
+		m.Reset()
+	}
+}
+func (m *BlockResult) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_BlockResult.Put(m)
+	}
+}
+func BlockResultFromVTPool() *BlockResult {
+	return vtprotoPool_BlockResult.Get().(*BlockResult)
+}
+
+var vtprotoPool_Signature = sync.Pool{
+	New: func() interface{} {
+		return &Signature{}
+	},
+}
+
+func (m *Signature) ResetVT() {
+	if m != nil {
+		f0 := m.R[:0]
+		f1 := m.V[:0]
+		f2 := m.S[:0]
+		m.Reset()
+		m.R = f0
+		m.V = f1
+		m.S = f2
+	}
+}
+func (m *Signature) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Signature.Put(m)
+	}
+}
+func SignatureFromVTPool() *Signature {
+	return vtprotoPool_Signature.Get().(*Signature)
+}
+
+var vtprotoPool_Topic = sync.Pool{
+	New: func() interface{} {
+		return &Topic{}
+	},
+}
+
+func (m *Topic) ResetVT() {
+	if m != nil {
+		f0 := m.Hash[:0]
+		m.Reset()
+		m.Hash = f0
+	}
+}
+func (m *Topic) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Topic.Put(m)
+	}
+}
+func TopicFromVTPool() *Topic {
+	return vtprotoPool_Topic.Get().(*Topic)
+}
+
+var vtprotoPool_LogHeader = sync.Pool{
+	New: func() interface{} {
+		return &LogHeader{}
+	},
+}
+
+func (m *LogHeader) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		f1 := m.Data[:0]
+		m.AddressCode.ReturnToVTPool()
+		m.Reset()
+		m.Address = f0
+		m.Data = f1
+	}
+}
+func (m *LogHeader) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_LogHeader.Put(m)
+	}
+}
+func LogHeaderFromVTPool() *LogHeader {
+	return vtprotoPool_LogHeader.Get().(*LogHeader)
+}
+
+var vtprotoPool_Log = sync.Pool{
+	New: func() interface{} {
+		return &Log{}
+	},
+}
+
+func (m *Log) ResetVT() {
+	if m != nil {
+		m.LogHeader.ReturnToVTPool()
+		for _, mm := range m.Topics {
+			mm.ResetVT()
+		}
+		f0 := m.Topics[:0]
+		m.Reset()
+		m.Topics = f0
+	}
+}
+func (m *Log) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Log.Put(m)
+	}
+}
+func LogFromVTPool() *Log {
+	return vtprotoPool_Log.Get().(*Log)
+}
+
+var vtprotoPool_Store = sync.Pool{
+	New: func() interface{} {
+		return &Store{}
+	},
+}
+
+func (m *Store) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		f1 := m.Location[:0]
+		f2 := m.Value[:0]
+		m.Reset()
+		m.Address = f0
+		m.Location = f1
+		m.Value = f2
+	}
+}
+func (m *Store) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Store.Put(m)
+	}
+}
+func StoreFromVTPool() *Store {
+	return vtprotoPool_Store.Get().(*Store)
+}
+
+var vtprotoPool_ReceiptHeader = sync.Pool{
+	New: func() interface{} {
+		return &ReceiptHeader{}
+	},
+}
+
+func (m *ReceiptHeader) ResetVT() {
+	if m != nil {
+		f0 := m.Bloom[:0]
+		f1 := m.ContractAddress[:0]
+		f2 := m.PostState[:0]
+		m.ContractAddressCode.ReturnToVTPool()
+		m.L1.ReturnToVTPool()
+		f3 := m.EffectiveGasPrice[:0]
+		f4 := m.BlobGasPrice[:0]
+		m.Reset()
+		m.Bloom = f0
+		m.ContractAddress = f1
+		m.PostState = f2
+		m.EffectiveGasPrice = f3
+		m.BlobGasPrice = f4
+	}
+}
+func (m *ReceiptHeader) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ReceiptHeader.Put(m)
+	}
+}
+func ReceiptHeaderFromVTPool() *ReceiptHeader {
+	return vtprotoPool_ReceiptHeader.Get().(*ReceiptHeader)
+}
+
+var vtprotoPool_ReceiptL1Extension = sync.Pool{
+	New: func() interface{} {
+		return &ReceiptL1Extension{}
+	},
+}
+
+func (m *ReceiptL1Extension) ResetVT() {
+	if m != nil {
+		f0 := m.GasPrice[:0]
+		f1 := m.GasUsed[:0]
+		f2 := m.Fee[:0]
+		m.Reset()
+		m.GasPrice = f0
+		m.GasUsed = f1
+		m.Fee = f2
+	}
+}
+func (m *ReceiptL1Extension) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ReceiptL1Extension.Put(m)
+	}
+}
+func ReceiptL1ExtensionFromVTPool() *ReceiptL1Extension {
+	return vtprotoPool_ReceiptL1Extension.Get().(*ReceiptL1Extension)
+}
+
+var vtprotoPool_Receipt = sync.Pool{
+	New: func() interface{} {
+		return &Receipt{}
+	},
+}
+
+func (m *Receipt) ResetVT() {
+	if m != nil {
+		m.ReceiptHeader.ReturnToVTPool()
+		for _, mm := range m.Logs {
+			mm.ResetVT()
+		}
+		f0 := m.Logs[:0]
+		m.Reset()
+		m.Logs = f0
+	}
+}
+func (m *Receipt) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Receipt.Put(m)
+	}
+}
+func ReceiptFromVTPool() *Receipt {
+	return vtprotoPool_Receipt.Get().(*Receipt)
+}
+
+var vtprotoPool_Opcode = sync.Pool{
+	New: func() interface{} {
+		return &Opcode{}
+	},
+}
+
+func (m *Opcode) ResetVT() {
+	if m != nil {
+		m.Reset()
+	}
+}
+func (m *Opcode) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Opcode.Put(m)
+	}
+}
+func OpcodeFromVTPool() *Opcode {
+	return vtprotoPool_Opcode.Get().(*Opcode)
+}
+
+var vtprotoPool_CaptureStart = sync.Pool{
+	New: func() interface{} {
+		return &CaptureStart{}
+	},
+}
+
+func (m *CaptureStart) ResetVT() {
+	if m != nil {
+		f0 := m.From[:0]
+		f1 := m.To[:0]
+		f2 := m.Input[:0]
+		f3 := m.Value[:0]
+		m.ToCode.ReturnToVTPool()
+		m.Reset()
+		m.From = f0
+		m.To = f1
+		m.Input = f2
+		m.Value = f3
+	}
+}
+func (m *CaptureStart) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_CaptureStart.Put(m)
+	}
+}
+func CaptureStartFromVTPool() *CaptureStart {
+	return vtprotoPool_CaptureStart.Get().(*CaptureStart)
+}
+
+var vtprotoPool_CaptureEnd = sync.Pool{
+	New: func() interface{} {
+		return &CaptureEnd{}
+	},
+}
+
+func (m *CaptureEnd) ResetVT() {
+	if m != nil {
+		f0 := m.Output[:0]
+		m.Reset()
+		m.Output = f0
+	}
+}
+func (m *CaptureEnd) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_CaptureEnd.Put(m)
+	}
+}
+func CaptureEndFromVTPool() *CaptureEnd {
+	return vtprotoPool_CaptureEnd.Get().(*CaptureEnd)
+}
+
+var vtprotoPool_Contract = sync.Pool{
+	New: func() interface{} {
+		return &Contract{}
+	},
+}
+
+func (m *Contract) ResetVT() {
+	if m != nil {
+		f0 := m.CallerAddress[:0]
+		f1 := m.Caller[:0]
+		f2 := m.Address[:0]
+		f3 := m.CodeAddr[:0]
+		f4 := m.Input[:0]
+		f5 := m.Value[:0]
+		m.Reset()
+		m.CallerAddress = f0
+		m.Caller = f1
+		m.Address = f2
+		m.CodeAddr = f3
+		m.Input = f4
+		m.Value = f5
+	}
+}
+func (m *Contract) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Contract.Put(m)
+	}
+}
+func ContractFromVTPool() *Contract {
+	return vtprotoPool_Contract.Get().(*Contract)
+}
+
+var vtprotoPool_CaptureFault = sync.Pool{
+	New: func() interface{} {
+		return &CaptureFault{}
+	},
+}
+
+func (m *CaptureFault) ResetVT() {
+	if m != nil {
+		m.Opcode.ReturnToVTPool()
+		f0 := m.Memory[:0]
+		f1 := m.Stack[:0]
+		m.Contract.ReturnToVTPool()
+		m.Reset()
+		m.Memory = f0
+		m.Stack = f1
+	}
+}
+func (m *CaptureFault) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_CaptureFault.Put(m)
+	}
+}
+func CaptureFaultFromVTPool() *CaptureFault {
+	return vtprotoPool_CaptureFault.Get().(*CaptureFault)
+}
+
+var vtprotoPool_CaptureEnter = sync.Pool{
+	New: func() interface{} {
+		return &CaptureEnter{}
+	},
+}
+
+func (m *CaptureEnter) ResetVT() {
+	if m != nil {
+		m.Opcode.ReturnToVTPool()
+		f0 := m.From[:0]
+		f1 := m.To[:0]
+		f2 := m.Input[:0]
+		f3 := m.Value[:0]
+		m.ToCode.ReturnToVTPool()
+		m.Reset()
+		m.From = f0
+		m.To = f1
+		m.Input = f2
+		m.Value = f3
+	}
+}
+func (m *CaptureEnter) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_CaptureEnter.Put(m)
+	}
+}
+func CaptureEnterFromVTPool() *CaptureEnter {
+	return vtprotoPool_CaptureEnter.Get().(*CaptureEnter)
+}
+
+var vtprotoPool_CaptureExit = sync.Pool{
+	New: func() interface{} {
+		return &CaptureExit{}
+	},
+}
+
+func (m *CaptureExit) ResetVT() {
+	if m != nil {
+		f0 := m.Output[:0]
+		m.Reset()
+		m.Output = f0
+	}
+}
+func (m *CaptureExit) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_CaptureExit.Put(m)
+	}
+}
+func CaptureExitFromVTPool() *CaptureExit {
+	return vtprotoPool_CaptureExit.Get().(*CaptureExit)
+}
+
+var vtprotoPool_CaptureStateHeader = sync.Pool{
+	New: func() interface{} {
+		return &CaptureStateHeader{}
+	},
+}
+
+func (m *CaptureStateHeader) ResetVT() {
+	if m != nil {
+		m.Opcode.ReturnToVTPool()
+		f0 := m.RData[:0]
+		m.Reset()
+		m.RData = f0
+	}
+}
+func (m *CaptureStateHeader) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_CaptureStateHeader.Put(m)
+	}
+}
+func CaptureStateHeaderFromVTPool() *CaptureStateHeader {
+	return vtprotoPool_CaptureStateHeader.Get().(*CaptureStateHeader)
+}
+
+var vtprotoPool_StorageChange = sync.Pool{
+	New: func() interface{} {
+		return &StorageChange{}
+	},
+}
+
+func (m *StorageChange) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		f1 := m.Slot[:0]
+		f2 := m.Pre[:0]
+		f3 := m.Post[:0]
+		m.Reset()
+		m.Address = f0
+		m.Slot = f1
+		m.Pre = f2
+		m.Post = f3
+	}
+}
+func (m *StorageChange) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_StorageChange.Put(m)
+	}
+}
+func StorageChangeFromVTPool() *StorageChange {
+	return vtprotoPool_StorageChange.Get().(*StorageChange)
+}
+
+var vtprotoPool_CaptureState = sync.Pool{
+	New: func() interface{} {
+		return &CaptureState{}
+	},
+}
+
+func (m *CaptureState) ResetVT() {
+	if m != nil {
+		m.CaptureStateHeader.ReturnToVTPool()
+		m.Log.ReturnToVTPool()
+		m.Store.ReturnToVTPool()
+		m.StorageChange.ReturnToVTPool()
+		m.Reset()
+	}
+}
+func (m *CaptureState) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_CaptureState.Put(m)
+	}
+}
+func CaptureStateFromVTPool() *CaptureState {
+	return vtprotoPool_CaptureState.Get().(*CaptureState)
+}
+
+var vtprotoPool_Call = sync.Pool{
+	New: func() interface{} {
+		return &Call{}
+	},
+}
+
+func (m *Call) ResetVT() {
+	if m != nil {
+		m.CaptureEnter.ReturnToVTPool()
+		m.CaptureExit.ReturnToVTPool()
+		for _, mm := range m.CaptureStates {
+			mm.ResetVT()
+		}
+		f0 := m.CaptureStates[:0]
+		m.Reset()
+		m.CaptureStates = f0
+	}
+}
+func (m *Call) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Call.Put(m)
+	}
+}
+func CallFromVTPool() *Call {
+	return vtprotoPool_Call.Get().(*Call)
+}
+
+var vtprotoPool_Trace = sync.Pool{
+	New: func() interface{} {
+		return &Trace{}
+	},
+}
+
+func (m *Trace) ResetVT() {
+	if m != nil {
+		for _, mm := range m.Calls {
+			mm.ResetVT()
+		}
+		f0 := m.Calls[:0]
+		m.CaptureStart.ReturnToVTPool()
+		m.CaptureEnd.ReturnToVTPool()
+		m.CaptureFault.ReturnToVTPool()
+		for _, mm := range m.CaptureStates {
+			mm.ResetVT()
+		}
+		f1 := m.CaptureStates[:0]
+		for _, mm := range m.TokenBalanceUpdates {
+			mm.ResetVT()
+		}
+		f2 := m.TokenBalanceUpdates[:0]
+		for _, mm := range m.NativeBalanceUpdates {
+			mm.ResetVT()
+		}
+		f3 := m.NativeBalanceUpdates[:0]
+		for _, mm := range m.StorageChanges {
+			mm.ResetVT()
+		}
+		f4 := m.StorageChanges[:0]
+		m.Reset()
+		m.Calls = f0
+		m.CaptureStates = f1
+		m.TokenBalanceUpdates = f2
+		m.NativeBalanceUpdates = f3
+		m.StorageChanges = f4
+	}
+}
+func (m *Trace) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Trace.Put(m)
+	}
+}
+func TraceFromVTPool() *Trace {
+	return vtprotoPool_Trace.Get().(*Trace)
+}
+
+var vtprotoPool_AccessTuple = sync.Pool{
+	New: func() interface{} {
+		return &AccessTuple{}
+	},
+}
+
+func (m *AccessTuple) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		f1 := m.StorageKeys[:0]
+		m.Reset()
+		m.Address = f0
+		m.StorageKeys = f1
+	}
+}
+func (m *AccessTuple) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_AccessTuple.Put(m)
+	}
+}
+func AccessTupleFromVTPool() *AccessTuple {
+	return vtprotoPool_AccessTuple.Get().(*AccessTuple)
+}
+
+var vtprotoPool_TransactionHeader = sync.Pool{
+	New: func() interface{} {
+		return &TransactionHeader{}
+	},
+}
+
+func (m *TransactionHeader) ResetVT() {
+	if m != nil {
+		f0 := m.Hash[:0]
+		f1 := m.Value[:0]
+		f2 := m.Data[:0]
+		f3 := m.ChainId[:0]
+		f4 := m.Cost[:0]
+		f5 := m.GasFeeCap[:0]
+		f6 := m.GasPrice[:0]
+		f7 := m.GasTipCap[:0]
+		f8 := m.To[:0]
+		f9 := m.From[:0]
+		m.ToCode.ReturnToVTPool()
+		for _, mm := range m.AccessList {
+			mm.ResetVT()
+		}
+		f10 := m.AccessList[:0]
+		f11 := m.SourceHash[:0]
+		m.Blob.ReturnToVTPool()
+		m.Reset()
+		m.Hash = f0
+		m.Value = f1
+		m.Data = f2
+		m.ChainId = f3
+		m.Cost = f4
+		m.GasFeeCap = f5
+		m.GasPrice = f6
+		m.GasTipCap = f7
+		m.To = f8
+		m.From = f9
+		m.AccessList = f10
+		m.SourceHash = f11
+	}
+}
+func (m *TransactionHeader) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TransactionHeader.Put(m)
+	}
+}
+func TransactionHeaderFromVTPool() *TransactionHeader {
+	return vtprotoPool_TransactionHeader.Get().(*TransactionHeader)
+}
+
+var vtprotoPool_Blob = sync.Pool{
+	New: func() interface{} {
+		return &Blob{}
+	},
+}
+
+func (m *Blob) ResetVT() {
+	if m != nil {
+		f0 := m.Hashes[:0]
+		f1 := m.Proofs[:0]
+		f2 := m.Commitments[:0]
+		f3 := m.BlobGasFeeCap[:0]
+		m.Reset()
+		m.Hashes = f0
+		m.Proofs = f1
+		m.Commitments = f2
+		m.BlobGasFeeCap = f3
+	}
+}
+func (m *Blob) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Blob.Put(m)
+	}
+}
+func BlobFromVTPool() *Blob {
+	return vtprotoPool_Blob.Get().(*Blob)
+}
+
+var vtprotoPool_Token = sync.Pool{
+	New: func() interface{} {
+		return &Token{}
+	},
+}
+
+func (m *Token) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		f1 := m.TotalSupply[:0]
+		m.Reset()
+		m.Address = f0
+		m.TotalSupply = f1
+	}
+}
+func (m *Token) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Token.Put(m)
+	}
+}
+func TokenFromVTPool() *Token {
+	return vtprotoPool_Token.Get().(*Token)
+}
+
+var vtprotoPool_TokenOwnership = sync.Pool{
+	New: func() interface{} {
+		return &TokenOwnership{}
+	},
+}
+
+func (m *TokenOwnership) ResetVT() {
+	if m != nil {
+		f0 := m.Id[:0]
+		m.Reset()
+		m.Id = f0
+	}
+}
+func (m *TokenOwnership) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TokenOwnership.Put(m)
+	}
+}
+func TokenOwnershipFromVTPool() *TokenOwnership {
+	return vtprotoPool_TokenOwnership.Get().(*TokenOwnership)
+}
+
+var vtprotoPool_TokenBalanceUpdate = sync.Pool{
+	New: func() interface{} {
+		return &TokenBalanceUpdate{}
+	},
+}
+
+func (m *TokenBalanceUpdate) ResetVT() {
+	if m != nil {
+		m.Token.ReturnToVTPool()
+		f0 := m.Address[:0]
+		f1 := m.PostBalance[:0]
+		m.TokenOwnership.ReturnToVTPool()
+		m.Reset()
+		m.Address = f0
+		m.PostBalance = f1
+	}
+}
+func (m *TokenBalanceUpdate) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TokenBalanceUpdate.Put(m)
+	}
+}
+func TokenBalanceUpdateFromVTPool() *TokenBalanceUpdate {
+	return vtprotoPool_TokenBalanceUpdate.Get().(*TokenBalanceUpdate)
+}
+
+var vtprotoPool_NativeBalanceUpdate = sync.Pool{
+	New: func() interface{} {
+		return &NativeBalanceUpdate{}
+	},
+}
+
+func (m *NativeBalanceUpdate) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		f1 := m.PreBalance[:0]
+		f2 := m.PostBalance[:0]
+		m.Reset()
+		m.Address = f0
+		m.PreBalance = f1
+		m.PostBalance = f2
+	}
+}
+func (m *NativeBalanceUpdate) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_NativeBalanceUpdate.Put(m)
+	}
+}
+func NativeBalanceUpdateFromVTPool() *NativeBalanceUpdate {
+	return vtprotoPool_NativeBalanceUpdate.Get().(*NativeBalanceUpdate)
+}
+
+var vtprotoPool_Transaction = sync.Pool{
+	New: func() interface{} {
+		return &Transaction{}
+	},
+}
+
+func (m *Transaction) ResetVT() {
+	if m != nil {
+		m.TransactionHeader.ReturnToVTPool()
+		m.Signature.ReturnToVTPool()
+		m.Receipt.ReturnToVTPool()
+		m.Trace.ReturnToVTPool()
+		m.Reset()
+	}
+}
+func (m *Transaction) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Transaction.Put(m)
+	}
+}
+func TransactionFromVTPool() *Transaction {
+	return vtprotoPool_Transaction.Get().(*Transaction)
+}
+
+var vtprotoPool_Chain = sync.Pool{
+	New: func() interface{} {
+		return &Chain{}
+	},
+}
+
+func (m *Chain) ResetVT() {
+	if m != nil {
+		f0 := m.ChainId[:0]
+		m.Reset()
+		m.ChainId = f0
+	}
+}
+func (m *Chain) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_Chain.Put(m)
+	}
+}
+func ChainFromVTPool() *Chain {
+	return vtprotoPool_Chain.Get().(*Chain)
+}
+
+var vtprotoPool_L1MessageInfo = sync.Pool{
+	New: func() interface{} {
+		return &L1MessageInfo{}
+	},
+}
+
+func (m *L1MessageInfo) ResetVT() {
+	if m != nil {
+		f0 := m.Poster[:0]
+		f1 := m.RequestId[:0]
+		f2 := m.L1BaseFee[:0]
+		m.Reset()
+		m.Poster = f0
+		m.RequestId = f1
+		m.L1BaseFee = f2
+	}
+}
+func (m *L1MessageInfo) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_L1MessageInfo.Put(m)
+	}
+}
+func L1MessageInfoFromVTPool() *L1MessageInfo {
+	return vtprotoPool_L1MessageInfo.Get().(*L1MessageInfo)
+}
+
+var vtprotoPool_BlockMessage = sync.Pool{
+	New: func() interface{} {
+		return &BlockMessage{}
+	},
+}
+
+func (m *BlockMessage) ResetVT() {
+	if m != nil {
+		m.Chain.ReturnToVTPool()
+		m.Header.ReturnToVTPool()
+		m.Result.ReturnToVTPool()
+		for _, mm := range m.Uncles {
+			mm.ResetVT()
+		}
+		f0 := m.Uncles[:0]
+		for _, mm := range m.Transactions {
+			mm.ResetVT()
+		}
+		f1 := m.Transactions[:0]
+		m.L1Header.ReturnToVTPool()
+		m.L1MessageInfo.ReturnToVTPool()
+		m.Reset()
+		m.Uncles = f0
+		m.Transactions = f1
+	}
+}
+func (m *BlockMessage) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_BlockMessage.Put(m)
+	}
+}
+func BlockMessageFromVTPool() *BlockMessage {
+	return vtprotoPool_BlockMessage.Get().(*BlockMessage)
+}
 func (m *AddressCode) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -5102,7 +6076,7 @@ func (m *LogHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.AddressCode == nil {
-				m.AddressCode = &AddressCode{}
+				m.AddressCode = AddressCodeFromVTPool()
 			}
 			if err := m.AddressCode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5210,7 +6184,7 @@ func (m *Log) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.LogHeader == nil {
-				m.LogHeader = &LogHeader{}
+				m.LogHeader = LogHeaderFromVTPool()
 			}
 			if err := m.LogHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5245,7 +6219,14 @@ func (m *Log) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Topics = append(m.Topics, &Topic{})
+			if len(m.Topics) == cap(m.Topics) {
+				m.Topics = append(m.Topics, &Topic{})
+			} else {
+				m.Topics = m.Topics[:len(m.Topics)+1]
+				if m.Topics[len(m.Topics)-1] == nil {
+					m.Topics[len(m.Topics)-1] = &Topic{}
+				}
+			}
 			if err := m.Topics[len(m.Topics)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5662,7 +6643,7 @@ func (m *ReceiptHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ContractAddressCode == nil {
-				m.ContractAddressCode = &AddressCode{}
+				m.ContractAddressCode = AddressCodeFromVTPool()
 			}
 			if err := m.ContractAddressCode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5698,7 +6679,7 @@ func (m *ReceiptHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1 == nil {
-				m.L1 = &ReceiptL1Extension{}
+				m.L1 = ReceiptL1ExtensionFromVTPool()
 			}
 			if err := m.L1.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6026,7 +7007,7 @@ func (m *Receipt) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ReceiptHeader == nil {
-				m.ReceiptHeader = &ReceiptHeader{}
+				m.ReceiptHeader = ReceiptHeaderFromVTPool()
 			}
 			if err := m.ReceiptHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6061,7 +7042,14 @@ func (m *Receipt) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Logs = append(m.Logs, &Log{})
+			if len(m.Logs) == cap(m.Logs) {
+				m.Logs = append(m.Logs, &Log{})
+			} else {
+				m.Logs = m.Logs[:len(m.Logs)+1]
+				if m.Logs[len(m.Logs)-1] == nil {
+					m.Logs[len(m.Logs)-1] = &Log{}
+				}
+			}
 			if err := m.Logs[len(m.Logs)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -6424,7 +7412,7 @@ func (m *CaptureStart) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ToCode == nil {
-				m.ToCode = &AddressCode{}
+				m.ToCode = AddressCodeFromVTPool()
 			}
 			if err := m.ToCode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -6954,7 +7942,7 @@ func (m *CaptureFault) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Opcode == nil {
-				m.Opcode = &Opcode{}
+				m.Opcode = OpcodeFromVTPool()
 			}
 			if err := m.Opcode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7113,7 +8101,7 @@ func (m *CaptureFault) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Contract == nil {
-				m.Contract = &Contract{}
+				m.Contract = ContractFromVTPool()
 			}
 			if err := m.Contract.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7232,7 +8220,7 @@ func (m *CaptureEnter) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Opcode == nil {
-				m.Opcode = &Opcode{}
+				m.Opcode = OpcodeFromVTPool()
 			}
 			if err := m.Opcode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7423,7 +8411,7 @@ func (m *CaptureEnter) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ToCode == nil {
-				m.ToCode = &AddressCode{}
+				m.ToCode = AddressCodeFromVTPool()
 			}
 			if err := m.ToCode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -7736,7 +8724,7 @@ func (m *CaptureStateHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Opcode == nil {
-				m.Opcode = &Opcode{}
+				m.Opcode = OpcodeFromVTPool()
 			}
 			if err := m.Opcode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8153,7 +9141,7 @@ func (m *CaptureState) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CaptureStateHeader == nil {
-				m.CaptureStateHeader = &CaptureStateHeader{}
+				m.CaptureStateHeader = CaptureStateHeaderFromVTPool()
 			}
 			if err := m.CaptureStateHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8189,7 +9177,7 @@ func (m *CaptureState) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Log == nil {
-				m.Log = &Log{}
+				m.Log = LogFromVTPool()
 			}
 			if err := m.Log.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8225,7 +9213,7 @@ func (m *CaptureState) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Store == nil {
-				m.Store = &Store{}
+				m.Store = StoreFromVTPool()
 			}
 			if err := m.Store.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8261,7 +9249,7 @@ func (m *CaptureState) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.StorageChange == nil {
-				m.StorageChange = &StorageChange{}
+				m.StorageChange = StorageChangeFromVTPool()
 			}
 			if err := m.StorageChange.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8443,7 +9431,7 @@ func (m *Call) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CaptureEnter == nil {
-				m.CaptureEnter = &CaptureEnter{}
+				m.CaptureEnter = CaptureEnterFromVTPool()
 			}
 			if err := m.CaptureEnter.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8479,7 +9467,7 @@ func (m *Call) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CaptureExit == nil {
-				m.CaptureExit = &CaptureExit{}
+				m.CaptureExit = CaptureExitFromVTPool()
 			}
 			if err := m.CaptureExit.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8514,7 +9502,14 @@ func (m *Call) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CaptureStates = append(m.CaptureStates, &CaptureState{})
+			if len(m.CaptureStates) == cap(m.CaptureStates) {
+				m.CaptureStates = append(m.CaptureStates, &CaptureState{})
+			} else {
+				m.CaptureStates = m.CaptureStates[:len(m.CaptureStates)+1]
+				if m.CaptureStates[len(m.CaptureStates)-1] == nil {
+					m.CaptureStates[len(m.CaptureStates)-1] = &CaptureState{}
+				}
+			}
 			if err := m.CaptureStates[len(m.CaptureStates)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -8599,7 +9594,14 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Calls = append(m.Calls, &Call{})
+			if len(m.Calls) == cap(m.Calls) {
+				m.Calls = append(m.Calls, &Call{})
+			} else {
+				m.Calls = m.Calls[:len(m.Calls)+1]
+				if m.Calls[len(m.Calls)-1] == nil {
+					m.Calls[len(m.Calls)-1] = &Call{}
+				}
+			}
 			if err := m.Calls[len(m.Calls)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -8634,7 +9636,7 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CaptureStart == nil {
-				m.CaptureStart = &CaptureStart{}
+				m.CaptureStart = CaptureStartFromVTPool()
 			}
 			if err := m.CaptureStart.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8670,7 +9672,7 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CaptureEnd == nil {
-				m.CaptureEnd = &CaptureEnd{}
+				m.CaptureEnd = CaptureEndFromVTPool()
 			}
 			if err := m.CaptureEnd.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8706,7 +9708,7 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.CaptureFault == nil {
-				m.CaptureFault = &CaptureFault{}
+				m.CaptureFault = CaptureFaultFromVTPool()
 			}
 			if err := m.CaptureFault.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -8741,7 +9743,14 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CaptureStates = append(m.CaptureStates, &CaptureState{})
+			if len(m.CaptureStates) == cap(m.CaptureStates) {
+				m.CaptureStates = append(m.CaptureStates, &CaptureState{})
+			} else {
+				m.CaptureStates = m.CaptureStates[:len(m.CaptureStates)+1]
+				if m.CaptureStates[len(m.CaptureStates)-1] == nil {
+					m.CaptureStates[len(m.CaptureStates)-1] = &CaptureState{}
+				}
+			}
 			if err := m.CaptureStates[len(m.CaptureStates)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -8775,7 +9784,14 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.TokenBalanceUpdates = append(m.TokenBalanceUpdates, &TokenBalanceUpdate{})
+			if len(m.TokenBalanceUpdates) == cap(m.TokenBalanceUpdates) {
+				m.TokenBalanceUpdates = append(m.TokenBalanceUpdates, &TokenBalanceUpdate{})
+			} else {
+				m.TokenBalanceUpdates = m.TokenBalanceUpdates[:len(m.TokenBalanceUpdates)+1]
+				if m.TokenBalanceUpdates[len(m.TokenBalanceUpdates)-1] == nil {
+					m.TokenBalanceUpdates[len(m.TokenBalanceUpdates)-1] = &TokenBalanceUpdate{}
+				}
+			}
 			if err := m.TokenBalanceUpdates[len(m.TokenBalanceUpdates)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -8809,7 +9825,14 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.NativeBalanceUpdates = append(m.NativeBalanceUpdates, &NativeBalanceUpdate{})
+			if len(m.NativeBalanceUpdates) == cap(m.NativeBalanceUpdates) {
+				m.NativeBalanceUpdates = append(m.NativeBalanceUpdates, &NativeBalanceUpdate{})
+			} else {
+				m.NativeBalanceUpdates = m.NativeBalanceUpdates[:len(m.NativeBalanceUpdates)+1]
+				if m.NativeBalanceUpdates[len(m.NativeBalanceUpdates)-1] == nil {
+					m.NativeBalanceUpdates[len(m.NativeBalanceUpdates)-1] = &NativeBalanceUpdate{}
+				}
+			}
 			if err := m.NativeBalanceUpdates[len(m.NativeBalanceUpdates)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -8843,7 +9866,14 @@ func (m *Trace) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.StorageChanges = append(m.StorageChanges, &StorageChange{})
+			if len(m.StorageChanges) == cap(m.StorageChanges) {
+				m.StorageChanges = append(m.StorageChanges, &StorageChange{})
+			} else {
+				m.StorageChanges = m.StorageChanges[:len(m.StorageChanges)+1]
+				if m.StorageChanges[len(m.StorageChanges)-1] == nil {
+					m.StorageChanges[len(m.StorageChanges)-1] = &StorageChange{}
+				}
+			}
 			if err := m.StorageChanges[len(m.StorageChanges)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -9482,7 +10512,7 @@ func (m *TransactionHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ToCode == nil {
-				m.ToCode = &AddressCode{}
+				m.ToCode = AddressCodeFromVTPool()
 			}
 			if err := m.ToCode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -9517,7 +10547,14 @@ func (m *TransactionHeader) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AccessList = append(m.AccessList, &AccessTuple{})
+			if len(m.AccessList) == cap(m.AccessList) {
+				m.AccessList = append(m.AccessList, &AccessTuple{})
+			} else {
+				m.AccessList = m.AccessList[:len(m.AccessList)+1]
+				if m.AccessList[len(m.AccessList)-1] == nil {
+					m.AccessList[len(m.AccessList)-1] = &AccessTuple{}
+				}
+			}
 			if err := m.AccessList[len(m.AccessList)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -9667,7 +10704,7 @@ func (m *TransactionHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Blob == nil {
-				m.Blob = &Blob{}
+				m.Blob = BlobFromVTPool()
 			}
 			if err := m.Blob.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -10313,7 +11350,7 @@ func (m *TokenBalanceUpdate) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Token == nil {
-				m.Token = &Token{}
+				m.Token = TokenFromVTPool()
 			}
 			if err := m.Token.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -10417,7 +11454,7 @@ func (m *TokenBalanceUpdate) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TokenOwnership == nil {
-				m.TokenOwnership = &TokenOwnership{}
+				m.TokenOwnership = TokenOwnershipFromVTPool()
 			}
 			if err := m.TokenOwnership.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -10676,7 +11713,7 @@ func (m *Transaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -10712,7 +11749,7 @@ func (m *Transaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Signature == nil {
-				m.Signature = &Signature{}
+				m.Signature = SignatureFromVTPool()
 			}
 			if err := m.Signature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -10748,7 +11785,7 @@ func (m *Transaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Receipt == nil {
-				m.Receipt = &Receipt{}
+				m.Receipt = ReceiptFromVTPool()
 			}
 			if err := m.Receipt.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -10784,7 +11821,7 @@ func (m *Transaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Trace == nil {
-				m.Trace = &Trace{}
+				m.Trace = TraceFromVTPool()
 			}
 			if err := m.Trace.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -11217,7 +12254,7 @@ func (m *BlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Chain == nil {
-				m.Chain = &Chain{}
+				m.Chain = ChainFromVTPool()
 			}
 			if err := m.Chain.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -11253,7 +12290,7 @@ func (m *BlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &BlockHeader{}
+				m.Header = BlockHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -11289,7 +12326,7 @@ func (m *BlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Result == nil {
-				m.Result = &BlockResult{}
+				m.Result = BlockResultFromVTPool()
 			}
 			if err := m.Result.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -11324,7 +12361,14 @@ func (m *BlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Uncles = append(m.Uncles, &BlockHeader{})
+			if len(m.Uncles) == cap(m.Uncles) {
+				m.Uncles = append(m.Uncles, &BlockHeader{})
+			} else {
+				m.Uncles = m.Uncles[:len(m.Uncles)+1]
+				if m.Uncles[len(m.Uncles)-1] == nil {
+					m.Uncles[len(m.Uncles)-1] = &BlockHeader{}
+				}
+			}
 			if err := m.Uncles[len(m.Uncles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -11358,7 +12402,14 @@ func (m *BlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Transactions = append(m.Transactions, &Transaction{})
+			if len(m.Transactions) == cap(m.Transactions) {
+				m.Transactions = append(m.Transactions, &Transaction{})
+			} else {
+				m.Transactions = m.Transactions[:len(m.Transactions)+1]
+				if m.Transactions[len(m.Transactions)-1] == nil {
+					m.Transactions[len(m.Transactions)-1] = &Transaction{}
+				}
+			}
 			if err := m.Transactions[len(m.Transactions)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -11393,7 +12444,7 @@ func (m *BlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1Header == nil {
-				m.L1Header = &BlockHeader{}
+				m.L1Header = BlockHeaderFromVTPool()
 			}
 			if err := m.L1Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -11429,7 +12480,7 @@ func (m *BlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1MessageInfo == nil {
-				m.L1MessageInfo = &L1MessageInfo{}
+				m.L1MessageInfo = L1MessageInfoFromVTPool()
 			}
 			if err := m.L1MessageInfo.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err

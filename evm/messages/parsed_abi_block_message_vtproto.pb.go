@@ -9,6 +9,7 @@ import (
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	io "io"
+	sync "sync"
 )
 
 const (
@@ -1424,6 +1425,470 @@ func (m *ParsedAbiBlockMessage) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
+var vtprotoPool_ArgumentValue = sync.Pool{
+	New: func() interface{} {
+		return &ArgumentValue{}
+	},
+}
+
+func (m *ArgumentValue) ResetVT() {
+	if m != nil {
+		if oneof, ok := m.Value.(*ArgumentValue_Array); ok {
+			oneof.Array.ReturnToVTPool()
+		}
+		if oneof, ok := m.Value.(*ArgumentValue_Tuple); ok {
+			oneof.Tuple.ReturnToVTPool()
+		}
+		m.Reset()
+	}
+}
+func (m *ArgumentValue) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ArgumentValue.Put(m)
+	}
+}
+func ArgumentValueFromVTPool() *ArgumentValue {
+	return vtprotoPool_ArgumentValue.Get().(*ArgumentValue)
+}
+
+var vtprotoPool_ArgumentArray = sync.Pool{
+	New: func() interface{} {
+		return &ArgumentArray{}
+	},
+}
+
+func (m *ArgumentArray) ResetVT() {
+	if m != nil {
+		for _, mm := range m.Elements {
+			mm.ResetVT()
+		}
+		f0 := m.Elements[:0]
+		m.Reset()
+		m.Elements = f0
+	}
+}
+func (m *ArgumentArray) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ArgumentArray.Put(m)
+	}
+}
+func ArgumentArrayFromVTPool() *ArgumentArray {
+	return vtprotoPool_ArgumentArray.Get().(*ArgumentArray)
+}
+
+var vtprotoPool_ArgumentTuple = sync.Pool{
+	New: func() interface{} {
+		return &ArgumentTuple{}
+	},
+}
+
+func (m *ArgumentTuple) ResetVT() {
+	if m != nil {
+		for _, mm := range m.Elements {
+			mm.ResetVT()
+		}
+		f0 := m.Elements[:0]
+		m.Reset()
+		m.Elements = f0
+	}
+}
+func (m *ArgumentTuple) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ArgumentTuple.Put(m)
+	}
+}
+func ArgumentTupleFromVTPool() *ArgumentTuple {
+	return vtprotoPool_ArgumentTuple.Get().(*ArgumentTuple)
+}
+
+var vtprotoPool_ParsedAbiSignature = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiSignature{}
+	},
+}
+
+func (m *ParsedAbiSignature) ResetVT() {
+	if m != nil {
+		f0 := m.SignatureHash[:0]
+		m.Reset()
+		m.SignatureHash = f0
+	}
+}
+func (m *ParsedAbiSignature) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiSignature.Put(m)
+	}
+}
+func ParsedAbiSignatureFromVTPool() *ParsedAbiSignature {
+	return vtprotoPool_ParsedAbiSignature.Get().(*ParsedAbiSignature)
+}
+
+var vtprotoPool_ParsedArgument = sync.Pool{
+	New: func() interface{} {
+		return &ParsedArgument{}
+	},
+}
+
+func (m *ParsedArgument) ResetVT() {
+	if m != nil {
+		m.Value.ReturnToVTPool()
+		m.Reset()
+	}
+}
+func (m *ParsedArgument) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedArgument.Put(m)
+	}
+}
+func ParsedArgumentFromVTPool() *ParsedArgument {
+	return vtprotoPool_ParsedArgument.Get().(*ParsedArgument)
+}
+
+var vtprotoPool_ParsedAbiLogHeader = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiLogHeader{}
+	},
+}
+
+func (m *ParsedAbiLogHeader) ResetVT() {
+	if m != nil {
+		f0 := m.SmartContract[:0]
+		m.Signature.ReturnToVTPool()
+		m.Reset()
+		m.SmartContract = f0
+	}
+}
+func (m *ParsedAbiLogHeader) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiLogHeader.Put(m)
+	}
+}
+func ParsedAbiLogHeaderFromVTPool() *ParsedAbiLogHeader {
+	return vtprotoPool_ParsedAbiLogHeader.Get().(*ParsedAbiLogHeader)
+}
+
+var vtprotoPool_ParsedAbiLog = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiLog{}
+	},
+}
+
+func (m *ParsedAbiLog) ResetVT() {
+	if m != nil {
+		m.Header.ReturnToVTPool()
+		for _, mm := range m.Topics {
+			mm.ResetVT()
+		}
+		f0 := m.Topics[:0]
+		m.Parsed.ReturnToVTPool()
+		for _, mm := range m.Arguments {
+			mm.ResetVT()
+		}
+		f1 := m.Arguments[:0]
+		m.Reset()
+		m.Topics = f0
+		m.Arguments = f1
+	}
+}
+func (m *ParsedAbiLog) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiLog.Put(m)
+	}
+}
+func ParsedAbiLogFromVTPool() *ParsedAbiLog {
+	return vtprotoPool_ParsedAbiLog.Get().(*ParsedAbiLog)
+}
+
+var vtprotoPool_ParsedStateChange = sync.Pool{
+	New: func() interface{} {
+		return &ParsedStateChange{}
+	},
+}
+
+func (m *ParsedStateChange) ResetVT() {
+	if m != nil {
+		f0 := m.Address[:0]
+		f1 := m.Location[:0]
+		f2 := m.Value[:0]
+		m.Reset()
+		m.Address = f0
+		m.Location = f1
+		m.Value = f2
+	}
+}
+func (m *ParsedStateChange) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedStateChange.Put(m)
+	}
+}
+func ParsedStateChangeFromVTPool() *ParsedStateChange {
+	return vtprotoPool_ParsedStateChange.Get().(*ParsedStateChange)
+}
+
+var vtprotoPool_ParsedAbiCallHeader = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiCallHeader{}
+	},
+}
+
+func (m *ParsedAbiCallHeader) ResetVT() {
+	if m != nil {
+		f0 := m.CallPath[:0]
+		f1 := m.From[:0]
+		f2 := m.To[:0]
+		f3 := m.Input[:0]
+		f4 := m.Value[:0]
+		f5 := m.Output[:0]
+		m.Opcode.ReturnToVTPool()
+		m.Signature.ReturnToVTPool()
+		m.Reset()
+		m.CallPath = f0
+		m.From = f1
+		m.To = f2
+		m.Input = f3
+		m.Value = f4
+		m.Output = f5
+	}
+}
+func (m *ParsedAbiCallHeader) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiCallHeader.Put(m)
+	}
+}
+func ParsedAbiCallHeaderFromVTPool() *ParsedAbiCallHeader {
+	return vtprotoPool_ParsedAbiCallHeader.Get().(*ParsedAbiCallHeader)
+}
+
+var vtprotoPool_ParsedAbiCall = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiCall{}
+	},
+}
+
+func (m *ParsedAbiCall) ResetVT() {
+	if m != nil {
+		m.Header.ReturnToVTPool()
+		for _, mm := range m.Arguments {
+			mm.ResetVT()
+		}
+		f0 := m.Arguments[:0]
+		for _, mm := range m.ReturnValues {
+			mm.ResetVT()
+		}
+		f1 := m.ReturnValues[:0]
+		for _, mm := range m.Logs {
+			mm.ResetVT()
+		}
+		f2 := m.Logs[:0]
+		for _, mm := range m.StateChanges {
+			mm.ResetVT()
+		}
+		f3 := m.StateChanges[:0]
+		m.Reset()
+		m.Arguments = f0
+		m.ReturnValues = f1
+		m.Logs = f2
+		m.StateChanges = f3
+	}
+}
+func (m *ParsedAbiCall) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiCall.Put(m)
+	}
+}
+func ParsedAbiCallFromVTPool() *ParsedAbiCall {
+	return vtprotoPool_ParsedAbiCall.Get().(*ParsedAbiCall)
+}
+
+var vtprotoPool_TransactionFee = sync.Pool{
+	New: func() interface{} {
+		return &TransactionFee{}
+	},
+}
+
+func (m *TransactionFee) ResetVT() {
+	if m != nil {
+		f0 := m.SenderFee[:0]
+		f1 := m.PriorityFeePerGas[:0]
+		f2 := m.EffectiveGasPrice[:0]
+		f3 := m.Burnt[:0]
+		f4 := m.Savings[:0]
+		f5 := m.MinerReward[:0]
+		m.Reset()
+		m.SenderFee = f0
+		m.PriorityFeePerGas = f1
+		m.EffectiveGasPrice = f2
+		m.Burnt = f3
+		m.Savings = f4
+		m.MinerReward = f5
+	}
+}
+func (m *TransactionFee) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_TransactionFee.Put(m)
+	}
+}
+func TransactionFeeFromVTPool() *TransactionFee {
+	return vtprotoPool_TransactionFee.Get().(*TransactionFee)
+}
+
+var vtprotoPool_ParsedAbiTransactionStatus = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiTransactionStatus{}
+	},
+}
+
+func (m *ParsedAbiTransactionStatus) ResetVT() {
+	if m != nil {
+		m.Reset()
+	}
+}
+func (m *ParsedAbiTransactionStatus) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiTransactionStatus.Put(m)
+	}
+}
+func ParsedAbiTransactionStatusFromVTPool() *ParsedAbiTransactionStatus {
+	return vtprotoPool_ParsedAbiTransactionStatus.Get().(*ParsedAbiTransactionStatus)
+}
+
+var vtprotoPool_ParsedAbiTransaction = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiTransaction{}
+	},
+}
+
+func (m *ParsedAbiTransaction) ResetVT() {
+	if m != nil {
+		m.TransactionHeader.ReturnToVTPool()
+		m.ReceiptHeader.ReturnToVTPool()
+		m.TransactionFee.ReturnToVTPool()
+		m.TransactionStatus.ReturnToVTPool()
+		for _, mm := range m.Calls {
+			mm.ResetVT()
+		}
+		f0 := m.Calls[:0]
+		m.Signature.ReturnToVTPool()
+		for _, mm := range m.TokenBalanceUpdates {
+			mm.ResetVT()
+		}
+		f1 := m.TokenBalanceUpdates[:0]
+		for _, mm := range m.NativeBalanceUpdates {
+			mm.ResetVT()
+		}
+		f2 := m.NativeBalanceUpdates[:0]
+		for _, mm := range m.StorageChanges {
+			mm.ResetVT()
+		}
+		f3 := m.StorageChanges[:0]
+		m.Reset()
+		m.Calls = f0
+		m.TokenBalanceUpdates = f1
+		m.NativeBalanceUpdates = f2
+		m.StorageChanges = f3
+	}
+}
+func (m *ParsedAbiTransaction) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiTransaction.Put(m)
+	}
+}
+func ParsedAbiTransactionFromVTPool() *ParsedAbiTransaction {
+	return vtprotoPool_ParsedAbiTransaction.Get().(*ParsedAbiTransaction)
+}
+
+var vtprotoPool_MinerReward = sync.Pool{
+	New: func() interface{} {
+		return &MinerReward{}
+	},
+}
+
+func (m *MinerReward) ResetVT() {
+	if m != nil {
+		f0 := m.Total[:0]
+		f1 := m.Static[:0]
+		f2 := m.Dynamic[:0]
+		f3 := m.TxFees[:0]
+		f4 := m.BurntFees[:0]
+		f5 := m.Uncle[:0]
+		f6 := m.Beneficiary[:0]
+		m.Reset()
+		m.Total = f0
+		m.Static = f1
+		m.Dynamic = f2
+		m.TxFees = f3
+		m.BurntFees = f4
+		m.Uncle = f5
+		m.Beneficiary = f6
+	}
+}
+func (m *MinerReward) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_MinerReward.Put(m)
+	}
+}
+func MinerRewardFromVTPool() *MinerReward {
+	return vtprotoPool_MinerReward.Get().(*MinerReward)
+}
+
+var vtprotoPool_ParsedAbiBlockMessage = sync.Pool{
+	New: func() interface{} {
+		return &ParsedAbiBlockMessage{}
+	},
+}
+
+func (m *ParsedAbiBlockMessage) ResetVT() {
+	if m != nil {
+		m.Chain.ReturnToVTPool()
+		m.Header.ReturnToVTPool()
+		for _, mm := range m.Uncles {
+			mm.ResetVT()
+		}
+		f0 := m.Uncles[:0]
+		m.Reward.ReturnToVTPool()
+		for _, mm := range m.UncleRewards {
+			mm.ResetVT()
+		}
+		f1 := m.UncleRewards[:0]
+		for _, mm := range m.Transactions {
+			mm.ResetVT()
+		}
+		f2 := m.Transactions[:0]
+		m.L1Header.ReturnToVTPool()
+		for _, mm := range m.ExtraRewards {
+			mm.ResetVT()
+		}
+		f3 := m.ExtraRewards[:0]
+		m.Reset()
+		m.Uncles = f0
+		m.UncleRewards = f1
+		m.Transactions = f2
+		m.ExtraRewards = f3
+	}
+}
+func (m *ParsedAbiBlockMessage) ReturnToVTPool() {
+	if m != nil {
+		m.ResetVT()
+		vtprotoPool_ParsedAbiBlockMessage.Put(m)
+	}
+}
+func ParsedAbiBlockMessageFromVTPool() *ParsedAbiBlockMessage {
+	return vtprotoPool_ParsedAbiBlockMessage.Get().(*ParsedAbiBlockMessage)
+}
 func (m *ArgumentValue) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2268,7 +2733,7 @@ func (m *ArgumentValue) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 			} else {
-				v := &ArgumentArray{}
+				v := ArgumentArrayFromVTPool()
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -2309,7 +2774,7 @@ func (m *ArgumentValue) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 			} else {
-				v := &ArgumentTuple{}
+				v := ArgumentTupleFromVTPool()
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -2396,7 +2861,14 @@ func (m *ArgumentArray) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Elements = append(m.Elements, &ArgumentValue{})
+			if len(m.Elements) == cap(m.Elements) {
+				m.Elements = append(m.Elements, &ArgumentValue{})
+			} else {
+				m.Elements = m.Elements[:len(m.Elements)+1]
+				if m.Elements[len(m.Elements)-1] == nil {
+					m.Elements[len(m.Elements)-1] = &ArgumentValue{}
+				}
+			}
 			if err := m.Elements[len(m.Elements)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2513,7 +2985,14 @@ func (m *ArgumentTuple) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Elements = append(m.Elements, &ArgumentValue{})
+			if len(m.Elements) == cap(m.Elements) {
+				m.Elements = append(m.Elements, &ArgumentValue{})
+			} else {
+				m.Elements = m.Elements[:len(m.Elements)+1]
+				if m.Elements[len(m.Elements)-1] == nil {
+					m.Elements[len(m.Elements)-1] = &ArgumentValue{}
+				}
+			}
 			if err := m.Elements[len(m.Elements)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2871,7 +3350,7 @@ func (m *ParsedArgument) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Value == nil {
-				m.Value = &ArgumentValue{}
+				m.Value = ArgumentValueFromVTPool()
 			}
 			if err := m.Value.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3087,7 +3566,7 @@ func (m *ParsedAbiLogHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Signature == nil {
-				m.Signature = &ParsedAbiSignature{}
+				m.Signature = ParsedAbiSignatureFromVTPool()
 			}
 			if err := m.Signature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3174,7 +3653,7 @@ func (m *ParsedAbiLog) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &LogHeader{}
+				m.Header = LogHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3209,7 +3688,14 @@ func (m *ParsedAbiLog) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Topics = append(m.Topics, &Topic{})
+			if len(m.Topics) == cap(m.Topics) {
+				m.Topics = append(m.Topics, &Topic{})
+			} else {
+				m.Topics = m.Topics[:len(m.Topics)+1]
+				if m.Topics[len(m.Topics)-1] == nil {
+					m.Topics[len(m.Topics)-1] = &Topic{}
+				}
+			}
 			if err := m.Topics[len(m.Topics)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -3244,7 +3730,7 @@ func (m *ParsedAbiLog) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Parsed == nil {
-				m.Parsed = &ParsedAbiLogHeader{}
+				m.Parsed = ParsedAbiLogHeaderFromVTPool()
 			}
 			if err := m.Parsed.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -3279,7 +3765,14 @@ func (m *ParsedAbiLog) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Arguments = append(m.Arguments, &ParsedArgument{})
+			if len(m.Arguments) == cap(m.Arguments) {
+				m.Arguments = append(m.Arguments, &ParsedArgument{})
+			} else {
+				m.Arguments = m.Arguments[:len(m.Arguments)+1]
+				if m.Arguments[len(m.Arguments)-1] == nil {
+					m.Arguments[len(m.Arguments)-1] = &ParsedArgument{}
+				}
+			}
 			if err := m.Arguments[len(m.Arguments)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -3730,7 +4223,7 @@ func (m *ParsedAbiCallHeader) UnmarshalVT(dAtA []byte) error {
 					}
 				}
 				elementCount = count
-				if elementCount != 0 && len(m.CallPath) == 0 {
+				if elementCount != 0 && len(m.CallPath) == 0 && cap(m.CallPath) < elementCount {
 					m.CallPath = make([]uint32, 0, elementCount)
 				}
 				for iNdEx < postIndex {
@@ -4044,7 +4537,7 @@ func (m *ParsedAbiCallHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Opcode == nil {
-				m.Opcode = &Opcode{}
+				m.Opcode = OpcodeFromVTPool()
 			}
 			if err := m.Opcode.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -4160,7 +4653,7 @@ func (m *ParsedAbiCallHeader) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Signature == nil {
-				m.Signature = &ParsedAbiSignature{}
+				m.Signature = ParsedAbiSignatureFromVTPool()
 			}
 			if err := m.Signature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -4247,7 +4740,7 @@ func (m *ParsedAbiCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &ParsedAbiCallHeader{}
+				m.Header = ParsedAbiCallHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -4282,7 +4775,14 @@ func (m *ParsedAbiCall) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Arguments = append(m.Arguments, &ParsedArgument{})
+			if len(m.Arguments) == cap(m.Arguments) {
+				m.Arguments = append(m.Arguments, &ParsedArgument{})
+			} else {
+				m.Arguments = m.Arguments[:len(m.Arguments)+1]
+				if m.Arguments[len(m.Arguments)-1] == nil {
+					m.Arguments[len(m.Arguments)-1] = &ParsedArgument{}
+				}
+			}
 			if err := m.Arguments[len(m.Arguments)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4316,7 +4816,14 @@ func (m *ParsedAbiCall) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ReturnValues = append(m.ReturnValues, &ParsedArgument{})
+			if len(m.ReturnValues) == cap(m.ReturnValues) {
+				m.ReturnValues = append(m.ReturnValues, &ParsedArgument{})
+			} else {
+				m.ReturnValues = m.ReturnValues[:len(m.ReturnValues)+1]
+				if m.ReturnValues[len(m.ReturnValues)-1] == nil {
+					m.ReturnValues[len(m.ReturnValues)-1] = &ParsedArgument{}
+				}
+			}
 			if err := m.ReturnValues[len(m.ReturnValues)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4350,7 +4857,14 @@ func (m *ParsedAbiCall) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Logs = append(m.Logs, &ParsedAbiLog{})
+			if len(m.Logs) == cap(m.Logs) {
+				m.Logs = append(m.Logs, &ParsedAbiLog{})
+			} else {
+				m.Logs = m.Logs[:len(m.Logs)+1]
+				if m.Logs[len(m.Logs)-1] == nil {
+					m.Logs[len(m.Logs)-1] = &ParsedAbiLog{}
+				}
+			}
 			if err := m.Logs[len(m.Logs)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4384,7 +4898,14 @@ func (m *ParsedAbiCall) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.StateChanges = append(m.StateChanges, &ParsedStateChange{})
+			if len(m.StateChanges) == cap(m.StateChanges) {
+				m.StateChanges = append(m.StateChanges, &ParsedStateChange{})
+			} else {
+				m.StateChanges = m.StateChanges[:len(m.StateChanges)+1]
+				if m.StateChanges[len(m.StateChanges)-1] == nil {
+					m.StateChanges[len(m.StateChanges)-1] = &ParsedStateChange{}
+				}
+			}
 			if err := m.StateChanges[len(m.StateChanges)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4879,7 +5400,7 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionHeader == nil {
-				m.TransactionHeader = &TransactionHeader{}
+				m.TransactionHeader = TransactionHeaderFromVTPool()
 			}
 			if err := m.TransactionHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -4915,7 +5436,7 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.ReceiptHeader == nil {
-				m.ReceiptHeader = &ReceiptHeader{}
+				m.ReceiptHeader = ReceiptHeaderFromVTPool()
 			}
 			if err := m.ReceiptHeader.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -4951,7 +5472,7 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionFee == nil {
-				m.TransactionFee = &TransactionFee{}
+				m.TransactionFee = TransactionFeeFromVTPool()
 			}
 			if err := m.TransactionFee.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -4987,7 +5508,7 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.TransactionStatus == nil {
-				m.TransactionStatus = &ParsedAbiTransactionStatus{}
+				m.TransactionStatus = ParsedAbiTransactionStatusFromVTPool()
 			}
 			if err := m.TransactionStatus.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5022,7 +5543,14 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Calls = append(m.Calls, &ParsedAbiCall{})
+			if len(m.Calls) == cap(m.Calls) {
+				m.Calls = append(m.Calls, &ParsedAbiCall{})
+			} else {
+				m.Calls = m.Calls[:len(m.Calls)+1]
+				if m.Calls[len(m.Calls)-1] == nil {
+					m.Calls[len(m.Calls)-1] = &ParsedAbiCall{}
+				}
+			}
 			if err := m.Calls[len(m.Calls)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5057,7 +5585,7 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Signature == nil {
-				m.Signature = &Signature{}
+				m.Signature = SignatureFromVTPool()
 			}
 			if err := m.Signature.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5092,7 +5620,14 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.TokenBalanceUpdates = append(m.TokenBalanceUpdates, &TokenBalanceUpdate{})
+			if len(m.TokenBalanceUpdates) == cap(m.TokenBalanceUpdates) {
+				m.TokenBalanceUpdates = append(m.TokenBalanceUpdates, &TokenBalanceUpdate{})
+			} else {
+				m.TokenBalanceUpdates = m.TokenBalanceUpdates[:len(m.TokenBalanceUpdates)+1]
+				if m.TokenBalanceUpdates[len(m.TokenBalanceUpdates)-1] == nil {
+					m.TokenBalanceUpdates[len(m.TokenBalanceUpdates)-1] = &TokenBalanceUpdate{}
+				}
+			}
 			if err := m.TokenBalanceUpdates[len(m.TokenBalanceUpdates)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5126,7 +5661,14 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.NativeBalanceUpdates = append(m.NativeBalanceUpdates, &NativeBalanceUpdate{})
+			if len(m.NativeBalanceUpdates) == cap(m.NativeBalanceUpdates) {
+				m.NativeBalanceUpdates = append(m.NativeBalanceUpdates, &NativeBalanceUpdate{})
+			} else {
+				m.NativeBalanceUpdates = m.NativeBalanceUpdates[:len(m.NativeBalanceUpdates)+1]
+				if m.NativeBalanceUpdates[len(m.NativeBalanceUpdates)-1] == nil {
+					m.NativeBalanceUpdates[len(m.NativeBalanceUpdates)-1] = &NativeBalanceUpdate{}
+				}
+			}
 			if err := m.NativeBalanceUpdates[len(m.NativeBalanceUpdates)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5160,7 +5702,14 @@ func (m *ParsedAbiTransaction) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.StorageChanges = append(m.StorageChanges, &StorageChange{})
+			if len(m.StorageChanges) == cap(m.StorageChanges) {
+				m.StorageChanges = append(m.StorageChanges, &StorageChange{})
+			} else {
+				m.StorageChanges = m.StorageChanges[:len(m.StorageChanges)+1]
+				if m.StorageChanges[len(m.StorageChanges)-1] == nil {
+					m.StorageChanges[len(m.StorageChanges)-1] = &StorageChange{}
+				}
+			}
 			if err := m.StorageChanges[len(m.StorageChanges)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5535,7 +6084,7 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Chain == nil {
-				m.Chain = &Chain{}
+				m.Chain = ChainFromVTPool()
 			}
 			if err := m.Chain.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5571,7 +6120,7 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Header == nil {
-				m.Header = &BlockHeader{}
+				m.Header = BlockHeaderFromVTPool()
 			}
 			if err := m.Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5606,7 +6155,14 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Uncles = append(m.Uncles, &BlockHeader{})
+			if len(m.Uncles) == cap(m.Uncles) {
+				m.Uncles = append(m.Uncles, &BlockHeader{})
+			} else {
+				m.Uncles = m.Uncles[:len(m.Uncles)+1]
+				if m.Uncles[len(m.Uncles)-1] == nil {
+					m.Uncles[len(m.Uncles)-1] = &BlockHeader{}
+				}
+			}
 			if err := m.Uncles[len(m.Uncles)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5641,7 +6197,7 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Reward == nil {
-				m.Reward = &MinerReward{}
+				m.Reward = MinerRewardFromVTPool()
 			}
 			if err := m.Reward.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5676,7 +6232,14 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.UncleRewards = append(m.UncleRewards, &MinerReward{})
+			if len(m.UncleRewards) == cap(m.UncleRewards) {
+				m.UncleRewards = append(m.UncleRewards, &MinerReward{})
+			} else {
+				m.UncleRewards = m.UncleRewards[:len(m.UncleRewards)+1]
+				if m.UncleRewards[len(m.UncleRewards)-1] == nil {
+					m.UncleRewards[len(m.UncleRewards)-1] = &MinerReward{}
+				}
+			}
 			if err := m.UncleRewards[len(m.UncleRewards)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5710,7 +6273,14 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Transactions = append(m.Transactions, &ParsedAbiTransaction{})
+			if len(m.Transactions) == cap(m.Transactions) {
+				m.Transactions = append(m.Transactions, &ParsedAbiTransaction{})
+			} else {
+				m.Transactions = m.Transactions[:len(m.Transactions)+1]
+				if m.Transactions[len(m.Transactions)-1] == nil {
+					m.Transactions[len(m.Transactions)-1] = &ParsedAbiTransaction{}
+				}
+			}
 			if err := m.Transactions[len(m.Transactions)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5745,7 +6315,7 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.L1Header == nil {
-				m.L1Header = &BlockHeader{}
+				m.L1Header = BlockHeaderFromVTPool()
 			}
 			if err := m.L1Header.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -5780,7 +6350,14 @@ func (m *ParsedAbiBlockMessage) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ExtraRewards = append(m.ExtraRewards, &MinerReward{})
+			if len(m.ExtraRewards) == cap(m.ExtraRewards) {
+				m.ExtraRewards = append(m.ExtraRewards, &MinerReward{})
+			} else {
+				m.ExtraRewards = m.ExtraRewards[:len(m.ExtraRewards)+1]
+				if m.ExtraRewards[len(m.ExtraRewards)-1] == nil {
+					m.ExtraRewards[len(m.ExtraRewards)-1] = &MinerReward{}
+				}
+			}
 			if err := m.ExtraRewards[len(m.ExtraRewards)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
