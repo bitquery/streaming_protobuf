@@ -6,6 +6,7 @@ toolchain go1.23.10
 
 require (
 	github.com/akamensky/base58 v0.0.0-20210829145138-ce8bf8802e8f
+	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.10

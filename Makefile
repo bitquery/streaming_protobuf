@@ -4,12 +4,20 @@ generate_evm:
 	protoc \
 	-I=. \
 	--go_out=. \
+	--go-vtproto_out=. \
+	--go-vtproto_opt=features=marshal+unmarshal+size \
 	--go_opt="Mevm/block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/dex_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/dex_pool_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/parsed_abi_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/token_block_message.proto=evm/messages;evm_messages" \
 	--go_opt="Mevm/prediction_market_block_message.proto=evm/messages;evm_messages" \
+	--go-vtproto_opt="Mevm/block_message.proto=evm/messages;evm_messages" \
+	--go-vtproto_opt="Mevm/dex_block_message.proto=evm/messages;evm_messages" \
+	--go-vtproto_opt="Mevm/dex_pool_block_message.proto=evm/messages;evm_messages" \
+	--go-vtproto_opt="Mevm/parsed_abi_block_message.proto=evm/messages;evm_messages" \
+	--go-vtproto_opt="Mevm/token_block_message.proto=evm/messages;evm_messages" \
+	--go-vtproto_opt="Mevm/prediction_market_block_message.proto=evm/messages;evm_messages" \
 	$(shell find ./evm -type f -name '*.proto')
 	protoc \
     	-I=. \
