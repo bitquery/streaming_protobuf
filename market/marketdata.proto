@@ -23,6 +23,7 @@ message Token {
   string Name = 7;
   string Symbol = 8;
   string NetworkBid = 9;
+  bool   Fungible = 10;
 }
 
 message CurrencyPriceBucket {

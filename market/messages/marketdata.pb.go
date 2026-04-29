@@ -84,6 +84,7 @@ type Token struct {
 	Name          string                 `protobuf:"bytes,7,opt,name=Name,proto3" json:"Name,omitempty"`
 	Symbol        string                 `protobuf:"bytes,8,opt,name=Symbol,proto3" json:"Symbol,omitempty"`
 	NetworkBid    string                 `protobuf:"bytes,9,opt,name=NetworkBid,proto3" json:"NetworkBid,omitempty"`
+	Fungible      bool                   `protobuf:"varint,10,opt,name=Fungible,proto3" json:"Fungible,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -179,6 +180,13 @@ func (x *Token) GetNetworkBid() string {
 		return x.NetworkBid
 	}
 	return ""
+}
+
+func (x *Token) GetFungible() bool {
+	if x != nil {
+		return x.Fungible
+	}
+	return false
 }
 
 type CurrencyPriceBucket struct {
@@ -410,7 +418,7 @@ const file_market_marketdata_proto_rawDesc = "" +
 	"\n" +
 	"Currencies\x18\x01 \x03(\v2(.marketdata_messages.CurrencyPriceBucketR\n" +
 	"Currencies\x12\x16\n" +
-	"\x06Source\x18\x02 \x01(\tR\x06Source\"\x81\x02\n" +
+	"\x06Source\x18\x02 \x01(\tR\x06Source\"\x9d\x02\n" +
 	"\x05Token\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\tR\x02Id\x12\x10\n" +
 	"\x03Did\x18\x02 \x01(\tR\x03Did\x12\x18\n" +
@@ -422,7 +430,9 @@ const file_market_marketdata_proto_rawDesc = "" +
 	"\x06Symbol\x18\b \x01(\tR\x06Symbol\x12\x1e\n" +
 	"\n" +
 	"NetworkBid\x18\t \x01(\tR\n" +
-	"NetworkBidB\n" +
+	"NetworkBid\x12\x1a\n" +
+	"\bFungible\x18\n" +
+	" \x01(\bR\bFungibleB\n" +
 	"\n" +
 	"\b_AddressB\n" +
 	"\n" +
