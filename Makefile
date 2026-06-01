@@ -1,6 +1,7 @@
 all: generate_evm generate_market generate_offchain generate_solana generate_ton generate_tron generate_utxo
 
 generate_evm:
+	@mkdir -p evm/python evm/rust
 	protoc \
 	-I=. \
 	--go_out=. \
@@ -12,11 +13,16 @@ generate_evm:
 	--go_opt="Mevm/prediction_market_block_message.proto=evm/messages;evm_messages" \
 	$(shell find ./evm -type f -name '*.proto')
 	protoc \
-    	-I=. \
+		-I=. \
 		--python_out="evm/python" \
-    	$(shell find ./evm -type f -name '*.proto')
+		$(shell find ./evm -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--prost_out="evm/rust" \
+		$(shell find ./evm -type f -name '*.proto')
 
 generate_market:
+	@mkdir -p market/python market/rust
 	protoc \
 	-I=. \
 	--go_out=. \
@@ -29,22 +35,32 @@ generate_market:
 	--go_opt="Mmarket/transaction.proto=market/messages;marketdata_messages" \
 	$(shell find ./market -type f -name '*.proto')
 	protoc \
-    	-I=. \
+		-I=. \
 		--python_out="market/python" \
-    	$(shell find ./market -type f -name '*.proto')
+		$(shell find ./market -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--prost_out="market/rust" \
+		$(shell find ./market -type f -name '*.proto')
 
 generate_offchain:
+	@mkdir -p offchain/python offchain/rust
 	protoc \
 	-I=. \
 	--go_out=. \
 	--go_opt="Moffchain/entities.proto=offchain/messages;entities_messages" \
 	$(shell find ./offchain -type f -name '*.proto')
 	protoc \
-    	-I=. \
+		-I=. \
 		--python_out="offchain/python" \
-    	$(shell find ./offchain -type f -name '*.proto')
+		$(shell find ./offchain -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--prost_out="offchain/rust" \
+		$(shell find ./offchain -type f -name '*.proto')
 
 generate_solana:
+	@mkdir -p solana/python solana/rust
 	protoc \
 	-I=. \
 	--go_out=. \
@@ -67,22 +83,27 @@ generate_solana:
 	--go-grpc_opt="Msolana/corecast/stream_message.proto=solana/corecast/stream;solana_corecast" \
 	$(shell find ./solana -type f -name '*.proto' ! -name 'dex_stream.proto' ! -name 'transactions_stream.proto')
 	protoc \
-    	-I=. \
+		-I=. \
 		--python_out="solana/python" \
-    	$(shell find ./solana -type f -name '*.proto' ! -name 'dex_stream.proto' ! -name 'transactions_stream.proto')
+		$(shell find ./solana -type f -name '*.proto' ! -name 'dex_stream.proto' ! -name 'transactions_stream.proto')
+	protoc \
+		-I=. \
+		--prost_out="solana/rust" \
+		$(shell find ./solana -type f -name '*.proto' ! -name 'dex_stream.proto' ! -name 'transactions_stream.proto')
 	@echo "-- reorganizing generated files into target folders --"
 	@mkdir -p solana/messages solana/corecast/stream
 	@for f in block_message dex_block_message parsed_idl_block_message token_block_message; do \
-	  if [ -f solana/$$f.pb.go ]; then mv -f solana/$$f.pb.go solana/messages/; fi; \
-	  if [ -f solana/$$f_grpc.pb.go ]; then mv -f solana/$$f_grpc.pb.go solana/messages/; fi; \
+		if [ -f solana/$$f.pb.go ]; then mv -f solana/$$f.pb.go solana/messages/; fi; \
+		if [ -f solana/$$f_grpc.pb.go ]; then mv -f solana/$$f_grpc.pb.go solana/messages/; fi; \
 	done
 	# New unified CoreCast API: move generated files (corecast, request, stream_message)
 	@for f in corecast request stream_message; do \
-	  if [ -f solana/corecast/$$f.pb.go ]; then mv -f solana/corecast/$$f.pb.go solana/corecast/stream/; fi; \
-	  if [ -f solana/corecast/$$f*_grpc.pb.go ]; then mv -f solana/corecast/$$f*_grpc.pb.go solana/corecast/stream/; fi; \
+		if [ -f solana/corecast/$$f.pb.go ]; then mv -f solana/corecast/$$f.pb.go solana/corecast/stream/; fi; \
+		if [ -f solana/corecast/$$f*_grpc.pb.go ]; then mv -f solana/corecast/$$f*_grpc.pb.go solana/corecast/stream/; fi; \
 	done
-	
- generate_ton:
+
+generate_ton:
+	@mkdir -p ton/python ton/rust
 	protoc \
 	-I=. \
 	--go_out=. \
@@ -96,8 +117,13 @@ generate_solana:
 		-I=. \
 		--python_out="ton/python" \
 		$(shell find ./ton -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--prost_out="ton/rust" \
+		$(shell find ./ton -type f -name '*.proto')
 
- generate_tron:
+generate_tron:
+	@mkdir -p tron/python tron/rust
 	protoc \
 	-I=. \
 	--go_out=. \
@@ -114,8 +140,13 @@ generate_solana:
 		-I=. \
 		--python_out="tron/python" \
 		$(shell find ./tron -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--prost_out="tron/rust" \
+		$(shell find ./tron -type f -name '*.proto')
 
 generate_utxo:
+	@mkdir -p utxo/python utxo/rust
 	protoc \
 	-I=. \
 	--go_out=. \
@@ -125,4 +156,8 @@ generate_utxo:
 	protoc \
 		-I=. \
 		--python_out="utxo/python" \
+		$(shell find ./utxo -type f -name '*.proto')
+	protoc \
+		-I=. \
+		--prost_out="utxo/rust" \
 		$(shell find ./utxo -type f -name '*.proto')
