@@ -4,8 +4,24 @@ package tron_messages;
 import "tron/block_message.proto";
 import "evm/token_block_message.proto";
 
+message BalanceUpdate {
+  TransactionHeader TransactionHeader = 1;
+
+  uint64 CallIndex = 2;
+  uint64 LogIndex = 3;
+
+  bytes  Address = 4;
+  bytes  Amount = 5;
+
+  evm_messages.TokenInfo Currency = 6;
+
+  uint32 Index = 7;
+  string Type = 8;
+}
+
 message TokenBlockMessage {
   tron_messages.Chain Chain = 1;
   tron_messages.BlockHeader Header = 2;
   repeated evm_messages.TokenTransfer Transfers = 3;
+  repeated BalanceUpdate BalanceUpdates = 4;
 }
