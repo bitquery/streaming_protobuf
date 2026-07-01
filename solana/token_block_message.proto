@@ -42,6 +42,7 @@ message Currency {
   bool Parsed = 23;
 
   uint64 TotalSupply = 24;
+  uint32 Multiplier = 25;
 }
 
 
