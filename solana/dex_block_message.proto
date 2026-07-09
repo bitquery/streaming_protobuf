@@ -29,6 +29,8 @@ message DexOrder {
   bytes Payer = 7;
   bytes Mint = 8;
 
+  float LimitPriceInUsd = 9;
+  float LimitAmountInUsd = 10;
 }
 
 message ParsedPoolLiquidityChange {
@@ -52,6 +54,9 @@ message PoolLiquidityChangeEvent {
 message PoolSide {
   int64    ChangeAmount = 2;
   uint64   PostAmount = 3;
+
+  float ChangeAmountInUsd = 4;
+  float PostAmountInUsd = 5;
 }
 
 enum DexOrderEventType {
@@ -76,6 +81,8 @@ message DexTradeSide {
 
   Account Account = 3;
   DexOrder Order = 4;
+
+  float AmountInUsd = 5;
 }
 
 message DexTradeEvent {
@@ -98,6 +105,8 @@ message ParsedDexTransaction {
   repeated DexTradeEvent Trades = 5;
   repeated DexOrderEvent OrderEvents = 6;
   repeated PoolLiquidityChangeEvent PoolEvents = 7;
+
+  float FeeInUsd = 8;
 }
 
 message DexParsedBlockMessage {
