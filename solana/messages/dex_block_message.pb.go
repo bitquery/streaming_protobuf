@@ -755,16 +755,23 @@ func (x *DexTradeEvent) GetInstruction() *ParsedIdlInstruction {
 }
 
 type ParsedDexTransaction struct {
-	state         protoimpl.MessageState      `protogen:"open.v1"`
-	Index         uint32                      `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"`
-	Signature     []byte                      `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
-	Status        *TransactionStatus          `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
-	Header        *TransactionHeader          `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
-	Trades        []*DexTradeEvent            `protobuf:"bytes,5,rep,name=Trades,proto3" json:"Trades,omitempty"`
-	OrderEvents   []*DexOrderEvent            `protobuf:"bytes,6,rep,name=OrderEvents,proto3" json:"OrderEvents,omitempty"`
-	PoolEvents    []*PoolLiquidityChangeEvent `protobuf:"bytes,7,rep,name=PoolEvents,proto3" json:"PoolEvents,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state       protoimpl.MessageState      `protogen:"open.v1"`
+	Index       uint32                      `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"`
+	Signature   []byte                      `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	Status      *TransactionStatus          `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
+	Header      *TransactionHeader          `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
+	Trades      []*DexTradeEvent            `protobuf:"bytes,5,rep,name=Trades,proto3" json:"Trades,omitempty"`
+	OrderEvents []*DexOrderEvent            `protobuf:"bytes,6,rep,name=OrderEvents,proto3" json:"OrderEvents,omitempty"`
+	PoolEvents  []*PoolLiquidityChangeEvent `protobuf:"bytes,7,rep,name=PoolEvents,proto3" json:"PoolEvents,omitempty"`
+	// Transaction-level balance changes covering every account that changed over
+	// the whole transaction (RPC meta.pre/postBalances + pre/postTokenBalances),
+	// including the trader's own accounts touched only by transfers outside the
+	// swap (aggregator routes: DFlow, Jupiter, OKX, ...). Each entry's
+	// Mint/Owner/Decimals live on Header.Accounts[AccountIndex].Token.
+	TotalBalanceUpdates      []*BalanceUpdate `protobuf:"bytes,8,rep,name=TotalBalanceUpdates,proto3" json:"TotalBalanceUpdates,omitempty"`           // native SOL (lamports)
+	TotalTokenBalanceUpdates []*BalanceUpdate `protobuf:"bytes,9,rep,name=TotalTokenBalanceUpdates,proto3" json:"TotalTokenBalanceUpdates,omitempty"` // SPL/Token-2022 raw amounts
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ParsedDexTransaction) Reset() {
@@ -842,6 +849,20 @@ func (x *ParsedDexTransaction) GetOrderEvents() []*DexOrderEvent {
 func (x *ParsedDexTransaction) GetPoolEvents() []*PoolLiquidityChangeEvent {
 	if x != nil {
 		return x.PoolEvents
+	}
+	return nil
+}
+
+func (x *ParsedDexTransaction) GetTotalBalanceUpdates() []*BalanceUpdate {
+	if x != nil {
+		return x.TotalBalanceUpdates
+	}
+	return nil
+}
+
+func (x *ParsedDexTransaction) GetTotalTokenBalanceUpdates() []*BalanceUpdate {
+	if x != nil {
+		return x.TotalTokenBalanceUpdates
 	}
 	return nil
 }
@@ -960,7 +981,7 @@ const file_solana_dex_block_message_proto_rawDesc = "" +
 	"\x04Sell\x18\x05 \x01(\v2\x1d.solana_messages.DexTradeSideR\x04Sell\x12\x18\n" +
 	"\aRoyalty\x18\x06 \x01(\x04R\aRoyalty\x12\x10\n" +
 	"\x03Fee\x18\a \x01(\x04R\x03Fee\x12G\n" +
-	"\vInstruction\x18\b \x01(\v2%.solana_messages.ParsedIdlInstructionR\vInstruction\"\x87\x03\n" +
+	"\vInstruction\x18\b \x01(\v2%.solana_messages.ParsedIdlInstructionR\vInstruction\"\xb5\x04\n" +
 	"\x14ParsedDexTransaction\x12\x14\n" +
 	"\x05Index\x18\x01 \x01(\rR\x05Index\x12\x1c\n" +
 	"\tSignature\x18\x02 \x01(\fR\tSignature\x12:\n" +
@@ -970,7 +991,9 @@ const file_solana_dex_block_message_proto_rawDesc = "" +
 	"\vOrderEvents\x18\x06 \x03(\v2\x1e.solana_messages.DexOrderEventR\vOrderEvents\x12I\n" +
 	"\n" +
 	"PoolEvents\x18\a \x03(\v2).solana_messages.PoolLiquidityChangeEventR\n" +
-	"PoolEvents\"\x98\x01\n" +
+	"PoolEvents\x12P\n" +
+	"\x13TotalBalanceUpdates\x18\b \x03(\v2\x1e.solana_messages.BalanceUpdateR\x13TotalBalanceUpdates\x12Z\n" +
+	"\x18TotalTokenBalanceUpdates\x18\t \x03(\v2\x1e.solana_messages.BalanceUpdateR\x18TotalTokenBalanceUpdates\"\x98\x01\n" +
 	"\x15DexParsedBlockMessage\x124\n" +
 	"\x06Header\x18\x01 \x01(\v2\x1c.solana_messages.BlockHeaderR\x06Header\x12I\n" +
 	"\fTransactions\x18\x02 \x03(\v2%.solana_messages.ParsedDexTransactionR\fTransactions*5\n" +
@@ -1013,7 +1036,8 @@ var file_solana_dex_block_message_proto_goTypes = []any{
 	(*TransactionHeader)(nil),         // 14: solana_messages.TransactionHeader
 	(*ParsedIdlInstruction)(nil),      // 15: solana_messages.ParsedIdlInstruction
 	(*Account)(nil),                   // 16: solana_messages.Account
-	(*BlockHeader)(nil),               // 17: solana_messages.BlockHeader
+	(*BalanceUpdate)(nil),             // 17: solana_messages.BalanceUpdate
+	(*BlockHeader)(nil),               // 18: solana_messages.BlockHeader
 }
 var file_solana_dex_block_message_proto_depIdxs = []int32{
 	12, // 0: solana_messages.DexMarket.BaseCurrency:type_name -> solana_messages.Currency
@@ -1044,13 +1068,15 @@ var file_solana_dex_block_message_proto_depIdxs = []int32{
 	9,  // 25: solana_messages.ParsedDexTransaction.Trades:type_name -> solana_messages.DexTradeEvent
 	7,  // 26: solana_messages.ParsedDexTransaction.OrderEvents:type_name -> solana_messages.DexOrderEvent
 	5,  // 27: solana_messages.ParsedDexTransaction.PoolEvents:type_name -> solana_messages.PoolLiquidityChangeEvent
-	17, // 28: solana_messages.DexParsedBlockMessage.Header:type_name -> solana_messages.BlockHeader
-	10, // 29: solana_messages.DexParsedBlockMessage.Transactions:type_name -> solana_messages.ParsedDexTransaction
-	30, // [30:30] is the sub-list for method output_type
-	30, // [30:30] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	17, // 28: solana_messages.ParsedDexTransaction.TotalBalanceUpdates:type_name -> solana_messages.BalanceUpdate
+	17, // 29: solana_messages.ParsedDexTransaction.TotalTokenBalanceUpdates:type_name -> solana_messages.BalanceUpdate
+	18, // 30: solana_messages.DexParsedBlockMessage.Header:type_name -> solana_messages.BlockHeader
+	10, // 31: solana_messages.DexParsedBlockMessage.Transactions:type_name -> solana_messages.ParsedDexTransaction
+	32, // [32:32] is the sub-list for method output_type
+	32, // [32:32] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_solana_dex_block_message_proto_init() }

@@ -98,6 +98,9 @@ message ParsedDexTransaction {
   repeated DexTradeEvent Trades = 5;
   repeated DexOrderEvent OrderEvents = 6;
   repeated PoolLiquidityChangeEvent PoolEvents = 7;
+
+  repeated BalanceUpdate TotalBalanceUpdates = 8;      // native SOL (lamports)
+  repeated BalanceUpdate TotalTokenBalanceUpdates = 9; // SPL/Token-2022 raw amounts
 }
 
 message DexParsedBlockMessage {
