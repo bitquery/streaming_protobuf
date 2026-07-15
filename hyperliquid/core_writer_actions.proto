@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — system_and_core_writer_actions stream.
+// The Core↔HyperEVM bridge: system transfers and core-writer order placements, each linked
+// to an EVM tx via EvmTxHash.
+package hyperliquid_messages;
+
+// NOTE: unlike other HyperCore streams, `token`/`wei`/`ntl` here are RAW INTEGERS (token
+// index, wei amount, notional), not decimal strings.
+
+// SystemAction = one event: {user, nonce, evm_tx_hash, action:{type,…}}.
+message SystemAction {
+  bytes  User      = 1;
+  uint64 Nonce     = 2;
+  bytes  EvmTxHash = 3; // hash of the HyperEVM tx this Core action corresponds to
+  Action Action    = 4;
+  map<string, string> Extra = 5;
+}
+
+// Action = flattened union of action.type shapes. Type is the tag; each type sets only its own
+// subset of the fields below.
+message Action {
+  string Type = 1; // "SystemSpotSendAction"|"SystemSendAssetAction"|"SystemUsdClassTransferAction"
+                   // |"order"|"approveAgent"|"tokenDelegate". Open set. LowCardinality
+
+  optional bytes  Destination          = 2;  // SystemSpotSend/SendAsset
+  optional uint32 Token                = 3;  // token index
+  optional uint64 Wei                  = 4;  // amount in wei (SendAsset/SpotSend; also tokenDelegate)
+  optional uint32 DestinationDexOrSpot = 5;
+  optional uint32 SourceDexOrSpot      = 6;
+  optional bytes  FromSubAccount       = 7;  // always null in sample — TENTATIVE type
+  optional uint64 Ntl                  = 8;  // notional (SystemUsdClassTransferAction)
+  optional bool   ToPerp               = 9;  // SystemUsdClassTransferAction
+  optional string Grouping             = 10; // "order" action. LowCardinality
+  repeated string Orders               = 11; // "order": raw JSON per order (keys a/b/p/s/r/t/c)
+
+  // approveAgent / tokenDelegate (signed L1 actions bridged from EVM).
+  optional bytes  AgentAddress     = 13; // approveAgent
+  optional string AgentName        = 14; // approveAgent
+  optional string SignatureChainId = 15; // e.g. "0x0" (string, not fixed-width hex). LowCardinality
+  optional string HyperliquidChain = 16; // e.g. "Mainnet". LowCardinality
+  optional bytes  Validator        = 17; // tokenDelegate
+  optional bool   IsUndelegate     = 18; // tokenDelegate
+  optional uint64 ActionNonce      = 19; // action-level nonce (approveAgent/tokenDelegate), != event Nonce
+  optional bytes  Builder          = 20; // builder-attached "order"
+  optional uint32 MaxFeeRate       = 21; // builder-attached "order"
+
+  map<string, string> Extra = 12;
+}

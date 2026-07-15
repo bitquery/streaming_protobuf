@@ -1,4 +1,23 @@
-all: generate_evm generate_market generate_offchain generate_solana generate_ton generate_tron generate_utxo
+all: generate_evm generate_market generate_offchain generate_solana generate_ton generate_tron generate_utxo generate_hyperliquid
+
+generate_hyperliquid:
+	@mkdir -p hyperliquid/messages hyperliquid/python
+	protoc \
+	-I=. \
+	--go_out=. \
+	--go_opt="Mhyperliquid/hypercore.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/fills.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/order_statuses.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/raw_book_diffs.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/twap_statuses.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/oracle_updates.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/misc_events.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/core_writer_actions.proto=hyperliquid/messages;hyperliquid_messages" \
+	$(shell find ./hyperliquid -type f -name '*.proto')
+	protoc \
+	-I=. \
+	--python_out="hyperliquid/python" \
+	$(shell find ./hyperliquid -type f -name '*.proto')
 
 generate_evm:
 	protoc \

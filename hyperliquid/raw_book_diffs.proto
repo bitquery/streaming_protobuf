@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — node_raw_book_diffs stream (L4 deltas).
+package hyperliquid_messages;
+
+// Conventions (see fills.proto): decimals are STRINGS; block/local time = epoch NANOSECONDS.
+
+// BookDiff = one L4 order-book delta from node_raw_book_diffs_streaming.
+// The node's `raw_book_diff` is a tagged union we flatten into Kind + variant fields:
+//   {"new":{"sz":..}}                  → Kind="new",    Sz set
+//   {"update":{"origSz":..,"newSz":..}}→ Kind="update", OrigSz+NewSz set
+//   "remove"                            → Kind="remove", size fields unset
+// Kind is set to the union tag verbatim, so an unseen variant is still preserved.
+message BookDiff {
+  bytes  User = 1; // 0x-address that owns the order
+  uint64 Oid  = 2; // order id
+  string Coin = 3;
+  string Side = 4; // "B"=bid, "A"=ask. LowCardinality
+  string Px   = 5; // price level
+
+  string Kind = 6; // "new" | "update" | "remove". LowCardinality
+
+  optional string Sz     = 7; // Kind="new": resting size at this level
+  optional string OrigSz = 8; // Kind="update": size before
+  optional string NewSz  = 9; // Kind="update": size after
+
+  map<string, string> Extra = 10;
+}

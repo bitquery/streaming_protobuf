@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — hip3_oracle_updates stream.
+package hyperliquid_messages;
+
+// Conventions (see fills.proto): prices are DECIMAL STRINGS; block/local time = epoch NANOSECONDS.
+
+// PxInput = one [coin, price] pair from the *_px_inputs lists.
+message PxInput {
+  string Coin = 1; // e.g. "flx:BTC", "cash:AMZN", "abcd:USA500"
+  string Px   = 2;
+}
+
+// OraclePx = one entry of an oracle_pxs list: [coin, {px, last_update_time, daily_px}].
+message OraclePx {
+  string Coin           = 1;
+  string Px             = 2;
+  int64  LastUpdateTime = 3; // epoch NANOSECONDS (parsed from the node's ISO string)
+  string DailyPx        = 4;
+  map<string, string> Extra = 5;
+}
+
+// OraclePxs = the oracle_pxs object: three coin→price lists.
+message OraclePxs {
+  repeated OraclePx CoinToMarkPx         = 1;
+  repeated OraclePx CoinToOraclePx       = 2;
+  repeated OraclePx CoinToExternalPerpPx = 3;
+  map<string, string> Extra = 4;
+}
+
+// OracleUpdate = one hip3_oracle_updates event (HIP-3 mark/spot price feed).
+message OracleUpdate {
+  string UpdateClass = 1; // "Deployer" | "Fallback". LowCardinality
+
+  repeated PxInput MarkPxInputs         = 2;
+  repeated PxInput SpotPxInputs         = 3;
+  repeated PxInput ExternalPerpPxInputs = 4; // often empty
+
+  OraclePxs OraclePxs = 5;
+
+  map<string, string> Extra = 6;
+}

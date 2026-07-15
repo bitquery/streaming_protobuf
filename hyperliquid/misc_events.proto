@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — misc_events stream.
+// A grab-bag of financial/consensus events; by far the most polymorphic HyperCore stream.
+//
+// Value types below are inferred from the HL convention (monetary values = DECIMAL STRINGS;
+// flags = bool; nonces/ids = ints). The nested consensus payloads (validator_to_reward,
+// previous_winner) are unconfirmed and kept in Extra, so nothing is lost even if a type is refined.
+package hyperliquid_messages;
+
+// MiscEvent = one misc_events event: {time, hash, inner:{<Variant>:{...}}}.
+// InnerType is the variant tag; exactly one of the typed variant fields below is set.
+message MiscEvent {
+  int64  Time      = 1; // event time, epoch NANOSECONDS (parsed from ISO string)
+  bytes  Hash      = 2; // L1 tx hash 0x…, often all-zeros for system events
+  string InnerType = 3; // "LedgerUpdate"|"Funding"|"CDeposit"|"CWithdrawal"|"Delegation"|
+                        // "ValidatorRewards"|"GossipPriorityAuctionRestart". LowCardinality
+
+  LedgerUpdate LedgerUpdate = 4;
+  Funding      Funding      = 5;
+  CDeposit     CDeposit     = 6;
+  CWithdrawal  CWithdrawal  = 7;
+  Delegation   Delegation   = 8;
+  ValidatorRewards             ValidatorRewards = 9;
+  GossipPriorityAuctionRestart Gossip           = 10;
+
+  map<string, string> Extra = 11;
+}
+
+// LedgerUpdate = a balance change for a set of users. delta is a tagged union (16 types)
+// flattened into LedgerDelta.
+message LedgerUpdate {
+  repeated bytes Users = 1;
+  LedgerDelta     Delta = 2;
+  map<string, string> Extra = 3;
+}
+
+// LedgerDelta = flattened union of all delta.type shapes. Type is the tag; the fields below
+// are the union of every type's keys (each type sets only its subset). All monetary values
+// are decimal strings.
+message LedgerDelta {
+  string Type = 1; // "send"|"spotTransfer"|"deposit"|"withdraw"|"borrowLend"|… LowCardinality
+
+  optional bytes  User           = 2;
+  optional string Amount         = 3;
+  optional string Token          = 4;  // LowCardinality
+  optional string Usdc           = 5;
+  optional string UsdcValue      = 6;
+  optional bytes  Destination    = 7;
+  optional string DestinationDex = 8;  // LowCardinality
+  optional string SourceDex      = 9;  // LowCardinality
+  optional string Fee            = 10;
+  optional string FeeToken       = 11; // LowCardinality
+  optional string NativeTokenFee = 12;
+  optional uint64 Nonce          = 13;
+  optional bool   ToPerp         = 14; // accountClassTransfer
+  optional string Operation      = 15; // borrowLend. LowCardinality
+  optional string InterestAmount = 16;
+  optional bytes  Vault          = 17;
+  optional string Basis          = 18; // vaultWithdraw
+  optional string ClosingCost    = 19;
+  optional string Commission     = 20;
+  optional string NetWithdrawnUsd= 21;
+  optional string RequestedUsd   = 22;
+  optional bool   IsDeposit      = 23; // cStakingTransfer
+
+  map<string, string> Extra = 24;
+}
+
+// Funding = hourly funding payments to open positions (one entry per user/coin).
+message Funding {
+  repeated FundingDelta Deltas = 1;
+  map<string, string> Extra = 2;
+}
+message FundingDelta {
+  bytes  User          = 1;
+  string Coin          = 2;
+  string FundingAmount = 3;
+  string Szi           = 4; // signed position size
+  string FundingRate   = 5;
+  map<string, string> Extra = 6;
+}
+
+// CDeposit / CWithdrawal = staking (C = core) deposits/withdrawals.
+message CDeposit {
+  string Amount = 1;
+  bytes  User   = 2;
+  map<string, string> Extra = 3;
+}
+message CWithdrawal {
+  string Amount      = 1;
+  bytes  User        = 2;
+  bool   IsFinalized = 3;
+  map<string, string> Extra = 4;
+}
+
+// Delegation = validator (un)delegation.
+message Delegation {
+  string Amount       = 1;
+  bytes  User         = 2;
+  bytes  Validator    = 3;
+  bool   IsUndelegate = 4;
+  map<string, string> Extra = 5;
+}
+
+// ValidatorRewards / GossipPriorityAuctionRestart = consensus events. Their nested payloads
+// (validator_to_reward, previous_winner) are unconfirmed — kept as raw JSON in Extra for now.
+message ValidatorRewards {
+  map<string, string> Extra = 1; // validator_to_reward
+}
+message GossipPriorityAuctionRestart {
+  int64  SlotId = 1;
+  map<string, string> Extra = 2; // end_gas, previous_winner
+}

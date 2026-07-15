@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — node_order_statuses stream.
+package hyperliquid_messages;
+
+// Conventions (see fills.proto):
+//  • Money/price/size are DECIMAL STRINGS, never float.
+//  • block/local/event time = epoch NANOSECONDS (int64); order.Timestamp = epoch MILLISECONDS.
+
+// OrderStatus = one order-lifecycle event from node_order_statuses_streaming.
+// Raw event: {time, user, hash, builder, status, order:{...}}
+message OrderStatus {
+  bytes  User   = 1; // 0x-address that owns the order
+  string Status = 2; // an OPEN set ("open","canceled","badAloPxRejected","filled","triggered",
+                     // various *Rejected/*Canceled). LowCardinality
+  int64  Time   = 3; // event time, epoch NANOSECONDS (parsed from the node's ISO string)
+  Order  Order  = 4;
+
+  optional bytes        Hash    = 5; // L1 tx hash 0x…, null for orders that never hit chain
+  optional OrderBuilder Builder = 6; // usually null
+
+  map<string, string> Extra = 7;
+}
+
+message Order {
+  string Coin             = 1;
+  string Side             = 2;  // "B"=bid, "A"=ask. LowCardinality
+  string LimitPx          = 3;
+  string Sz               = 4;  // remaining size
+  string OrigSz           = 5;  // original size
+  uint64 Oid              = 6;  // order id
+  int64  Timestamp        = 7;  // order placement time, epoch MILLISECONDS
+  string OrderType        = 8;  // open set ("Limit","Market","Stop Market","Stop Limit","Take
+                                // Profit Market","Take Profit Limit"). LowCardinality
+  string TriggerCondition = 9;  // e.g. "N/A" or a condition. LowCardinality
+  string TriggerPx        = 10;
+  bool   IsTrigger        = 11;
+  bool   IsPositionTpsl   = 12;
+  bool   ReduceOnly       = 13;
+
+  optional bytes  Cloid = 14; // client order id 0x…, may be null
+  optional string Tif   = 15; // time-in-force, may be null: "Alo"/"Ioc"/"Gtc"/"FrontendMarket"/
+                              // "LiquidationMarket". LowCardinality
+
+  // Child orders — a TP/SL bracket. Each child is itself an Order (same field set, never nested
+  // deeper); a bracket holds 1 (SL) or 2 (TP+SL) children.
+  repeated Order Children = 16;
+
+  map<string, string> Extra = 17;
+}
+
+// OrderBuilder — builder info on an order. Node shape {"b": address, "f": fee}.
+message OrderBuilder {
+  bytes  Address = 1; // node key "b"
+  uint32 Fee     = 2; // node key "f"
+  map<string, string> Extra = 3;
+}

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — node_twap_statuses stream.
+package hyperliquid_messages;
+
+// Conventions (see fills.proto): decimals are STRINGS; block/local/event time = epoch NANOSECONDS;
+// state.Timestamp = epoch MILLISECONDS.
+
+// TwapStatus = one TWAP-order lifecycle event from node_twap_statuses_streaming.
+// The node's `status` is a tagged union we flatten into Status + StatusError:
+//   "activated" | "finished" | "terminated"  → Status = that string
+//   {"error": "<msg>"}                         → Status = "error", StatusError = the message
+message TwapStatus {
+  int64     Time   = 1; // event time, epoch NANOSECONDS (parsed from ISO string)
+  uint64    TwapId = 2; // TWAP order id
+  TwapState State  = 3;
+
+  string Status = 4; // "activated"|"finished"|"terminated"|"error". LowCardinality
+  optional string StatusError = 5; // set when status was {"error": msg}
+
+  map<string, string> Extra = 6;
+}
+
+message TwapState {
+  string Coin        = 1; // perps, HIP-3 perps ("xyz:"…) and spot ("@<n>")
+  bytes  User        = 2; // 0x-address
+  string Side        = 3; // "B"=bid, "A"=ask. LowCardinality
+  string Sz          = 4; // total order size
+  string ExecutedSz  = 5; // filled size so far
+  string ExecutedNtl = 6; // executed notional (USD)
+  uint32 Minutes     = 7; // TWAP duration in minutes
+  int64  Timestamp   = 8; // order start time, epoch MILLISECONDS
+  bool   ReduceOnly  = 9;
+  bool   Randomize   = 10;
+
+  map<string, string> Extra = 11;
+}

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package hyperliquid_messages;
+
+import "hyperliquid/fills.proto";
+import "hyperliquid/order_statuses.proto";
+import "hyperliquid/raw_book_diffs.proto";
+import "hyperliquid/twap_statuses.proto";
+import "hyperliquid/oracle_updates.proto";
+import "hyperliquid/misc_events.proto";
+import "hyperliquid/core_writer_actions.proto";
+
+message HyperCoreBlock {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2; // consensus block time, epoch NANOSECONDS (UTC) — shared by all events
+
+  repeated Fill         Fills             = 3;
+  repeated OrderStatus  OrderStatuses     = 4;
+  repeated BookDiff     BookDiffs         = 5;
+  repeated TwapStatus   TwapStatuses      = 6;
+  repeated OracleUpdate OracleUpdates     = 7;
+  repeated MiscEvent    MiscEvents        = 8;
+  repeated SystemAction CoreWriterActions = 9;
+}
+
+message HyperCoreBlocks {
+  repeated HyperCoreBlock Blocks = 1;
+  uint64 FirstBlockNumber = 2;
+  uint64 LastBlockNumber  = 3;
+}

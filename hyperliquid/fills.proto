@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — node_fills stream.
+package hyperliquid_messages;
+
+// Conventions:
+//  • Money/price/size are DECIMAL STRINGS, never float (float loses precision).
+//  • Timestamps differ per field: fill Time = epoch MILLISECONDS; block/local time = NANOSECONDS.
+
+// Fill = one execution for ONE user (node_fills_streaming).
+// A match normally produces TWO fills, one per counterparty, keyed by the triple
+// (BlockNumber, Coin, Tid). Crossed=true is the taker, false the maker. A "trade" pairs the two
+// on that triple — NOT on Hash (zero on TWAP trades) and NOT on Tid alone (only 50 bits).
+// Three levels, do not conflate: TRANSACTION (Hash) → MATCH (Coin, Tid) → SIDE (User).
+message Fill {
+  bytes  User          = 1;   // 0x-address of this side
+
+  string Coin          = 2;   // market id, raw. Families: plain perp ("HYPE"), HIP-3 perp
+                              // ("xyz:…","hyna:…"), spot ("@107"), outcome token ("#1890").
+                              // Outcome tokens come in complementary pairs (n, n^1): a complete-set
+                              // op emits one fill per leg — same Hash/Sz/Dir, DIFFERENT Coin+Tid,
+                              // Px summing to 1. That is why some matches look one-sided under the
+                              // triple; the other leg is the sibling Coin, not lost. LowCardinality
+  string Side          = 3;   // "B"=bid (bought), "A"=ask (sold), raw. LowCardinality
+  string Px            = 4;
+  string Sz            = 5;
+  string StartPosition = 6;
+  string Dir           = 7;   // position change, raw open set ("Open Long","Close Short","Buy",
+                              // "Long > Short","Merge Outcome",…). LowCardinality
+  string ClosedPnl     = 8;
+  string Fee           = 9;
+  string FeeToken      = 10;  // fee denomination, an OPEN SET — NOT always "USDC" (spot pays in
+                              // the spot token, outcome markets in "+<n>"). LowCardinality
+
+  bytes  Hash          = 11;  // L1 TRANSACTION hash 0x… — one tx spans many matches, and is 32
+                              // ZERO bytes on both sides of a TWAP trade. NOT unique; never a
+                              // dedup/join key — use (BlockNumber, Coin, Tid). See Tid.
+  uint64 Oid           = 12;  // order id
+  uint64 Tid           = 13;  // 50-bit hash of (buyer_oid, seller_oid), shared by both sides of a
+                              // match. NOT globally unique (50 bits collide at scale). Trade key
+                              // is the triple (BlockNumber, Coin, Tid); Tid alone is safe only
+                              // within one block+coin.
+  bool   Crossed       = 14;  // true = taker/aggressor
+  int64  Time          = 15;  // event time, epoch MILLISECONDS
+
+  optional bytes  Cloid  = 16; // client order id 0x…, often absent
+  optional uint64 TwapId = 17; // set ONLY on the TWAP owner's side (the counterparty has it unset
+                               // but the same zero Hash). Attribute both sides via the triple.
+
+  // BuilderFee is never set without Builder, but Builder can appear without BuilderFee.
+  optional string BuilderFee   = 18;         // paid to builder, a component of Fee (same unit)
+  optional FillLiquidation Liquidation = 19; // present only on liquidation fills
+  optional bytes  Builder      = 20;         // builder 0x-address
+  optional string DeployerFee  = 21;         // fee to asset deployer (HIP-3 "xyz:"), component of Fee
+  optional string PriorityGas  = 22;         // priority gas; may be "0.0"
+
+  // Fee denomination: BuilderFee/DeployerFee are components of Fee (unit = FeeToken). PriorityGas
+  // is NOT a component of Fee and NOT in FeeToken — one fixed unit (USDC or HYPE unresolved). Do
+  // not sum PriorityGas into Fee.
+
+  // Forward-compat net: any unmodeled node field lands here (key=name, value=raw JSON). Empty in
+  // the common case; a non-empty Extra means the node added a field.
+  map<string, string> Extra = 23;
+}
+
+// Liquidation details — present on a Fill only when it results from a liquidation.
+message FillLiquidation {
+  bytes  LiquidatedUser = 1; // 0x-address being liquidated
+  string MarkPx         = 2; // mark price at liquidation
+  string Method         = 3; // "market" | "backstop" (only "market" seen so far). LowCardinality
+}
