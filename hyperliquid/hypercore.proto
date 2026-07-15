@@ -25,6 +25,4 @@ message HyperCoreBlock {
 
 message HyperCoreBlocks {
   repeated HyperCoreBlock Blocks = 1;
-  uint64 FirstBlockNumber = 2;
-  uint64 LastBlockNumber  = 3;
 }

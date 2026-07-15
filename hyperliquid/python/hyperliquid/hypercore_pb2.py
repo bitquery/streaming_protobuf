@@ -31,7 +31,7 @@ from hyperliquid import misc_events_pb2 as hyperliquid_dot_misc__events__pb2
 from hyperliquid import core_writer_actions_pb2 as hyperliquid_dot_core__writer__actions__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bhyperliquid/hypercore.proto\x12\x14hyperliquid_messages\x1a\x17hyperliquid/fills.proto\x1a hyperliquid/order_statuses.proto\x1a hyperliquid/raw_book_diffs.proto\x1a\x1fhyperliquid/twap_statuses.proto\x1a hyperliquid/oracle_updates.proto\x1a\x1dhyperliquid/misc_events.proto\x1a%hyperliquid/core_writer_actions.proto\"\xb7\x03\n\x0eHyperCoreBlock\x12\x13\n\x0b\x42lockNumber\x18\x01 \x01(\x04\x12\x11\n\tBlockTime\x18\x02 \x01(\x03\x12)\n\x05\x46ills\x18\x03 \x03(\x0b\x32\x1a.hyperliquid_messages.Fill\x12\x38\n\rOrderStatuses\x18\x04 \x03(\x0b\x32!.hyperliquid_messages.OrderStatus\x12\x31\n\tBookDiffs\x18\x05 \x03(\x0b\x32\x1e.hyperliquid_messages.BookDiff\x12\x36\n\x0cTwapStatuses\x18\x06 \x03(\x0b\x32 .hyperliquid_messages.TwapStatus\x12\x39\n\rOracleUpdates\x18\x07 \x03(\x0b\x32\".hyperliquid_messages.OracleUpdate\x12\x33\n\nMiscEvents\x18\x08 \x03(\x0b\x32\x1f.hyperliquid_messages.MiscEvent\x12=\n\x11\x43oreWriterActions\x18\t \x03(\x0b\x32\".hyperliquid_messages.SystemAction\"z\n\x0fHyperCoreBlocks\x12\x34\n\x06\x42locks\x18\x01 \x03(\x0b\x32$.hyperliquid_messages.HyperCoreBlock\x12\x18\n\x10\x46irstBlockNumber\x18\x02 \x01(\x04\x12\x17\n\x0fLastBlockNumber\x18\x03 \x01(\x04\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1bhyperliquid/hypercore.proto\x12\x14hyperliquid_messages\x1a\x17hyperliquid/fills.proto\x1a hyperliquid/order_statuses.proto\x1a hyperliquid/raw_book_diffs.proto\x1a\x1fhyperliquid/twap_statuses.proto\x1a hyperliquid/oracle_updates.proto\x1a\x1dhyperliquid/misc_events.proto\x1a%hyperliquid/core_writer_actions.proto\"\xb7\x03\n\x0eHyperCoreBlock\x12\x13\n\x0b\x42lockNumber\x18\x01 \x01(\x04\x12\x11\n\tBlockTime\x18\x02 \x01(\x03\x12)\n\x05\x46ills\x18\x03 \x03(\x0b\x32\x1a.hyperliquid_messages.Fill\x12\x38\n\rOrderStatuses\x18\x04 \x03(\x0b\x32!.hyperliquid_messages.OrderStatus\x12\x31\n\tBookDiffs\x18\x05 \x03(\x0b\x32\x1e.hyperliquid_messages.BookDiff\x12\x36\n\x0cTwapStatuses\x18\x06 \x03(\x0b\x32 .hyperliquid_messages.TwapStatus\x12\x39\n\rOracleUpdates\x18\x07 \x03(\x0b\x32\".hyperliquid_messages.OracleUpdate\x12\x33\n\nMiscEvents\x18\x08 \x03(\x0b\x32\x1f.hyperliquid_messages.MiscEvent\x12=\n\x11\x43oreWriterActions\x18\t \x03(\x0b\x32\".hyperliquid_messages.SystemAction\"G\n\x0fHyperCoreBlocks\x12\x34\n\x06\x42locks\x18\x01 \x03(\x0b\x32$.hyperliquid_messages.HyperCoreBlockb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -41,5 +41,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_HYPERCOREBLOCK']._serialized_start=284
   _globals['_HYPERCOREBLOCK']._serialized_end=723
   _globals['_HYPERCOREBLOCKS']._serialized_start=725
-  _globals['_HYPERCOREBLOCKS']._serialized_end=847
+  _globals['_HYPERCOREBLOCKS']._serialized_end=796
 # @@protoc_insertion_point(module_scope)

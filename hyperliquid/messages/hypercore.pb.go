@@ -130,12 +130,10 @@ func (x *HyperCoreBlock) GetCoreWriterActions() []*SystemAction {
 }
 
 type HyperCoreBlocks struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Blocks           []*HyperCoreBlock      `protobuf:"bytes,1,rep,name=Blocks,proto3" json:"Blocks,omitempty"`
-	FirstBlockNumber uint64                 `protobuf:"varint,2,opt,name=FirstBlockNumber,proto3" json:"FirstBlockNumber,omitempty"`
-	LastBlockNumber  uint64                 `protobuf:"varint,3,opt,name=LastBlockNumber,proto3" json:"LastBlockNumber,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Blocks        []*HyperCoreBlock      `protobuf:"bytes,1,rep,name=Blocks,proto3" json:"Blocks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HyperCoreBlocks) Reset() {
@@ -175,20 +173,6 @@ func (x *HyperCoreBlocks) GetBlocks() []*HyperCoreBlock {
 	return nil
 }
 
-func (x *HyperCoreBlocks) GetFirstBlockNumber() uint64 {
-	if x != nil {
-		return x.FirstBlockNumber
-	}
-	return 0
-}
-
-func (x *HyperCoreBlocks) GetLastBlockNumber() uint64 {
-	if x != nil {
-		return x.LastBlockNumber
-	}
-	return 0
-}
-
 var File_hyperliquid_hypercore_proto protoreflect.FileDescriptor
 
 const file_hyperliquid_hypercore_proto_rawDesc = "" +
@@ -205,11 +189,9 @@ const file_hyperliquid_hypercore_proto_rawDesc = "" +
 	"\n" +
 	"MiscEvents\x18\b \x03(\v2\x1f.hyperliquid_messages.MiscEventR\n" +
 	"MiscEvents\x12P\n" +
-	"\x11CoreWriterActions\x18\t \x03(\v2\".hyperliquid_messages.SystemActionR\x11CoreWriterActions\"\xa5\x01\n" +
+	"\x11CoreWriterActions\x18\t \x03(\v2\".hyperliquid_messages.SystemActionR\x11CoreWriterActions\"O\n" +
 	"\x0fHyperCoreBlocks\x12<\n" +
-	"\x06Blocks\x18\x01 \x03(\v2$.hyperliquid_messages.HyperCoreBlockR\x06Blocks\x12*\n" +
-	"\x10FirstBlockNumber\x18\x02 \x01(\x04R\x10FirstBlockNumber\x12(\n" +
-	"\x0fLastBlockNumber\x18\x03 \x01(\x04R\x0fLastBlockNumberb\x06proto3"
+	"\x06Blocks\x18\x01 \x03(\v2$.hyperliquid_messages.HyperCoreBlockR\x06Blocksb\x06proto3"
 
 var (
 	file_hyperliquid_hypercore_proto_rawDescOnce sync.Once
