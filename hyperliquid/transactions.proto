@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+// Canonical HyperCore schema for Bitquery streaming — replica_cmds stream
+// (consensus transactions: what went INTO each block, vs the 7 event streams
+// which record what the execution engine produced).
+package hyperliquid_messages;
+
+// Conventions:
+//  • BlockTime is epoch NANOSECONDS (UTC) — same clock as HyperCoreBlock.
+//  • The typed fields below are the STABLE skeleton of replica_cmds; the
+//    action payload is an OPEN, hardfork-evolving set of dozens of types and
+//    is carried VERBATIM as raw JSON bytes (Action / Response). Parse it at
+//    read time — a typed copy would silently drop unknown fields.
+//  • HyperCore has NO block hash; BlockNumber is the canonical block id.
+//    Round/ParentRound are the consensus counters (≠ BlockNumber: empty
+//    rounds produce no block, so Round runs ~28% ahead).
+
+// One signed action plus the engine's verdict on it.
+message SignedAction {
+  bytes  User         = 1;  // acting MASTER account resolved by the engine (from resps).
+                            // NOT the signer: an agent (API wallet) signs on the master's
+                            // behalf — the signer is recoverable from R/S/V + Action.
+  string ActionType   = 2;  // action.type verbatim: "order", "cancel", "spotSend",
+                            // "tokenDelegate", "evmRawTx", … open set. LowCardinality
+  bytes  SignatureR   = 3;  // 32 bytes
+  bytes  SignatureS   = 4;  // 32 bytes
+  uint32 SignatureV   = 5;  // 27/28
+  uint64 Nonce        = 6;  // signer's nonce, epoch ms by convention
+  bytes  VaultAddress = 7;  // 0x… when acting for a vault, else empty
+  int64  ExpiresAfter = 8;  // epoch ms deadline, 0 when absent
+
+  string Status       = 9;  // engine verdict: "ok" | "err". Rejections that never reach
+                            // the event streams (bad nonce, api errors) surface HERE.
+  bytes  Response     = 10; // raw JSON of the engine response: statuses/oids for "ok",
+                            // the error text for "err"
+  bytes  Action       = 11; // raw JSON of the action, verbatim from replica_cmds
+}
+
+// One action bundle = one L1 transaction.
+message TransactionBundle {
+  bytes  Hash             = 1;  // bundle hash as recorded in replica_cmds. NOT equal to
+                                // Fill.Hash/OrderStatus.Hash in the event streams (verified:
+                                // the two hash universes are disjoint) — join events to
+                                // transactions via BlockNumber + User until the event-hash
+                                // derivation is established.
+  bytes  Broadcaster      = 2;  // 0x… node/relay that broadcast the bundle
+  uint64 BroadcasterNonce = 3;
+  repeated SignedAction Actions = 4;
+}
+
+// Everything consensus recorded for one block.
+message HyperCoreTransactionsBlock {
+  uint64 BlockNumber     = 1;
+  int64  BlockTime       = 2;  // consensus block time, epoch NANOSECONDS (UTC)
+  uint64 Round           = 3;
+  uint64 ParentRound     = 4;
+  bytes  Proposer        = 5;  // 0x… validator that proposed the block
+  uint32 HardforkVersion = 6;
+
+  repeated TransactionBundle Bundles = 7;
+}
+
+// Storage container: one file per 1000-block bucket in SeaWeedFS.
+message HyperCoreTransactionsBlocks {
+  repeated HyperCoreTransactionsBlock Blocks = 1;
+}

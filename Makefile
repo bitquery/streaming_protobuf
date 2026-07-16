@@ -13,6 +13,7 @@ generate_hyperliquid:
 	--go_opt="Mhyperliquid/oracle_updates.proto=hyperliquid/messages;hyperliquid_messages" \
 	--go_opt="Mhyperliquid/misc_events.proto=hyperliquid/messages;hyperliquid_messages" \
 	--go_opt="Mhyperliquid/core_writer_actions.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/transactions.proto=hyperliquid/messages;hyperliquid_messages" \
 	$(shell find ./hyperliquid -type f -name '*.proto')
 	protoc \
 	-I=. \
