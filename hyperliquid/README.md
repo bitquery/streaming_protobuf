@@ -378,6 +378,12 @@ One **L4 order-book delta** — order-level (not price-level-aggregated) book ch
 Applied on top of an L4 snapshot, this stream reconstructs the entire book in real time,
 with every resting order attributed to its owner.
 
+L4 snapshots (the anchor state) come from the node itself: offline via
+`hl-node --chain <chain> compute-l4-snapshots <abci-state-path> <out-path>` (state files
+are written every 10,000 blocks to `~/hl/data/periodic_abci_states/{date}/{height}.rmp`),
+or online from a node running with `--serve-info` via a
+`{"type":"fileSnapshot","request":{"type":"l4Snapshots",…}}` request.
+
 The node's `raw_book_diff` field is a tagged union, flattened into `Kind` + variant fields:
 
 | Node JSON | `Kind` | Variant fields set |
