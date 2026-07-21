@@ -40,13 +40,20 @@ type Fill struct {
 	Side          string `protobuf:"bytes,3,opt,name=Side,proto3" json:"Side,omitempty"` // "B"=bid (bought), "A"=ask (sold), raw. LowCardinality
 	Px            string `protobuf:"bytes,4,opt,name=Px,proto3" json:"Px,omitempty"`
 	Sz            string `protobuf:"bytes,5,opt,name=Sz,proto3" json:"Sz,omitempty"`
-	StartPosition string `protobuf:"bytes,6,opt,name=StartPosition,proto3" json:"StartPosition,omitempty"`
-	Dir           string `protobuf:"bytes,7,opt,name=Dir,proto3" json:"Dir,omitempty"` // position change, raw open set ("Open Long","Close Short","Buy",
+	StartPosition string `protobuf:"bytes,6,opt,name=StartPosition,proto3" json:"StartPosition,omitempty"` // SIGNED position (szi) in this Coin BEFORE the fill: positive =
+	// long, negative = short, 0 = flat. Perp: units of the base asset;
+	// spot: token balance (never negative). Position AFTER this fill =
+	// StartPosition ± Sz by Side (Buy +, Sell −). NOT money — realized
+	// PnL is ClosedPnl. Scoped per (User, Coin). Sign confirmed against
+	// the node stream and the HL userFills API (Close Short → negative).
+	Dir string `protobuf:"bytes,7,opt,name=Dir,proto3" json:"Dir,omitempty"` // position change, raw open set ("Open Long","Close Short","Buy",
 	// "Long > Short","Merge Outcome",…). LowCardinality
-	ClosedPnl string `protobuf:"bytes,8,opt,name=ClosedPnl,proto3" json:"ClosedPnl,omitempty"`
-	Fee       string `protobuf:"bytes,9,opt,name=Fee,proto3" json:"Fee,omitempty"`
-	FeeToken  string `protobuf:"bytes,10,opt,name=FeeToken,proto3" json:"FeeToken,omitempty"` // fee denomination, an OPEN SET — NOT always "USDC" (spot pays in
-	Hash      []byte `protobuf:"bytes,11,opt,name=Hash,proto3" json:"Hash,omitempty"`         // L1 TRANSACTION hash 0x… — one tx spans many matches, and is 32
+	ClosedPnl string `protobuf:"bytes,8,opt,name=ClosedPnl,proto3" json:"ClosedPnl,omitempty"` // REALIZED PnL in USDC (money, not size). Non-zero only when this
+	// fill CLOSES or reduces a position; 0 on opens. Distinct from
+	// StartPosition (that is position size, signed by direction).
+	Fee      string `protobuf:"bytes,9,opt,name=Fee,proto3" json:"Fee,omitempty"`
+	FeeToken string `protobuf:"bytes,10,opt,name=FeeToken,proto3" json:"FeeToken,omitempty"` // fee denomination, an OPEN SET — NOT always "USDC" (spot pays in
+	Hash     []byte `protobuf:"bytes,11,opt,name=Hash,proto3" json:"Hash,omitempty"`         // L1 TRANSACTION hash 0x… — one tx spans many matches, and is 32
 	// ZERO bytes on both sides of a TWAP trade. NOT unique; never a
 	// dedup/join key — use (BlockNumber, Coin, Tid). See Tid.
 	Oid uint64 `protobuf:"varint,12,opt,name=Oid,proto3" json:"Oid,omitempty"` // order id

@@ -75,9 +75,10 @@ message Funding {
 message FundingDelta {
   bytes  User          = 1;
   string Coin          = 2;
-  string FundingAmount = 3;
-  string Szi           = 4; // signed position size
-  string FundingRate   = 5;
+  string FundingAmount = 3; // SIGNED funding payment for this position, can be negative
+                            // (paid vs received) — exact sign direction TBD, verify like StartPosition
+  string Szi           = 4; // signed position size (see fills.StartPosition)
+  string FundingRate   = 5; // SIGNED hourly funding rate, can be negative (shorts pay longs)
   map<string, string> Extra = 6;
 }
 

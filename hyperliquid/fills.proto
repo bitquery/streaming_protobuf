@@ -24,10 +24,17 @@ message Fill {
   string Side          = 3;   // "B"=bid (bought), "A"=ask (sold), raw. LowCardinality
   string Px            = 4;
   string Sz            = 5;
-  string StartPosition = 6;
+  string StartPosition = 6;   // SIGNED position (szi) in this Coin BEFORE the fill: positive =
+                              // long, negative = short, 0 = flat. Perp: units of the base asset;
+                              // spot: token balance (never negative). Position AFTER this fill =
+                              // StartPosition ± Sz by Side (Buy +, Sell −). NOT money — realized
+                              // PnL is ClosedPnl. Scoped per (User, Coin). Sign confirmed against
+                              // the node stream and the HL userFills API (Close Short → negative).
   string Dir           = 7;   // position change, raw open set ("Open Long","Close Short","Buy",
                               // "Long > Short","Merge Outcome",…). LowCardinality
-  string ClosedPnl     = 8;
+  string ClosedPnl     = 8;   // REALIZED PnL in USDC (money, not size). Non-zero only when this
+                              // fill CLOSES or reduces a position; 0 on opens. Distinct from
+                              // StartPosition (that is position size, signed by direction).
   string Fee           = 9;
   string FeeToken      = 10;  // fee denomination, an OPEN SET — NOT always "USDC" (spot pays in
                               // the spot token, outcome markets in "+<n>"). LowCardinality

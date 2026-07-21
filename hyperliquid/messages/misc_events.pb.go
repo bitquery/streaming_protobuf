@@ -504,10 +504,11 @@ type FundingDelta struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	User          []byte                 `protobuf:"bytes,1,opt,name=User,proto3" json:"User,omitempty"`
 	Coin          string                 `protobuf:"bytes,2,opt,name=Coin,proto3" json:"Coin,omitempty"`
-	FundingAmount string                 `protobuf:"bytes,3,opt,name=FundingAmount,proto3" json:"FundingAmount,omitempty"`
-	Szi           string                 `protobuf:"bytes,4,opt,name=Szi,proto3" json:"Szi,omitempty"` // signed position size
-	FundingRate   string                 `protobuf:"bytes,5,opt,name=FundingRate,proto3" json:"FundingRate,omitempty"`
-	Extra         map[string]string      `protobuf:"bytes,6,rep,name=Extra,proto3" json:"Extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	FundingAmount string                 `protobuf:"bytes,3,opt,name=FundingAmount,proto3" json:"FundingAmount,omitempty"` // SIGNED funding payment for this position, can be negative
+	// (paid vs received) — exact sign direction TBD, verify like StartPosition
+	Szi           string            `protobuf:"bytes,4,opt,name=Szi,proto3" json:"Szi,omitempty"`                 // signed position size (see fills.StartPosition)
+	FundingRate   string            `protobuf:"bytes,5,opt,name=FundingRate,proto3" json:"FundingRate,omitempty"` // SIGNED hourly funding rate, can be negative (shorts pay longs)
+	Extra         map[string]string `protobuf:"bytes,6,rep,name=Extra,proto3" json:"Extra,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
