@@ -200,8 +200,8 @@ type DexOrder struct {
 	Owner            []byte                 `protobuf:"bytes,6,opt,name=Owner,proto3" json:"Owner,omitempty"`
 	Payer            []byte                 `protobuf:"bytes,7,opt,name=Payer,proto3" json:"Payer,omitempty"`
 	Mint             []byte                 `protobuf:"bytes,8,opt,name=Mint,proto3" json:"Mint,omitempty"`
-	LimitPriceInUsd  float32                `protobuf:"fixed32,9,opt,name=LimitPriceInUsd,proto3" json:"LimitPriceInUsd,omitempty"`
-	LimitAmountInUsd float32                `protobuf:"fixed32,10,opt,name=LimitAmountInUsd,proto3" json:"LimitAmountInUsd,omitempty"`
+	LimitPriceInUSD  float32                `protobuf:"fixed32,9,opt,name=LimitPriceInUSD,proto3" json:"LimitPriceInUSD,omitempty"`
+	LimitAmountInUSD float32                `protobuf:"fixed32,10,opt,name=LimitAmountInUSD,proto3" json:"LimitAmountInUSD,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -292,16 +292,16 @@ func (x *DexOrder) GetMint() []byte {
 	return nil
 }
 
-func (x *DexOrder) GetLimitPriceInUsd() float32 {
+func (x *DexOrder) GetLimitPriceInUSD() float32 {
 	if x != nil {
-		return x.LimitPriceInUsd
+		return x.LimitPriceInUSD
 	}
 	return 0
 }
 
-func (x *DexOrder) GetLimitAmountInUsd() float32 {
+func (x *DexOrder) GetLimitAmountInUSD() float32 {
 	if x != nil {
-		return x.LimitAmountInUsd
+		return x.LimitAmountInUSD
 	}
 	return 0
 }
@@ -470,8 +470,8 @@ type PoolSide struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	ChangeAmount      int64                  `protobuf:"varint,2,opt,name=ChangeAmount,proto3" json:"ChangeAmount,omitempty"`
 	PostAmount        uint64                 `protobuf:"varint,3,opt,name=PostAmount,proto3" json:"PostAmount,omitempty"`
-	ChangeAmountInUsd float32                `protobuf:"fixed32,4,opt,name=ChangeAmountInUsd,proto3" json:"ChangeAmountInUsd,omitempty"`
-	PostAmountInUsd   float32                `protobuf:"fixed32,5,opt,name=PostAmountInUsd,proto3" json:"PostAmountInUsd,omitempty"`
+	ChangeAmountInUSD float32                `protobuf:"fixed32,4,opt,name=ChangeAmountInUSD,proto3" json:"ChangeAmountInUSD,omitempty"`
+	PostAmountInUSD   float32                `protobuf:"fixed32,5,opt,name=PostAmountInUSD,proto3" json:"PostAmountInUSD,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -520,16 +520,16 @@ func (x *PoolSide) GetPostAmount() uint64 {
 	return 0
 }
 
-func (x *PoolSide) GetChangeAmountInUsd() float32 {
+func (x *PoolSide) GetChangeAmountInUSD() float32 {
 	if x != nil {
-		return x.ChangeAmountInUsd
+		return x.ChangeAmountInUSD
 	}
 	return 0
 }
 
-func (x *PoolSide) GetPostAmountInUsd() float32 {
+func (x *PoolSide) GetPostAmountInUSD() float32 {
 	if x != nil {
-		return x.PostAmountInUsd
+		return x.PostAmountInUSD
 	}
 	return 0
 }
@@ -624,7 +624,7 @@ type DexTradeSide struct {
 	Currency      *Currency              `protobuf:"bytes,2,opt,name=Currency,proto3" json:"Currency,omitempty"`
 	Account       *Account               `protobuf:"bytes,3,opt,name=Account,proto3" json:"Account,omitempty"`
 	Order         *DexOrder              `protobuf:"bytes,4,opt,name=Order,proto3" json:"Order,omitempty"`
-	AmountInUsd   float32                `protobuf:"fixed32,5,opt,name=AmountInUsd,proto3" json:"AmountInUsd,omitempty"`
+	AmountInUSD   float32                `protobuf:"fixed32,5,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -687,9 +687,9 @@ func (x *DexTradeSide) GetOrder() *DexOrder {
 	return nil
 }
 
-func (x *DexTradeSide) GetAmountInUsd() float32 {
+func (x *DexTradeSide) GetAmountInUSD() float32 {
 	if x != nil {
-		return x.AmountInUsd
+		return x.AmountInUSD
 	}
 	return 0
 }
@@ -805,7 +805,7 @@ type ParsedDexTransaction struct {
 	PoolEvents               []*PoolLiquidityChangeEvent `protobuf:"bytes,7,rep,name=PoolEvents,proto3" json:"PoolEvents,omitempty"`
 	TotalBalanceUpdates      []*BalanceUpdate            `protobuf:"bytes,8,rep,name=TotalBalanceUpdates,proto3" json:"TotalBalanceUpdates,omitempty"`           // native SOL (lamports)
 	TotalTokenBalanceUpdates []*BalanceUpdate            `protobuf:"bytes,9,rep,name=TotalTokenBalanceUpdates,proto3" json:"TotalTokenBalanceUpdates,omitempty"` // SPL/Token-2022 raw amounts
-	FeeInUsd                 float32                     `protobuf:"fixed32,10,opt,name=FeeInUsd,proto3" json:"FeeInUsd,omitempty"`
+	FeeInUSD                 float32                     `protobuf:"fixed32,10,opt,name=FeeInUSD,proto3" json:"FeeInUSD,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -903,9 +903,9 @@ func (x *ParsedDexTransaction) GetTotalTokenBalanceUpdates() []*BalanceUpdate {
 	return nil
 }
 
-func (x *ParsedDexTransaction) GetFeeInUsd() float32 {
+func (x *ParsedDexTransaction) GetFeeInUSD() float32 {
 	if x != nil {
-		return x.FeeInUsd
+		return x.FeeInUSD
 	}
 	return 0
 }
@@ -986,9 +986,9 @@ const file_solana_dex_block_message_proto_rawDesc = "" +
 	"\x05Owner\x18\x06 \x01(\fR\x05Owner\x12\x14\n" +
 	"\x05Payer\x18\a \x01(\fR\x05Payer\x12\x12\n" +
 	"\x04Mint\x18\b \x01(\fR\x04Mint\x12(\n" +
-	"\x0fLimitPriceInUsd\x18\t \x01(\x02R\x0fLimitPriceInUsd\x12*\n" +
-	"\x10LimitAmountInUsd\x18\n" +
-	" \x01(\x02R\x10LimitAmountInUsd\"\x8c\x02\n" +
+	"\x0fLimitPriceInUSD\x18\t \x01(\x02R\x0fLimitPriceInUSD\x12*\n" +
+	"\x10LimitAmountInUSD\x18\n" +
+	" \x01(\x02R\x10LimitAmountInUSD\"\x8c\x02\n" +
 	"\x19ParsedPoolLiquidityChange\x12\x14\n" +
 	"\x05Index\x18\x01 \x01(\rR\x05Index\x12\x1c\n" +
 	"\tSignature\x18\x02 \x01(\fR\tSignature\x12:\n" +
@@ -1007,8 +1007,8 @@ const file_solana_dex_block_message_proto_rawDesc = "" +
 	"\n" +
 	"PostAmount\x18\x03 \x01(\x04R\n" +
 	"PostAmount\x12,\n" +
-	"\x11ChangeAmountInUsd\x18\x04 \x01(\x02R\x11ChangeAmountInUsd\x12(\n" +
-	"\x0fPostAmountInUsd\x18\x05 \x01(\x02R\x0fPostAmountInUsd\"\xcd\x02\n" +
+	"\x11ChangeAmountInUSD\x18\x04 \x01(\x02R\x11ChangeAmountInUSD\x12(\n" +
+	"\x0fPostAmountInUSD\x18\x05 \x01(\x02R\x0fPostAmountInUSD\"\xcd\x02\n" +
 	"\rDexOrderEvent\x12*\n" +
 	"\x10InstructionIndex\x18\x01 \x01(\rR\x10InstructionIndex\x126\n" +
 	"\x04Type\x18\x02 \x01(\x0e2\".solana_messages.DexOrderEventTypeR\x04Type\x12*\n" +
@@ -1021,7 +1021,7 @@ const file_solana_dex_block_message_proto_rawDesc = "" +
 	"\bCurrency\x18\x02 \x01(\v2\x19.solana_messages.CurrencyR\bCurrency\x122\n" +
 	"\aAccount\x18\x03 \x01(\v2\x18.solana_messages.AccountR\aAccount\x12/\n" +
 	"\x05Order\x18\x04 \x01(\v2\x19.solana_messages.DexOrderR\x05Order\x12 \n" +
-	"\vAmountInUsd\x18\x05 \x01(\x02R\vAmountInUsd\"\xf4\x02\n" +
+	"\vAmountInUSD\x18\x05 \x01(\x02R\vAmountInUSD\"\xf4\x02\n" +
 	"\rDexTradeEvent\x12*\n" +
 	"\x10InstructionIndex\x18\x01 \x01(\rR\x10InstructionIndex\x12*\n" +
 	"\x03Dex\x18\x02 \x01(\v2\x18.solana_messages.DexInfoR\x03Dex\x122\n" +
@@ -1043,8 +1043,8 @@ const file_solana_dex_block_message_proto_rawDesc = "" +
 	"PoolEvents\x12P\n" +
 	"\x13TotalBalanceUpdates\x18\b \x03(\v2\x1e.solana_messages.BalanceUpdateR\x13TotalBalanceUpdates\x12Z\n" +
 	"\x18TotalTokenBalanceUpdates\x18\t \x03(\v2\x1e.solana_messages.BalanceUpdateR\x18TotalTokenBalanceUpdates\x12\x1a\n" +
-	"\bFeeInUsd\x18\n" +
-	" \x01(\x02R\bFeeInUsd\"\x98\x01\n" +
+	"\bFeeInUSD\x18\n" +
+	" \x01(\x02R\bFeeInUSD\"\x98\x01\n" +
 	"\x15DexParsedBlockMessage\x124\n" +
 	"\x06Header\x18\x01 \x01(\v2\x1c.solana_messages.BlockHeaderR\x06Header\x12I\n" +
 	"\fTransactions\x18\x02 \x03(\v2%.solana_messages.ParsedDexTransactionR\fTransactions*5\n" +

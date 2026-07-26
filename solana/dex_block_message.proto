@@ -29,8 +29,8 @@ message DexOrder {
   bytes Payer = 7;
   bytes Mint = 8;
 
-  float LimitPriceInUsd = 9;
-  float LimitAmountInUsd = 10;
+  float LimitPriceInUSD = 9;
+  float LimitAmountInUSD = 10;
 }
 
 message ParsedPoolLiquidityChange {
@@ -55,8 +55,8 @@ message PoolSide {
   int64    ChangeAmount = 2;
   uint64   PostAmount = 3;
 
-  float ChangeAmountInUsd = 4;
-  float PostAmountInUsd = 5;
+  float ChangeAmountInUSD = 4;
+  float PostAmountInUSD = 5;
 }
 
 enum DexOrderEventType {
@@ -82,7 +82,7 @@ message DexTradeSide {
   Account Account = 3;
   DexOrder Order = 4;
 
-  float AmountInUsd = 5;
+  float AmountInUSD = 5;
 }
 
 message DexTradeEvent {
@@ -109,7 +109,7 @@ message ParsedDexTransaction {
   repeated BalanceUpdate TotalBalanceUpdates = 8;      // native SOL (lamports)
   repeated BalanceUpdate TotalTokenBalanceUpdates = 9; // SPL/Token-2022 raw amounts
 
-  float FeeInUsd = 10;
+  float FeeInUSD = 10;
 }
 
 message DexParsedBlockMessage {
