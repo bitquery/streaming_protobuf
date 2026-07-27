@@ -73,16 +73,30 @@ func (x *PerpetualBlockMessage) GetTransactions() []*ParsedPerpetualTransaction 
 	return nil
 }
 
+// One transaction's perpetual activity, split into four lists. Three of them are the kinds of
+// thing that happen to a trader, and they barely overlap in what they carry: an order never has a
+// position, a PnL never has an order, a counterparty exists only on a fill. Measured over a live
+// sample, every order event filled Order/Amount/Price and nothing else; every PnL filled Position
+// and nothing else. As one flat type a third of each row was necessarily empty.
+//
+// The fourth, Prices, is split for a different reason — volume. Market state is republished on
+// every price move and dwarfs user activity.
+//
+// Expect lists to be empty on venues built differently: a pool-based perpetual (no order book)
+// produces Fills and Positions but never an Order. That is the intended shape, not a gap.
+//
+// Ordering across all four is EventIndex, a single counter over the whole transaction, so a fill
+// can be placed against the order that caused it and against the mark of the same moment.
 type ParsedPerpetualTransaction struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	Index     uint32                 `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"` // transaction index in the block
-	Signature []byte                 `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
-	Status    *TransactionStatus     `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
-	Header    *TransactionHeader     `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
-	// Split by volume, not by kind: market/oracle state is republished on every price move
-	// and dwarfs user activity, so it gets its own message and its own table.
-	Events        []*PerpetualEvent      `protobuf:"bytes,5,rep,name=Events,proto3" json:"Events,omitempty"` // trades, orders, positions, collateral
-	Prices        []*PerpetualPriceEvent `protobuf:"bytes,6,rep,name=Prices,proto3" json:"Prices,omitempty"` // market / oracle state
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Index         uint32                    `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"` // transaction index in the block
+	Signature     []byte                    `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	Status        *TransactionStatus        `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
+	Header        *TransactionHeader        `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
+	Orders        []*PerpetualOrderEvent    `protobuf:"bytes,7,rep,name=Orders,proto3" json:"Orders,omitempty"`       // requested / placed / cancelled / rejected, incl. conditional
+	Fills         []*PerpetualFillEvent     `protobuf:"bytes,8,rep,name=Fills,proto3" json:"Fills,omitempty"`         // executions
+	Positions     []*PerpetualPositionEvent `protobuf:"bytes,9,rep,name=Positions,proto3" json:"Positions,omitempty"` // PnL and liquidations
+	Prices        []*PerpetualPriceEvent    `protobuf:"bytes,6,rep,name=Prices,proto3" json:"Prices,omitempty"`       // market / oracle state
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,9 +159,23 @@ func (x *ParsedPerpetualTransaction) GetHeader() *TransactionHeader {
 	return nil
 }
 
-func (x *ParsedPerpetualTransaction) GetEvents() []*PerpetualEvent {
+func (x *ParsedPerpetualTransaction) GetOrders() []*PerpetualOrderEvent {
 	if x != nil {
-		return x.Events
+		return x.Orders
+	}
+	return nil
+}
+
+func (x *ParsedPerpetualTransaction) GetFills() []*PerpetualFillEvent {
+	if x != nil {
+		return x.Fills
+	}
+	return nil
+}
+
+func (x *ParsedPerpetualTransaction) GetPositions() []*PerpetualPositionEvent {
+	if x != nil {
+		return x.Positions
 	}
 	return nil
 }
@@ -165,8 +193,6 @@ type PerpetualExchange struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=Name,proto3" json:"Name,omitempty"`       // "phoenix_eternal"
 	Family        string                 `protobuf:"bytes,3,opt,name=Family,proto3" json:"Family,omitempty"`   // "Phoenix"
 	Version       string                 `protobuf:"bytes,4,opt,name=Version,proto3" json:"Version,omitempty"` // IDL metadata version, e.g. "0.2.0"
-	Oracle        []byte                 `protobuf:"bytes,5,opt,name=Oracle,proto3" json:"Oracle,omitempty"`   // Hawkeye price publisher
-	Bridge        []byte                 `protobuf:"bytes,6,opt,name=Bridge,proto3" json:"Bridge,omitempty"`   // Ember deposit/withdrawal program
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -229,20 +255,6 @@ func (x *PerpetualExchange) GetVersion() string {
 	return ""
 }
 
-func (x *PerpetualExchange) GetOracle() []byte {
-	if x != nil {
-		return x.Oracle
-	}
-	return nil
-}
-
-func (x *PerpetualExchange) GetBridge() []byte {
-	if x != nil {
-		return x.Bridge
-	}
-	return nil
-}
-
 // One perpetual market. TickSize/LotSize are the minimum steps in human units, which is what
 // the protocol-specific lot arithmetic collapses to.
 type PerpetualAsset struct {
@@ -251,14 +263,25 @@ type PerpetualAsset struct {
 	// event: an absent (or 0) Id means SOL, not "unknown". SOL is also the busiest market, so this
 	// is the common case, not an edge one. Join on Symbol, which is always present, and never treat
 	// Id == 0 as a missing-value sentinel.
-	Id       uint64  `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
-	Symbol   string  `protobuf:"bytes,2,opt,name=Symbol,proto3" json:"Symbol,omitempty"`       // "SOL", "BTC", "GOLD"
+	//
+	// There is no mint for the asset itself and there cannot be for most of them: a perpetual is
+	// synthetic and never delivers, so GOLD, NVDA or WTIOIL have no token on Solana. Even SOL and
+	// BTC are not linked to their wrapped mints here. Id and Symbol are the whole identity; the only
+	// real mint in this message is the quote currency's.
+	Id     uint64 `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	Symbol string `protobuf:"bytes,2,opt,name=Symbol,proto3" json:"Symbol,omitempty"` // "SOL", "BTC", "GOLD"
+	// Price feed this market is marked against — the one identifier that carries across venues,
+	// since the same Pyth feed backs SOL on several of them. Phoenix Eternal runs a single oracle
+	// for the whole exchange (Hawkeye), so every asset here reports the same address; Drift and
+	// Mango name an oracle per market, which is why this sits on the asset rather than on the
+	// exchange.
+	Oracle   []byte  `protobuf:"bytes,6,opt,name=Oracle,proto3" json:"Oracle,omitempty"`
 	TickSize float64 `protobuf:"fixed64,3,opt,name=TickSize,proto3" json:"TickSize,omitempty"` // minimum price step, in quote currency (SOL: 0.01, BTC: 1, GOLD: 0.1)
 	LotSize  float64 `protobuf:"fixed64,4,opt,name=LotSize,proto3" json:"LotSize,omitempty"`   // minimum size step, in asset units (SOL: 0.01, BTC: 0.0001, GOLD: 0.001)
 	// The mint every price and amount on this market is denominated in. On Phoenix Eternal that is
 	// PhUsd, the token the exchange itself names as canonical — not the USDC it is backed 1:1 by
 	// and which funds enter and leave as.
-	QuoteCurrency *Currency `protobuf:"bytes,5,opt,name=QuoteCurrency,proto3" json:"QuoteCurrency,omitempty"`
+	QuoteCurrency *PerpetualCurrency `protobuf:"bytes,5,opt,name=QuoteCurrency,proto3" json:"QuoteCurrency,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -307,6 +330,13 @@ func (x *PerpetualAsset) GetSymbol() string {
 	return ""
 }
 
+func (x *PerpetualAsset) GetOracle() []byte {
+	if x != nil {
+		return x.Oracle
+	}
+	return nil
+}
+
 func (x *PerpetualAsset) GetTickSize() float64 {
 	if x != nil {
 		return x.TickSize
@@ -321,91 +351,42 @@ func (x *PerpetualAsset) GetLotSize() float64 {
 	return 0
 }
 
-func (x *PerpetualAsset) GetQuoteCurrency() *Currency {
+func (x *PerpetualAsset) GetQuoteCurrency() *PerpetualCurrency {
 	if x != nil {
 		return x.QuoteCurrency
 	}
 	return nil
 }
 
-// User-facing activity. Type is one of:
-//
-//	"OrderRequested"   the order as accepted, before it hits the book
-//	"OrderPlaced"      resting order added to the book
-//	"OrderCancelled"   removed or reduced; see Order.CancelReason
-//	"OrderRejected"    see Order.RejectReason
-//	"Fill"             one maker fill; Counterparty is the other side
-//	"TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted"       conditional orders
-//	"StopLossPlaced" / "StopLossCancelled" / "StopLossExecuted"    stop-loss orders
-//	"PnL"              realized PnL / position change
-//	"Liquidation"
-//
-// COLLATERAL FLOWS ARE OUT OF SCOPE. Deposits, withdrawals, internal transfers and funding
-// settlement move exchange-wide collateral rather than a position in a market, and this stream
-// reports positions, orders and trades. There is no message for them: field 18 held one and is
-// reserved. Funding is not lost — the protocol repeats each funding payment on the PnL event of
-// the same batch (Position.Funding), and the collateral backing a position on each fill
-// (Position.Collateral).
-// Every account field is empty when the chain named no account — never the all-zero address,
-// which would read as the System program. An expiry crank, for one, cancels orders it does not
-// own: those events carry no Signer and no Trader, and are joined to their OrderPlaced by
-// Order.Id.
-type PerpetualEvent struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Signer            []byte                 `protobuf:"bytes,1,opt,name=Signer,proto3" json:"Signer,omitempty"`                        // wallet that signed the transaction
-	Trader            []byte                 `protobuf:"bytes,2,opt,name=Trader,proto3" json:"Trader,omitempty"`                        // position-owning account (a PDA on Phoenix, not the wallet)
-	Counterparty      []byte                 `protobuf:"bytes,3,opt,name=Counterparty,proto3" json:"Counterparty,omitempty"`            // other side of a fill (the maker when Trader is the taker)
-	CounterpartyIsAmm bool                   `protobuf:"varint,5,opt,name=CounterpartyIsAmm,proto3" json:"CounterpartyIsAmm,omitempty"` // maker is protocol liquidity (a Phoenix spline), not a book order
-	// Trader is protocol liquidity, not a user. A spline's position moves like anyone else's and
-	// emits its own PnL events, so without this flag an aggregate over traders ranks the
-	// protocol's own liquidity as its biggest trader. Filter it out of trader-facing queries.
-	TraderIsAmm      bool               `protobuf:"varint,19,opt,name=TraderIsAmm,proto3" json:"TraderIsAmm,omitempty"`
-	Type             string             `protobuf:"bytes,6,opt,name=Type,proto3" json:"Type,omitempty"`
-	Side             string             `protobuf:"bytes,7,opt,name=Side,proto3" json:"Side,omitempty"`                          // "bid" / "ask"
-	EventIndex       uint32             `protobuf:"varint,8,opt,name=EventIndex,proto3" json:"EventIndex,omitempty"`             // execution order inside the transaction
-	InstructionIndex uint32             `protobuf:"varint,9,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"` // top-level instruction that produced it
-	Timestamp        uint64             `protobuf:"varint,10,opt,name=Timestamp,proto3" json:"Timestamp,omitempty"`
-	Slot             uint64             `protobuf:"varint,11,opt,name=Slot,proto3" json:"Slot,omitempty"`
-	Exchange         *PerpetualExchange `protobuf:"bytes,12,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
-	Asset            *PerpetualAsset    `protobuf:"bytes,13,opt,name=Asset,proto3" json:"Asset,omitempty"`
-	// Which of these is set depends on Type — the map, so a consumer needn't guess:
-	//
-	//	OrderRequested/Placed/Cancelled/Rejected  Order, Amount, Price(.Limit)
-	//	Trigger*/StopLoss*                        Order, Amount, Price(.Limit/.Trigger)
-	//	Fill                                      Amount(.Filled/.Quote/.Fee), Price(.Execution), Position
-	//	PnL                                       Position(incl. .Funding when funding settled)
-	//	Liquidation                               Amount, Price, Position(.Liquidation/.Liquidator)
-	//
-	// Price.Mark is denormalized from the market-state events of the same transaction, so it is
-	// present whenever that transaction also republished a price for this asset — measured at 62%
-	// of PnL events and 100% of fills. The protocol's PnL event carries no mark of its own, so for
-	// the rest the mark has to come from the price stream, which is dense enough for an asof join
-	// on (asset, slot): 12053 price rows to 2996 events in a nine-minute sample.
-	//
-	// These stay top-level messages rather than nested ones: protoc cannot resolve a nested type
-	// whose name equals the field name.
-	Order         *PerpetualOrder    `protobuf:"bytes,14,opt,name=Order,proto3" json:"Order,omitempty"`
-	Amount        *PerpetualAmount   `protobuf:"bytes,15,opt,name=Amount,proto3" json:"Amount,omitempty"`
-	Price         *PerpetualPrice    `protobuf:"bytes,16,opt,name=Price,proto3" json:"Price,omitempty"`
-	Position      *PerpetualPosition `protobuf:"bytes,17,opt,name=Position,proto3" json:"Position,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+// The quote token, in the four fields that identify it. Deliberately not the shared Currency
+// message: that one carries 27 fields of Metaplex metadata, supply and USD prices, of which a
+// perpetual venue fills four — and fills them identically on every row, since the quote currency
+// is a protocol constant. Flattened into ClickHouse the difference is 4 columns against 27, twice
+// (events and prices), for values that never vary.
+type PerpetualCurrency struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	MintAddress    []byte                 `protobuf:"bytes,1,opt,name=MintAddress,proto3" json:"MintAddress,omitempty"`
+	Symbol         string                 `protobuf:"bytes,2,opt,name=Symbol,proto3" json:"Symbol,omitempty"` // may be the protocol's documented name: an SPL mint need not carry metadata
+	Decimals       uint32                 `protobuf:"varint,3,opt,name=Decimals,proto3" json:"Decimals,omitempty"`
+	ProgramAddress []byte                 `protobuf:"bytes,4,opt,name=ProgramAddress,proto3" json:"ProgramAddress,omitempty"` // SPL Token or Token-2022
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *PerpetualEvent) Reset() {
-	*x = PerpetualEvent{}
+func (x *PerpetualCurrency) Reset() {
+	*x = PerpetualCurrency{}
 	mi := &file_solana_perpetual_block_message_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PerpetualEvent) String() string {
+func (x *PerpetualCurrency) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PerpetualEvent) ProtoMessage() {}
+func (*PerpetualCurrency) ProtoMessage() {}
 
-func (x *PerpetualEvent) ProtoReflect() protoreflect.Message {
+func (x *PerpetualCurrency) ProtoReflect() protoreflect.Message {
 	mi := &file_solana_perpetual_block_message_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -417,126 +398,511 @@ func (x *PerpetualEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PerpetualEvent.ProtoReflect.Descriptor instead.
-func (*PerpetualEvent) Descriptor() ([]byte, []int) {
+// Deprecated: Use PerpetualCurrency.ProtoReflect.Descriptor instead.
+func (*PerpetualCurrency) Descriptor() ([]byte, []int) {
 	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *PerpetualEvent) GetSigner() []byte {
+func (x *PerpetualCurrency) GetMintAddress() []byte {
+	if x != nil {
+		return x.MintAddress
+	}
+	return nil
+}
+
+func (x *PerpetualCurrency) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *PerpetualCurrency) GetDecimals() uint32 {
+	if x != nil {
+		return x.Decimals
+	}
+	return 0
+}
+
+func (x *PerpetualCurrency) GetProgramAddress() []byte {
+	if x != nil {
+		return x.ProgramAddress
+	}
+	return nil
+}
+
+// An order's life: requested, placed, cancelled or rejected — including conditional orders, which
+// are orders that are not in the book yet. Never carries a position: what an order does to one is
+// reported as a fill and a PnL.
+type PerpetualOrderEvent struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Signer []byte                 `protobuf:"bytes,1,opt,name=Signer,proto3" json:"Signer,omitempty"` // wallet that signed the transaction
+	Trader []byte                 `protobuf:"bytes,2,opt,name=Trader,proto3" json:"Trader,omitempty"` // position-owning account (a PDA on Phoenix, not the wallet)
+	// "OrderRequested"  the order as accepted, before it hits the book
+	// "OrderPlaced"     resting order added to the book
+	// "OrderCancelled"  removed or reduced; see Order.CancelReason
+	// "OrderRejected"   see Order.RejectReason
+	// "TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted"      conditional orders
+	// "StopLossPlaced" / "StopLossCancelled" / "StopLossExecuted"   stop-loss orders
+	Type string `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"`
+	Side string `protobuf:"bytes,4,opt,name=Side,proto3" json:"Side,omitempty"` // "bid" / "ask"
+	// Position in the transaction, shared across all four lists, so an order can be ordered against
+	// the fill it caused and the mark of that moment. There is no per-event time or slot: Phoenix
+	// states them once per batch and they are the block's own — measured identical to the block on
+	// 2434 of 2434 events — so they live on BlockHeader alone.
+	EventIndex       uint32             `protobuf:"varint,5,opt,name=EventIndex,proto3" json:"EventIndex,omitempty"`
+	InstructionIndex uint32             `protobuf:"varint,6,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"` // top-level instruction that produced it
+	Exchange         *PerpetualExchange `protobuf:"bytes,7,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
+	Asset            *PerpetualAsset    `protobuf:"bytes,8,opt,name=Asset,proto3" json:"Asset,omitempty"`
+	Order            *PerpetualOrder    `protobuf:"bytes,9,opt,name=Order,proto3" json:"Order,omitempty"`
+	Amount           *PerpetualAmount   `protobuf:"bytes,10,opt,name=Amount,proto3" json:"Amount,omitempty"`
+	Price            *PerpetualPrice    `protobuf:"bytes,11,opt,name=Price,proto3" json:"Price,omitempty"`              // .Limit, and .Trigger for conditional orders
+	TraderIsAmm      bool               `protobuf:"varint,12,opt,name=TraderIsAmm,proto3" json:"TraderIsAmm,omitempty"` // see the note on PerpetualPositionEvent
+	// Orders are placed during a forced liquidation too: the venue submits one on the liquidated
+	// trader's account to close the position, and it reaches this list like any other. Marked the
+	// same way as the fills and PnL it belongs with — see PerpetualPositionEvent.
+	Liquidation   bool   `protobuf:"varint,13,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
+	Liquidator    []byte `protobuf:"bytes,14,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PerpetualOrderEvent) Reset() {
+	*x = PerpetualOrderEvent{}
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PerpetualOrderEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PerpetualOrderEvent) ProtoMessage() {}
+
+func (x *PerpetualOrderEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PerpetualOrderEvent.ProtoReflect.Descriptor instead.
+func (*PerpetualOrderEvent) Descriptor() ([]byte, []int) {
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PerpetualOrderEvent) GetSigner() []byte {
 	if x != nil {
 		return x.Signer
 	}
 	return nil
 }
 
-func (x *PerpetualEvent) GetTrader() []byte {
+func (x *PerpetualOrderEvent) GetTrader() []byte {
 	if x != nil {
 		return x.Trader
 	}
 	return nil
 }
 
-func (x *PerpetualEvent) GetCounterparty() []byte {
-	if x != nil {
-		return x.Counterparty
-	}
-	return nil
-}
-
-func (x *PerpetualEvent) GetCounterpartyIsAmm() bool {
-	if x != nil {
-		return x.CounterpartyIsAmm
-	}
-	return false
-}
-
-func (x *PerpetualEvent) GetTraderIsAmm() bool {
-	if x != nil {
-		return x.TraderIsAmm
-	}
-	return false
-}
-
-func (x *PerpetualEvent) GetType() string {
+func (x *PerpetualOrderEvent) GetType() string {
 	if x != nil {
 		return x.Type
 	}
 	return ""
 }
 
-func (x *PerpetualEvent) GetSide() string {
+func (x *PerpetualOrderEvent) GetSide() string {
 	if x != nil {
 		return x.Side
 	}
 	return ""
 }
 
-func (x *PerpetualEvent) GetEventIndex() uint32 {
+func (x *PerpetualOrderEvent) GetEventIndex() uint32 {
 	if x != nil {
 		return x.EventIndex
 	}
 	return 0
 }
 
-func (x *PerpetualEvent) GetInstructionIndex() uint32 {
+func (x *PerpetualOrderEvent) GetInstructionIndex() uint32 {
 	if x != nil {
 		return x.InstructionIndex
 	}
 	return 0
 }
 
-func (x *PerpetualEvent) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
-func (x *PerpetualEvent) GetSlot() uint64 {
-	if x != nil {
-		return x.Slot
-	}
-	return 0
-}
-
-func (x *PerpetualEvent) GetExchange() *PerpetualExchange {
+func (x *PerpetualOrderEvent) GetExchange() *PerpetualExchange {
 	if x != nil {
 		return x.Exchange
 	}
 	return nil
 }
 
-func (x *PerpetualEvent) GetAsset() *PerpetualAsset {
+func (x *PerpetualOrderEvent) GetAsset() *PerpetualAsset {
 	if x != nil {
 		return x.Asset
 	}
 	return nil
 }
 
-func (x *PerpetualEvent) GetOrder() *PerpetualOrder {
+func (x *PerpetualOrderEvent) GetOrder() *PerpetualOrder {
 	if x != nil {
 		return x.Order
 	}
 	return nil
 }
 
-func (x *PerpetualEvent) GetAmount() *PerpetualAmount {
+func (x *PerpetualOrderEvent) GetAmount() *PerpetualAmount {
 	if x != nil {
 		return x.Amount
 	}
 	return nil
 }
 
-func (x *PerpetualEvent) GetPrice() *PerpetualPrice {
+func (x *PerpetualOrderEvent) GetPrice() *PerpetualPrice {
 	if x != nil {
 		return x.Price
 	}
 	return nil
 }
 
-func (x *PerpetualEvent) GetPosition() *PerpetualPosition {
+func (x *PerpetualOrderEvent) GetTraderIsAmm() bool {
+	if x != nil {
+		return x.TraderIsAmm
+	}
+	return false
+}
+
+func (x *PerpetualOrderEvent) GetLiquidation() bool {
+	if x != nil {
+		return x.Liquidation
+	}
+	return false
+}
+
+func (x *PerpetualOrderEvent) GetLiquidator() []byte {
+	if x != nil {
+		return x.Liquidator
+	}
+	return nil
+}
+
+// One maker fill, written from the taker's perspective. Type would be constant here, so there is
+// none: being in this list is what it would have said.
+type PerpetualFillEvent struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Signer            []byte                 `protobuf:"bytes,1,opt,name=Signer,proto3" json:"Signer,omitempty"`
+	Trader            []byte                 `protobuf:"bytes,2,opt,name=Trader,proto3" json:"Trader,omitempty"`                        // the taker, filled in from the transaction's TradeSummary
+	Counterparty      []byte                 `protobuf:"bytes,3,opt,name=Counterparty,proto3" json:"Counterparty,omitempty"`            // the maker
+	CounterpartyIsAmm bool                   `protobuf:"varint,4,opt,name=CounterpartyIsAmm,proto3" json:"CounterpartyIsAmm,omitempty"` // maker is protocol liquidity (a Phoenix spline), not a book order
+	TraderIsAmm       bool                   `protobuf:"varint,5,opt,name=TraderIsAmm,proto3" json:"TraderIsAmm,omitempty"`
+	Side              string                 `protobuf:"bytes,6,opt,name=Side,proto3" json:"Side,omitempty"` // taker side: "bid" / "ask"
+	EventIndex        uint32                 `protobuf:"varint,7,opt,name=EventIndex,proto3" json:"EventIndex,omitempty"`
+	InstructionIndex  uint32                 `protobuf:"varint,8,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"`
+	Exchange          *PerpetualExchange     `protobuf:"bytes,9,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
+	Asset             *PerpetualAsset        `protobuf:"bytes,10,opt,name=Asset,proto3" json:"Asset,omitempty"`
+	Amount            *PerpetualAmount       `protobuf:"bytes,11,opt,name=Amount,proto3" json:"Amount,omitempty"`     // .Filled, .Quote, .Fee
+	Price             *PerpetualPrice        `protobuf:"bytes,12,opt,name=Price,proto3" json:"Price,omitempty"`       // .Execution, .Mark
+	Position          *PerpetualPosition     `protobuf:"bytes,13,opt,name=Position,proto3" json:"Position,omitempty"` // the taker's position after the fill
+	// This fill is part of a forced liquidation of Trader's position — see PerpetualPositionEvent.
+	Liquidation   bool   `protobuf:"varint,14,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
+	Liquidator    []byte `protobuf:"bytes,15,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PerpetualFillEvent) Reset() {
+	*x = PerpetualFillEvent{}
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PerpetualFillEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PerpetualFillEvent) ProtoMessage() {}
+
+func (x *PerpetualFillEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PerpetualFillEvent.ProtoReflect.Descriptor instead.
+func (*PerpetualFillEvent) Descriptor() ([]byte, []int) {
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *PerpetualFillEvent) GetSigner() []byte {
+	if x != nil {
+		return x.Signer
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetTrader() []byte {
+	if x != nil {
+		return x.Trader
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetCounterparty() []byte {
+	if x != nil {
+		return x.Counterparty
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetCounterpartyIsAmm() bool {
+	if x != nil {
+		return x.CounterpartyIsAmm
+	}
+	return false
+}
+
+func (x *PerpetualFillEvent) GetTraderIsAmm() bool {
+	if x != nil {
+		return x.TraderIsAmm
+	}
+	return false
+}
+
+func (x *PerpetualFillEvent) GetSide() string {
+	if x != nil {
+		return x.Side
+	}
+	return ""
+}
+
+func (x *PerpetualFillEvent) GetEventIndex() uint32 {
+	if x != nil {
+		return x.EventIndex
+	}
+	return 0
+}
+
+func (x *PerpetualFillEvent) GetInstructionIndex() uint32 {
+	if x != nil {
+		return x.InstructionIndex
+	}
+	return 0
+}
+
+func (x *PerpetualFillEvent) GetExchange() *PerpetualExchange {
+	if x != nil {
+		return x.Exchange
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetAsset() *PerpetualAsset {
+	if x != nil {
+		return x.Asset
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetAmount() *PerpetualAmount {
+	if x != nil {
+		return x.Amount
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetPrice() *PerpetualPrice {
+	if x != nil {
+		return x.Price
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetPosition() *PerpetualPosition {
 	if x != nil {
 		return x.Position
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetLiquidation() bool {
+	if x != nil {
+		return x.Liquidation
+	}
+	return false
+}
+
+func (x *PerpetualFillEvent) GetLiquidator() []byte {
+	if x != nil {
+		return x.Liquidator
+	}
+	return nil
+}
+
+// What happened to a position: realized PnL, funding, and liquidations.
+type PerpetualPositionEvent struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Signer           []byte                 `protobuf:"bytes,1,opt,name=Signer,proto3" json:"Signer,omitempty"`
+	Trader           []byte                 `protobuf:"bytes,2,opt,name=Trader,proto3" json:"Trader,omitempty"`
+	Type             string                 `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"` // "PnL" or "Liquidation"
+	EventIndex       uint32                 `protobuf:"varint,4,opt,name=EventIndex,proto3" json:"EventIndex,omitempty"`
+	InstructionIndex uint32                 `protobuf:"varint,5,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"`
+	Exchange         *PerpetualExchange     `protobuf:"bytes,6,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
+	Asset            *PerpetualAsset        `protobuf:"bytes,7,opt,name=Asset,proto3" json:"Asset,omitempty"`
+	Position         *PerpetualPosition     `protobuf:"bytes,8,opt,name=Position,proto3" json:"Position,omitempty"`
+	Price            *PerpetualPrice        `protobuf:"bytes,9,opt,name=Price,proto3" json:"Price,omitempty"`    // .Mark
+	Amount           *PerpetualAmount       `protobuf:"bytes,10,opt,name=Amount,proto3" json:"Amount,omitempty"` // liquidated size and quote, on "Liquidation"
+	// Trader is protocol liquidity, not a user. A spline's position moves like anyone else's and
+	// emits its own PnL events, so without this flag an aggregate over traders ranks the protocol's
+	// own liquidity as its biggest trader. Filter it out of trader-facing queries.
+	TraderIsAmm bool `protobuf:"varint,11,opt,name=TraderIsAmm,proto3" json:"TraderIsAmm,omitempty"`
+	// This event is part of a forced liquidation of Trader's position, and Liquidator is who forced
+	// it. Set on every event of the liquidated trader in that transaction — not only on the one
+	// typed "Liquidation" — because a liquidation is executed *through* ordinary events: the sample
+	// transaction emits PnL, OrderRequested, PnL, Fill, PnL, Liquidation, and the PnL that actually
+	// realizes the loss is the fourth of those. Without the flag it is indistinguishable from a
+	// voluntary close, so "how much was lost to liquidations" cannot be asked.
+	//
+	// Empty on events that merely accompany one (the counterparty's own PnL, a spline's fill), since
+	// those are not that trader's position being closed.
+	Liquidation   bool   `protobuf:"varint,12,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
+	Liquidator    []byte `protobuf:"bytes,13,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PerpetualPositionEvent) Reset() {
+	*x = PerpetualPositionEvent{}
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PerpetualPositionEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PerpetualPositionEvent) ProtoMessage() {}
+
+func (x *PerpetualPositionEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PerpetualPositionEvent.ProtoReflect.Descriptor instead.
+func (*PerpetualPositionEvent) Descriptor() ([]byte, []int) {
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *PerpetualPositionEvent) GetSigner() []byte {
+	if x != nil {
+		return x.Signer
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetTrader() []byte {
+	if x != nil {
+		return x.Trader
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *PerpetualPositionEvent) GetEventIndex() uint32 {
+	if x != nil {
+		return x.EventIndex
+	}
+	return 0
+}
+
+func (x *PerpetualPositionEvent) GetInstructionIndex() uint32 {
+	if x != nil {
+		return x.InstructionIndex
+	}
+	return 0
+}
+
+func (x *PerpetualPositionEvent) GetExchange() *PerpetualExchange {
+	if x != nil {
+		return x.Exchange
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetAsset() *PerpetualAsset {
+	if x != nil {
+		return x.Asset
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetPosition() *PerpetualPosition {
+	if x != nil {
+		return x.Position
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetPrice() *PerpetualPrice {
+	if x != nil {
+		return x.Price
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetAmount() *PerpetualAmount {
+	if x != nil {
+		return x.Amount
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetTraderIsAmm() bool {
+	if x != nil {
+		return x.TraderIsAmm
+	}
+	return false
+}
+
+func (x *PerpetualPositionEvent) GetLiquidation() bool {
+	if x != nil {
+		return x.Liquidation
+	}
+	return false
+}
+
+func (x *PerpetualPositionEvent) GetLiquidator() []byte {
+	if x != nil {
+		return x.Liquidator
 	}
 	return nil
 }
@@ -575,7 +941,7 @@ type PerpetualOrder struct {
 
 func (x *PerpetualOrder) Reset() {
 	*x = PerpetualOrder{}
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[5]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -587,7 +953,7 @@ func (x *PerpetualOrder) String() string {
 func (*PerpetualOrder) ProtoMessage() {}
 
 func (x *PerpetualOrder) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[5]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -600,7 +966,7 @@ func (x *PerpetualOrder) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpetualOrder.ProtoReflect.Descriptor instead.
 func (*PerpetualOrder) Descriptor() ([]byte, []int) {
-	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{5}
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PerpetualOrder) GetId() []byte {
@@ -674,7 +1040,7 @@ type PerpetualAmount struct {
 
 func (x *PerpetualAmount) Reset() {
 	*x = PerpetualAmount{}
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[6]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -686,7 +1052,7 @@ func (x *PerpetualAmount) String() string {
 func (*PerpetualAmount) ProtoMessage() {}
 
 func (x *PerpetualAmount) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[6]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -699,7 +1065,7 @@ func (x *PerpetualAmount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpetualAmount.ProtoReflect.Descriptor instead.
 func (*PerpetualAmount) Descriptor() ([]byte, []int) {
-	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{6}
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PerpetualAmount) GetSize() float64 {
@@ -763,7 +1129,7 @@ type PerpetualPrice struct {
 
 func (x *PerpetualPrice) Reset() {
 	*x = PerpetualPrice{}
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[7]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -775,7 +1141,7 @@ func (x *PerpetualPrice) String() string {
 func (*PerpetualPrice) ProtoMessage() {}
 
 func (x *PerpetualPrice) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[7]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -788,7 +1154,7 @@ func (x *PerpetualPrice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpetualPrice.ProtoReflect.Descriptor instead.
 func (*PerpetualPrice) Descriptor() ([]byte, []int) {
-	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{7}
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PerpetualPrice) GetLimit() float64 {
@@ -820,23 +1186,46 @@ func (x *PerpetualPrice) GetMark() float64 {
 }
 
 type PerpetualPosition struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Size          float64                `protobuf:"fixed64,1,opt,name=Size,proto3" json:"Size,omitempty"` // position after the event, signed (negative = short)
-	SizeBefore    float64                `protobuf:"fixed64,2,opt,name=SizeBefore,proto3" json:"SizeBefore,omitempty"`
-	EntryPrice    float64                `protobuf:"fixed64,3,opt,name=EntryPrice,proto3" json:"EntryPrice,omitempty"` // average entry, folded from the protocol's virtual-quote balance
-	RealizedPnl   float64                `protobuf:"fixed64,4,opt,name=RealizedPnl,proto3" json:"RealizedPnl,omitempty"`
-	Funding       float64                `protobuf:"fixed64,5,opt,name=Funding,proto3" json:"Funding,omitempty"`       // funding paid (negative) or received (positive)
-	Collateral    float64                `protobuf:"fixed64,6,opt,name=Collateral,proto3" json:"Collateral,omitempty"` // collateral backing the position after the event
-	Liquidation   bool                   `protobuf:"varint,7,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
-	Liquidator    []byte                 `protobuf:"bytes,8,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
-	Closed        bool                   `protobuf:"varint,9,opt,name=Closed,proto3" json:"Closed,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Size        float64                `protobuf:"fixed64,1,opt,name=Size,proto3" json:"Size,omitempty"` // position after the event, signed (negative = short)
+	SizeBefore  float64                `protobuf:"fixed64,2,opt,name=SizeBefore,proto3" json:"SizeBefore,omitempty"`
+	EntryPrice  float64                `protobuf:"fixed64,3,opt,name=EntryPrice,proto3" json:"EntryPrice,omitempty"` // average entry, folded from the protocol's virtual-quote balance
+	RealizedPnl float64                `protobuf:"fixed64,4,opt,name=RealizedPnl,proto3" json:"RealizedPnl,omitempty"`
+	Funding     float64                `protobuf:"fixed64,5,opt,name=Funding,proto3" json:"Funding,omitempty"` // funding paid (negative) or received (positive)
+	// Collateral backing the trader, NOT this position. Phoenix Eternal is cross-margin: one
+	// TraderState.quoteLotCollateral covers every market the trader is in, and traders do use many
+	// — a live sample had accounts holding 15 to 30 markets at once. So this is the account's
+	// collateral seen at this event, and a leverage computed from it and one position's notional
+	// would be that position's share of the account, not its leverage. Real leverage needs the sum
+	// of |Size * Mark| over all of the trader's markets at that slot, which is a query, not a field.
+	//
+	// Only fills carry it: the protocol reports it on TradeSummary, and PnL events do not restate it.
+	Collateral float64 `protobuf:"fixed64,6,opt,name=Collateral,proto3" json:"Collateral,omitempty"`
+	// |Size * Price.Mark| / Collateral — the ratio Phoenix's own UI shows as "Order Leverage"
+	// (position value 4.07 over isolated collateral 1.29 reads as 3.2x). Computed, not published by
+	// the chain: no event or instruction carries a leverage figure, and LeverageTier.maxLeverage is
+	// the *permitted* maximum per size tier, not the actual one.
+	//
+	// READ IT AS "LEVERAGE AGAINST THE COLLATERAL OF THIS ACCOUNT". Phoenix has two account kinds —
+	// a parent (cross-margin) and its children (isolated margin), with TransferCollateralChildToParent
+	// between them. On an isolated account the denominator is that position's own collateral and the
+	// number matches the UI. On a cross-margin account the same collateral backs every market the
+	// trader is in — a live sample had accounts in 15 to 30 markets at once — so it is that
+	// position's share of the account, not its leverage. Which kind an account is does not appear in
+	// the event; it is Trader.traderSubaccountIndex in chain state.
+	//
+	// Present only where all three inputs are (fills with a mark), and worth a sanity check before
+	// trusting it: across 120 sampled fills every value came out below 1, i.e. those accounts held
+	// more collateral than notional.
+	Leverage      float64 `protobuf:"fixed64,7,opt,name=Leverage,proto3" json:"Leverage,omitempty"`
+	Closed        bool    `protobuf:"varint,9,opt,name=Closed,proto3" json:"Closed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PerpetualPosition) Reset() {
 	*x = PerpetualPosition{}
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[8]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -848,7 +1237,7 @@ func (x *PerpetualPosition) String() string {
 func (*PerpetualPosition) ProtoMessage() {}
 
 func (x *PerpetualPosition) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[8]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -861,7 +1250,7 @@ func (x *PerpetualPosition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpetualPosition.ProtoReflect.Descriptor instead.
 func (*PerpetualPosition) Descriptor() ([]byte, []int) {
-	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{8}
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PerpetualPosition) GetSize() float64 {
@@ -906,18 +1295,11 @@ func (x *PerpetualPosition) GetCollateral() float64 {
 	return 0
 }
 
-func (x *PerpetualPosition) GetLiquidation() bool {
+func (x *PerpetualPosition) GetLeverage() float64 {
 	if x != nil {
-		return x.Liquidation
+		return x.Leverage
 	}
-	return false
-}
-
-func (x *PerpetualPosition) GetLiquidator() []byte {
-	if x != nil {
-		return x.Liquidator
-	}
-	return nil
+	return 0
 }
 
 func (x *PerpetualPosition) GetClosed() bool {
@@ -944,35 +1326,43 @@ func (x *PerpetualPosition) GetClosed() bool {
 // A market whose lot scaling is not known yet is likewise skipped rather than published with
 // zeros. A gap is recoverable; a fabricated Mark of 0 is not.
 type PerpetualPriceEvent struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Type             string                 `protobuf:"bytes,1,opt,name=Type,proto3" json:"Type,omitempty"`
-	EventIndex       uint32                 `protobuf:"varint,2,opt,name=EventIndex,proto3" json:"EventIndex,omitempty"`
-	InstructionIndex uint32                 `protobuf:"varint,3,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"`
-	Timestamp        uint64                 `protobuf:"varint,4,opt,name=Timestamp,proto3" json:"Timestamp,omitempty"`
-	Slot             uint64                 `protobuf:"varint,5,opt,name=Slot,proto3" json:"Slot,omitempty"`
-	SequenceNumber   uint64                 `protobuf:"varint,6,opt,name=SequenceNumber,proto3" json:"SequenceNumber,omitempty"` // per-asset sequence number — ordering and dedup key
-	Exchange         *PerpetualExchange     `protobuf:"bytes,7,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
-	Asset            *PerpetualAsset        `protobuf:"bytes,8,opt,name=Asset,proto3" json:"Asset,omitempty"`
-	BestBid          float64                `protobuf:"fixed64,10,opt,name=BestBid,proto3" json:"BestBid,omitempty"`
-	BestAsk          float64                `protobuf:"fixed64,11,opt,name=BestAsk,proto3" json:"BestAsk,omitempty"`
-	LastTrade        float64                `protobuf:"fixed64,12,opt,name=LastTrade,proto3" json:"LastTrade,omitempty"`
-	Mark             float64                `protobuf:"fixed64,13,opt,name=Mark,proto3" json:"Mark,omitempty"`
-	Spot             float64                `protobuf:"fixed64,14,opt,name=Spot,proto3" json:"Spot,omitempty"`                       // exchange spot reference
-	Perp             float64                `protobuf:"fixed64,15,opt,name=Perp,proto3" json:"Perp,omitempty"`                       // exchange perp reference
-	FundingRate      float64                `protobuf:"fixed64,16,opt,name=FundingRate,proto3" json:"FundingRate,omitempty"`         // cumulative funding rate
-	FundingInterval  float64                `protobuf:"fixed64,17,opt,name=FundingInterval,proto3" json:"FundingInterval,omitempty"` // seconds
-	MaxFundingRate   float64                `protobuf:"fixed64,18,opt,name=MaxFundingRate,proto3" json:"MaxFundingRate,omitempty"`
-	OpenInterest     float64                `protobuf:"fixed64,19,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"`
-	MakerFees        float64                `protobuf:"fixed64,20,opt,name=MakerFees,proto3" json:"MakerFees,omitempty"`
-	TakerFees        float64                `protobuf:"fixed64,21,opt,name=TakerFees,proto3" json:"TakerFees,omitempty"`
-	Status           string                 `protobuf:"bytes,22,opt,name=Status,proto3" json:"Status,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Type  string                 `protobuf:"bytes,1,opt,name=Type,proto3" json:"Type,omitempty"`
+	// Same counter as PerpetualEvent.EventIndex, and no per-row time or slot for the same reason —
+	// see the note there.
+	EventIndex       uint32             `protobuf:"varint,2,opt,name=EventIndex,proto3" json:"EventIndex,omitempty"`
+	InstructionIndex uint32             `protobuf:"varint,3,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"`
+	SequenceNumber   uint64             `protobuf:"varint,6,opt,name=SequenceNumber,proto3" json:"SequenceNumber,omitempty"` // per-asset sequence number — ordering and dedup key
+	Exchange         *PerpetualExchange `protobuf:"bytes,7,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
+	Asset            *PerpetualAsset    `protobuf:"bytes,8,opt,name=Asset,proto3" json:"Asset,omitempty"`
+	BestBid          float64            `protobuf:"fixed64,10,opt,name=BestBid,proto3" json:"BestBid,omitempty"`
+	BestAsk          float64            `protobuf:"fixed64,11,opt,name=BestAsk,proto3" json:"BestAsk,omitempty"`
+	LastTrade        float64            `protobuf:"fixed64,12,opt,name=LastTrade,proto3" json:"LastTrade,omitempty"`
+	Mark             float64            `protobuf:"fixed64,13,opt,name=Mark,proto3" json:"Mark,omitempty"`
+	// Reference prices from *outside* this venue, which is what a perpetual is marked against.
+	// SpotIndex is the spot price of the underlying elsewhere; PerpIndex is what the same perpetual
+	// trades at on other venues. Phoenix Eternal calls them exchangeSpotPrice and exchangePerpPrice
+	// and keeps an EMA of the gap between its own book and SpotIndex; other venues expose the first
+	// as the oracle price and usually not the second.
+	//
+	// Not named Index: flattened into ClickHouse that would collide with Price_Index, the row's
+	// position within its transaction.
+	SpotIndex       float64 `protobuf:"fixed64,14,opt,name=SpotIndex,proto3" json:"SpotIndex,omitempty"`
+	PerpIndex       float64 `protobuf:"fixed64,15,opt,name=PerpIndex,proto3" json:"PerpIndex,omitempty"`
+	FundingRate     float64 `protobuf:"fixed64,16,opt,name=FundingRate,proto3" json:"FundingRate,omitempty"`         // cumulative funding rate
+	FundingInterval float64 `protobuf:"fixed64,17,opt,name=FundingInterval,proto3" json:"FundingInterval,omitempty"` // seconds
+	MaxFundingRate  float64 `protobuf:"fixed64,18,opt,name=MaxFundingRate,proto3" json:"MaxFundingRate,omitempty"`
+	OpenInterest    float64 `protobuf:"fixed64,19,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"`
+	MakerFees       float64 `protobuf:"fixed64,20,opt,name=MakerFees,proto3" json:"MakerFees,omitempty"`
+	TakerFees       float64 `protobuf:"fixed64,21,opt,name=TakerFees,proto3" json:"TakerFees,omitempty"`
+	Status          string  `protobuf:"bytes,22,opt,name=Status,proto3" json:"Status,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PerpetualPriceEvent) Reset() {
 	*x = PerpetualPriceEvent{}
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[9]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -984,7 +1374,7 @@ func (x *PerpetualPriceEvent) String() string {
 func (*PerpetualPriceEvent) ProtoMessage() {}
 
 func (x *PerpetualPriceEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_perpetual_block_message_proto_msgTypes[9]
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -997,7 +1387,7 @@ func (x *PerpetualPriceEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpetualPriceEvent.ProtoReflect.Descriptor instead.
 func (*PerpetualPriceEvent) Descriptor() ([]byte, []int) {
-	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{9}
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PerpetualPriceEvent) GetType() string {
@@ -1017,20 +1407,6 @@ func (x *PerpetualPriceEvent) GetEventIndex() uint32 {
 func (x *PerpetualPriceEvent) GetInstructionIndex() uint32 {
 	if x != nil {
 		return x.InstructionIndex
-	}
-	return 0
-}
-
-func (x *PerpetualPriceEvent) GetTimestamp() uint64 {
-	if x != nil {
-		return x.Timestamp
-	}
-	return 0
-}
-
-func (x *PerpetualPriceEvent) GetSlot() uint64 {
-	if x != nil {
-		return x.Slot
 	}
 	return 0
 }
@@ -1084,16 +1460,16 @@ func (x *PerpetualPriceEvent) GetMark() float64 {
 	return 0
 }
 
-func (x *PerpetualPriceEvent) GetSpot() float64 {
+func (x *PerpetualPriceEvent) GetSpotIndex() float64 {
 	if x != nil {
-		return x.Spot
+		return x.SpotIndex
 	}
 	return 0
 }
 
-func (x *PerpetualPriceEvent) GetPerp() float64 {
+func (x *PerpetualPriceEvent) GetPerpIndex() float64 {
 	if x != nil {
-		return x.Perp
+		return x.PerpIndex
 	}
 	return 0
 }
@@ -1151,51 +1527,96 @@ var File_solana_perpetual_block_message_proto protoreflect.FileDescriptor
 
 const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\n" +
-	"$solana/perpetual_block_message.proto\x12\x0fsolana_messages\x1a\x1asolana/block_message.proto\x1a solana/token_block_message.proto\"\x9e\x01\n" +
+	"$solana/perpetual_block_message.proto\x12\x0fsolana_messages\x1a\x1asolana/block_message.proto\"\x9e\x01\n" +
 	"\x15PerpetualBlockMessage\x124\n" +
 	"\x06Header\x18\x01 \x01(\v2\x1c.solana_messages.BlockHeaderR\x06Header\x12O\n" +
-	"\fTransactions\x18\x02 \x03(\v2+.solana_messages.ParsedPerpetualTransactionR\fTransactions\"\xbf\x02\n" +
+	"\fTransactions\x18\x02 \x03(\v2+.solana_messages.ParsedPerpetualTransactionR\fTransactions\"\xc6\x03\n" +
 	"\x1aParsedPerpetualTransaction\x12\x14\n" +
 	"\x05Index\x18\x01 \x01(\rR\x05Index\x12\x1c\n" +
 	"\tSignature\x18\x02 \x01(\fR\tSignature\x12:\n" +
 	"\x06Status\x18\x03 \x01(\v2\".solana_messages.TransactionStatusR\x06Status\x12:\n" +
-	"\x06Header\x18\x04 \x01(\v2\".solana_messages.TransactionHeaderR\x06Header\x127\n" +
-	"\x06Events\x18\x05 \x03(\v2\x1f.solana_messages.PerpetualEventR\x06Events\x12<\n" +
-	"\x06Prices\x18\x06 \x03(\v2$.solana_messages.PerpetualPriceEventR\x06Prices\"\xa3\x01\n" +
+	"\x06Header\x18\x04 \x01(\v2\".solana_messages.TransactionHeaderR\x06Header\x12<\n" +
+	"\x06Orders\x18\a \x03(\v2$.solana_messages.PerpetualOrderEventR\x06Orders\x129\n" +
+	"\x05Fills\x18\b \x03(\v2#.solana_messages.PerpetualFillEventR\x05Fills\x12E\n" +
+	"\tPositions\x18\t \x03(\v2'.solana_messages.PerpetualPositionEventR\tPositions\x12<\n" +
+	"\x06Prices\x18\x06 \x03(\v2$.solana_messages.PerpetualPriceEventR\x06Prices\"s\n" +
 	"\x11PerpetualExchange\x12\x18\n" +
 	"\aProgram\x18\x01 \x01(\fR\aProgram\x12\x12\n" +
 	"\x04Name\x18\x02 \x01(\tR\x04Name\x12\x16\n" +
 	"\x06Family\x18\x03 \x01(\tR\x06Family\x12\x18\n" +
-	"\aVersion\x18\x04 \x01(\tR\aVersion\x12\x16\n" +
-	"\x06Oracle\x18\x05 \x01(\fR\x06Oracle\x12\x16\n" +
-	"\x06Bridge\x18\x06 \x01(\fR\x06Bridge\"\xaf\x01\n" +
+	"\aVersion\x18\x04 \x01(\tR\aVersion\"\xd0\x01\n" +
 	"\x0ePerpetualAsset\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\x04R\x02Id\x12\x16\n" +
-	"\x06Symbol\x18\x02 \x01(\tR\x06Symbol\x12\x1a\n" +
+	"\x06Symbol\x18\x02 \x01(\tR\x06Symbol\x12\x16\n" +
+	"\x06Oracle\x18\x06 \x01(\fR\x06Oracle\x12\x1a\n" +
 	"\bTickSize\x18\x03 \x01(\x01R\bTickSize\x12\x18\n" +
-	"\aLotSize\x18\x04 \x01(\x01R\aLotSize\x12?\n" +
-	"\rQuoteCurrency\x18\x05 \x01(\v2\x19.solana_messages.CurrencyR\rQuoteCurrency\"\xc5\x05\n" +
-	"\x0ePerpetualEvent\x12\x16\n" +
+	"\aLotSize\x18\x04 \x01(\x01R\aLotSize\x12H\n" +
+	"\rQuoteCurrency\x18\x05 \x01(\v2\".solana_messages.PerpetualCurrencyR\rQuoteCurrency\"\x91\x01\n" +
+	"\x11PerpetualCurrency\x12 \n" +
+	"\vMintAddress\x18\x01 \x01(\fR\vMintAddress\x12\x16\n" +
+	"\x06Symbol\x18\x02 \x01(\tR\x06Symbol\x12\x1a\n" +
+	"\bDecimals\x18\x03 \x01(\rR\bDecimals\x12&\n" +
+	"\x0eProgramAddress\x18\x04 \x01(\fR\x0eProgramAddress\"\xbc\x04\n" +
+	"\x13PerpetualOrderEvent\x12\x16\n" +
+	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
+	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\x12\n" +
+	"\x04Type\x18\x03 \x01(\tR\x04Type\x12\x12\n" +
+	"\x04Side\x18\x04 \x01(\tR\x04Side\x12\x1e\n" +
+	"\n" +
+	"EventIndex\x18\x05 \x01(\rR\n" +
+	"EventIndex\x12*\n" +
+	"\x10InstructionIndex\x18\x06 \x01(\rR\x10InstructionIndex\x12>\n" +
+	"\bExchange\x18\a \x01(\v2\".solana_messages.PerpetualExchangeR\bExchange\x125\n" +
+	"\x05Asset\x18\b \x01(\v2\x1f.solana_messages.PerpetualAssetR\x05Asset\x125\n" +
+	"\x05Order\x18\t \x01(\v2\x1f.solana_messages.PerpetualOrderR\x05Order\x128\n" +
+	"\x06Amount\x18\n" +
+	" \x01(\v2 .solana_messages.PerpetualAmountR\x06Amount\x125\n" +
+	"\x05Price\x18\v \x01(\v2\x1f.solana_messages.PerpetualPriceR\x05Price\x12 \n" +
+	"\vTraderIsAmm\x18\f \x01(\bR\vTraderIsAmm\x12 \n" +
+	"\vLiquidation\x18\r \x01(\bR\vLiquidation\x12\x1e\n" +
+	"\n" +
+	"Liquidator\x18\x0e \x01(\fR\n" +
+	"Liquidator\"\x82\x05\n" +
+	"\x12PerpetualFillEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\"\n" +
 	"\fCounterparty\x18\x03 \x01(\fR\fCounterparty\x12,\n" +
-	"\x11CounterpartyIsAmm\x18\x05 \x01(\bR\x11CounterpartyIsAmm\x12 \n" +
-	"\vTraderIsAmm\x18\x13 \x01(\bR\vTraderIsAmm\x12\x12\n" +
-	"\x04Type\x18\x06 \x01(\tR\x04Type\x12\x12\n" +
-	"\x04Side\x18\a \x01(\tR\x04Side\x12\x1e\n" +
+	"\x11CounterpartyIsAmm\x18\x04 \x01(\bR\x11CounterpartyIsAmm\x12 \n" +
+	"\vTraderIsAmm\x18\x05 \x01(\bR\vTraderIsAmm\x12\x12\n" +
+	"\x04Side\x18\x06 \x01(\tR\x04Side\x12\x1e\n" +
 	"\n" +
-	"EventIndex\x18\b \x01(\rR\n" +
+	"EventIndex\x18\a \x01(\rR\n" +
 	"EventIndex\x12*\n" +
-	"\x10InstructionIndex\x18\t \x01(\rR\x10InstructionIndex\x12\x1c\n" +
-	"\tTimestamp\x18\n" +
-	" \x01(\x04R\tTimestamp\x12\x12\n" +
-	"\x04Slot\x18\v \x01(\x04R\x04Slot\x12>\n" +
-	"\bExchange\x18\f \x01(\v2\".solana_messages.PerpetualExchangeR\bExchange\x125\n" +
-	"\x05Asset\x18\r \x01(\v2\x1f.solana_messages.PerpetualAssetR\x05Asset\x125\n" +
-	"\x05Order\x18\x0e \x01(\v2\x1f.solana_messages.PerpetualOrderR\x05Order\x128\n" +
-	"\x06Amount\x18\x0f \x01(\v2 .solana_messages.PerpetualAmountR\x06Amount\x125\n" +
-	"\x05Price\x18\x10 \x01(\v2\x1f.solana_messages.PerpetualPriceR\x05Price\x12>\n" +
-	"\bPosition\x18\x11 \x01(\v2\".solana_messages.PerpetualPositionR\bPositionJ\x04\b\x04\x10\x05J\x04\b\x12\x10\x13\"\x9d\x02\n" +
+	"\x10InstructionIndex\x18\b \x01(\rR\x10InstructionIndex\x12>\n" +
+	"\bExchange\x18\t \x01(\v2\".solana_messages.PerpetualExchangeR\bExchange\x125\n" +
+	"\x05Asset\x18\n" +
+	" \x01(\v2\x1f.solana_messages.PerpetualAssetR\x05Asset\x128\n" +
+	"\x06Amount\x18\v \x01(\v2 .solana_messages.PerpetualAmountR\x06Amount\x125\n" +
+	"\x05Price\x18\f \x01(\v2\x1f.solana_messages.PerpetualPriceR\x05Price\x12>\n" +
+	"\bPosition\x18\r \x01(\v2\".solana_messages.PerpetualPositionR\bPosition\x12 \n" +
+	"\vLiquidation\x18\x0e \x01(\bR\vLiquidation\x12\x1e\n" +
+	"\n" +
+	"Liquidator\x18\x0f \x01(\fR\n" +
+	"Liquidator\"\xb4\x04\n" +
+	"\x16PerpetualPositionEvent\x12\x16\n" +
+	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
+	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\x12\n" +
+	"\x04Type\x18\x03 \x01(\tR\x04Type\x12\x1e\n" +
+	"\n" +
+	"EventIndex\x18\x04 \x01(\rR\n" +
+	"EventIndex\x12*\n" +
+	"\x10InstructionIndex\x18\x05 \x01(\rR\x10InstructionIndex\x12>\n" +
+	"\bExchange\x18\x06 \x01(\v2\".solana_messages.PerpetualExchangeR\bExchange\x125\n" +
+	"\x05Asset\x18\a \x01(\v2\x1f.solana_messages.PerpetualAssetR\x05Asset\x12>\n" +
+	"\bPosition\x18\b \x01(\v2\".solana_messages.PerpetualPositionR\bPosition\x125\n" +
+	"\x05Price\x18\t \x01(\v2\x1f.solana_messages.PerpetualPriceR\x05Price\x128\n" +
+	"\x06Amount\x18\n" +
+	" \x01(\v2 .solana_messages.PerpetualAmountR\x06Amount\x12 \n" +
+	"\vTraderIsAmm\x18\v \x01(\bR\vTraderIsAmm\x12 \n" +
+	"\vLiquidation\x18\f \x01(\bR\vLiquidation\x12\x1e\n" +
+	"\n" +
+	"Liquidator\x18\r \x01(\fR\n" +
+	"Liquidator\"\x9d\x02\n" +
 	"\x0ePerpetualOrder\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12\x1a\n" +
 	"\bClientId\x18\x02 \x01(\fR\bClientId\x12\x12\n" +
@@ -1220,7 +1641,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\x05Limit\x18\x01 \x01(\x01R\x05Limit\x12\x1c\n" +
 	"\tExecution\x18\x02 \x01(\x01R\tExecution\x12\x18\n" +
 	"\aTrigger\x18\x03 \x01(\x01R\aTrigger\x12\x12\n" +
-	"\x04Mark\x18\x04 \x01(\x01R\x04Mark\"\x9d\x02\n" +
+	"\x04Mark\x18\x04 \x01(\x01R\x04Mark\"\xf7\x01\n" +
 	"\x11PerpetualPosition\x12\x12\n" +
 	"\x04Size\x18\x01 \x01(\x01R\x04Size\x12\x1e\n" +
 	"\n" +
@@ -1233,20 +1654,15 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\aFunding\x18\x05 \x01(\x01R\aFunding\x12\x1e\n" +
 	"\n" +
 	"Collateral\x18\x06 \x01(\x01R\n" +
-	"Collateral\x12 \n" +
-	"\vLiquidation\x18\a \x01(\bR\vLiquidation\x12\x1e\n" +
-	"\n" +
-	"Liquidator\x18\b \x01(\fR\n" +
-	"Liquidator\x12\x16\n" +
-	"\x06Closed\x18\t \x01(\bR\x06Closed\"\xc6\x05\n" +
+	"Collateral\x12\x1a\n" +
+	"\bLeverage\x18\a \x01(\x01R\bLeverage\x12\x16\n" +
+	"\x06Closed\x18\t \x01(\bR\x06Closed\"\xa2\x05\n" +
 	"\x13PerpetualPriceEvent\x12\x12\n" +
 	"\x04Type\x18\x01 \x01(\tR\x04Type\x12\x1e\n" +
 	"\n" +
 	"EventIndex\x18\x02 \x01(\rR\n" +
 	"EventIndex\x12*\n" +
-	"\x10InstructionIndex\x18\x03 \x01(\rR\x10InstructionIndex\x12\x1c\n" +
-	"\tTimestamp\x18\x04 \x01(\x04R\tTimestamp\x12\x12\n" +
-	"\x04Slot\x18\x05 \x01(\x04R\x04Slot\x12&\n" +
+	"\x10InstructionIndex\x18\x03 \x01(\rR\x10InstructionIndex\x12&\n" +
 	"\x0eSequenceNumber\x18\x06 \x01(\x04R\x0eSequenceNumber\x12>\n" +
 	"\bExchange\x18\a \x01(\v2\".solana_messages.PerpetualExchangeR\bExchange\x125\n" +
 	"\x05Asset\x18\b \x01(\v2\x1f.solana_messages.PerpetualAssetR\x05Asset\x12\x18\n" +
@@ -1254,17 +1670,16 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	" \x01(\x01R\aBestBid\x12\x18\n" +
 	"\aBestAsk\x18\v \x01(\x01R\aBestAsk\x12\x1c\n" +
 	"\tLastTrade\x18\f \x01(\x01R\tLastTrade\x12\x12\n" +
-	"\x04Mark\x18\r \x01(\x01R\x04Mark\x12\x12\n" +
-	"\x04Spot\x18\x0e \x01(\x01R\x04Spot\x12\x12\n" +
-	"\x04Perp\x18\x0f \x01(\x01R\x04Perp\x12 \n" +
+	"\x04Mark\x18\r \x01(\x01R\x04Mark\x12\x1c\n" +
+	"\tSpotIndex\x18\x0e \x01(\x01R\tSpotIndex\x12\x1c\n" +
+	"\tPerpIndex\x18\x0f \x01(\x01R\tPerpIndex\x12 \n" +
 	"\vFundingRate\x18\x10 \x01(\x01R\vFundingRate\x12(\n" +
 	"\x0fFundingInterval\x18\x11 \x01(\x01R\x0fFundingInterval\x12&\n" +
 	"\x0eMaxFundingRate\x18\x12 \x01(\x01R\x0eMaxFundingRate\x12\"\n" +
 	"\fOpenInterest\x18\x13 \x01(\x01R\fOpenInterest\x12\x1c\n" +
 	"\tMakerFees\x18\x14 \x01(\x01R\tMakerFees\x12\x1c\n" +
 	"\tTakerFees\x18\x15 \x01(\x01R\tTakerFees\x12\x16\n" +
-	"\x06Status\x18\x16 \x01(\tR\x06StatusJ\x04\b\t\x10\n" +
-	"b\x06proto3"
+	"\x06Status\x18\x16 \x01(\tR\x06Statusb\x06proto3"
 
 var (
 	file_solana_perpetual_block_message_proto_rawDescOnce sync.Once
@@ -1278,44 +1693,57 @@ func file_solana_perpetual_block_message_proto_rawDescGZIP() []byte {
 	return file_solana_perpetual_block_message_proto_rawDescData
 }
 
-var file_solana_perpetual_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_solana_perpetual_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_solana_perpetual_block_message_proto_goTypes = []any{
 	(*PerpetualBlockMessage)(nil),      // 0: solana_messages.PerpetualBlockMessage
 	(*ParsedPerpetualTransaction)(nil), // 1: solana_messages.ParsedPerpetualTransaction
 	(*PerpetualExchange)(nil),          // 2: solana_messages.PerpetualExchange
 	(*PerpetualAsset)(nil),             // 3: solana_messages.PerpetualAsset
-	(*PerpetualEvent)(nil),             // 4: solana_messages.PerpetualEvent
-	(*PerpetualOrder)(nil),             // 5: solana_messages.PerpetualOrder
-	(*PerpetualAmount)(nil),            // 6: solana_messages.PerpetualAmount
-	(*PerpetualPrice)(nil),             // 7: solana_messages.PerpetualPrice
-	(*PerpetualPosition)(nil),          // 8: solana_messages.PerpetualPosition
-	(*PerpetualPriceEvent)(nil),        // 9: solana_messages.PerpetualPriceEvent
-	(*BlockHeader)(nil),                // 10: solana_messages.BlockHeader
-	(*TransactionStatus)(nil),          // 11: solana_messages.TransactionStatus
-	(*TransactionHeader)(nil),          // 12: solana_messages.TransactionHeader
-	(*Currency)(nil),                   // 13: solana_messages.Currency
+	(*PerpetualCurrency)(nil),          // 4: solana_messages.PerpetualCurrency
+	(*PerpetualOrderEvent)(nil),        // 5: solana_messages.PerpetualOrderEvent
+	(*PerpetualFillEvent)(nil),         // 6: solana_messages.PerpetualFillEvent
+	(*PerpetualPositionEvent)(nil),     // 7: solana_messages.PerpetualPositionEvent
+	(*PerpetualOrder)(nil),             // 8: solana_messages.PerpetualOrder
+	(*PerpetualAmount)(nil),            // 9: solana_messages.PerpetualAmount
+	(*PerpetualPrice)(nil),             // 10: solana_messages.PerpetualPrice
+	(*PerpetualPosition)(nil),          // 11: solana_messages.PerpetualPosition
+	(*PerpetualPriceEvent)(nil),        // 12: solana_messages.PerpetualPriceEvent
+	(*BlockHeader)(nil),                // 13: solana_messages.BlockHeader
+	(*TransactionStatus)(nil),          // 14: solana_messages.TransactionStatus
+	(*TransactionHeader)(nil),          // 15: solana_messages.TransactionHeader
 }
 var file_solana_perpetual_block_message_proto_depIdxs = []int32{
-	10, // 0: solana_messages.PerpetualBlockMessage.Header:type_name -> solana_messages.BlockHeader
+	13, // 0: solana_messages.PerpetualBlockMessage.Header:type_name -> solana_messages.BlockHeader
 	1,  // 1: solana_messages.PerpetualBlockMessage.Transactions:type_name -> solana_messages.ParsedPerpetualTransaction
-	11, // 2: solana_messages.ParsedPerpetualTransaction.Status:type_name -> solana_messages.TransactionStatus
-	12, // 3: solana_messages.ParsedPerpetualTransaction.Header:type_name -> solana_messages.TransactionHeader
-	4,  // 4: solana_messages.ParsedPerpetualTransaction.Events:type_name -> solana_messages.PerpetualEvent
-	9,  // 5: solana_messages.ParsedPerpetualTransaction.Prices:type_name -> solana_messages.PerpetualPriceEvent
-	13, // 6: solana_messages.PerpetualAsset.QuoteCurrency:type_name -> solana_messages.Currency
-	2,  // 7: solana_messages.PerpetualEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 8: solana_messages.PerpetualEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	5,  // 9: solana_messages.PerpetualEvent.Order:type_name -> solana_messages.PerpetualOrder
-	6,  // 10: solana_messages.PerpetualEvent.Amount:type_name -> solana_messages.PerpetualAmount
-	7,  // 11: solana_messages.PerpetualEvent.Price:type_name -> solana_messages.PerpetualPrice
-	8,  // 12: solana_messages.PerpetualEvent.Position:type_name -> solana_messages.PerpetualPosition
-	2,  // 13: solana_messages.PerpetualPriceEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 14: solana_messages.PerpetualPriceEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	14, // 2: solana_messages.ParsedPerpetualTransaction.Status:type_name -> solana_messages.TransactionStatus
+	15, // 3: solana_messages.ParsedPerpetualTransaction.Header:type_name -> solana_messages.TransactionHeader
+	5,  // 4: solana_messages.ParsedPerpetualTransaction.Orders:type_name -> solana_messages.PerpetualOrderEvent
+	6,  // 5: solana_messages.ParsedPerpetualTransaction.Fills:type_name -> solana_messages.PerpetualFillEvent
+	7,  // 6: solana_messages.ParsedPerpetualTransaction.Positions:type_name -> solana_messages.PerpetualPositionEvent
+	12, // 7: solana_messages.ParsedPerpetualTransaction.Prices:type_name -> solana_messages.PerpetualPriceEvent
+	4,  // 8: solana_messages.PerpetualAsset.QuoteCurrency:type_name -> solana_messages.PerpetualCurrency
+	2,  // 9: solana_messages.PerpetualOrderEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 10: solana_messages.PerpetualOrderEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	8,  // 11: solana_messages.PerpetualOrderEvent.Order:type_name -> solana_messages.PerpetualOrder
+	9,  // 12: solana_messages.PerpetualOrderEvent.Amount:type_name -> solana_messages.PerpetualAmount
+	10, // 13: solana_messages.PerpetualOrderEvent.Price:type_name -> solana_messages.PerpetualPrice
+	2,  // 14: solana_messages.PerpetualFillEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 15: solana_messages.PerpetualFillEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	9,  // 16: solana_messages.PerpetualFillEvent.Amount:type_name -> solana_messages.PerpetualAmount
+	10, // 17: solana_messages.PerpetualFillEvent.Price:type_name -> solana_messages.PerpetualPrice
+	11, // 18: solana_messages.PerpetualFillEvent.Position:type_name -> solana_messages.PerpetualPosition
+	2,  // 19: solana_messages.PerpetualPositionEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 20: solana_messages.PerpetualPositionEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	11, // 21: solana_messages.PerpetualPositionEvent.Position:type_name -> solana_messages.PerpetualPosition
+	10, // 22: solana_messages.PerpetualPositionEvent.Price:type_name -> solana_messages.PerpetualPrice
+	9,  // 23: solana_messages.PerpetualPositionEvent.Amount:type_name -> solana_messages.PerpetualAmount
+	2,  // 24: solana_messages.PerpetualPriceEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 25: solana_messages.PerpetualPriceEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_solana_perpetual_block_message_proto_init() }
@@ -1324,15 +1752,14 @@ func file_solana_perpetual_block_message_proto_init() {
 		return
 	}
 	file_solana_block_message_proto_init()
-	file_solana_token_block_message_proto_init()
-	file_solana_perpetual_block_message_proto_msgTypes[5].OneofWrappers = []any{}
+	file_solana_perpetual_block_message_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solana_perpetual_block_message_proto_rawDesc), len(file_solana_perpetual_block_message_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
