@@ -108,8 +108,8 @@ type Currency struct {
 	Parsed               bool                   `protobuf:"varint,23,opt,name=Parsed,proto3" json:"Parsed,omitempty"`
 	TotalSupply          uint64                 `protobuf:"varint,24,opt,name=TotalSupply,proto3" json:"TotalSupply,omitempty"`
 	Multiplier           float64                `protobuf:"fixed64,25,opt,name=Multiplier,proto3" json:"Multiplier,omitempty"`
-	PriceInUsd           float32                `protobuf:"fixed32,26,opt,name=PriceInUsd,proto3" json:"PriceInUsd,omitempty"`
-	TotalSupplyInUsd     float32                `protobuf:"fixed32,27,opt,name=TotalSupplyInUsd,proto3" json:"TotalSupplyInUsd,omitempty"`
+	PriceInUSD           float32                `protobuf:"fixed32,26,opt,name=PriceInUSD,proto3" json:"PriceInUSD,omitempty"`
+	TotalSupplyInUSD     float32                `protobuf:"fixed32,27,opt,name=TotalSupplyInUSD,proto3" json:"TotalSupplyInUSD,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -319,16 +319,16 @@ func (x *Currency) GetMultiplier() float64 {
 	return 0
 }
 
-func (x *Currency) GetPriceInUsd() float32 {
+func (x *Currency) GetPriceInUSD() float32 {
 	if x != nil {
-		return x.PriceInUsd
+		return x.PriceInUSD
 	}
 	return 0
 }
 
-func (x *Currency) GetTotalSupplyInUsd() float32 {
+func (x *Currency) GetTotalSupplyInUSD() float32 {
 	if x != nil {
-		return x.TotalSupplyInUsd
+		return x.TotalSupplyInUSD
 	}
 	return 0
 }
@@ -337,9 +337,9 @@ type CurrencyBalanceUpdate struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	BalanceUpdate    *BalanceUpdate         `protobuf:"bytes,1,opt,name=BalanceUpdate,proto3" json:"BalanceUpdate,omitempty"`
 	Currency         *Currency              `protobuf:"bytes,2,opt,name=Currency,proto3" json:"Currency,omitempty"`
-	PreBalanceInUsd  float32                `protobuf:"fixed32,3,opt,name=PreBalanceInUsd,proto3" json:"PreBalanceInUsd,omitempty"`
-	PostBalanceInUsd float32                `protobuf:"fixed32,4,opt,name=PostBalanceInUsd,proto3" json:"PostBalanceInUsd,omitempty"`
-	AmountInUsd      float32                `protobuf:"fixed32,5,opt,name=AmountInUsd,proto3" json:"AmountInUsd,omitempty"`
+	PreBalanceInUSD  float32                `protobuf:"fixed32,3,opt,name=PreBalanceInUSD,proto3" json:"PreBalanceInUSD,omitempty"`
+	PostBalanceInUSD float32                `protobuf:"fixed32,4,opt,name=PostBalanceInUSD,proto3" json:"PostBalanceInUSD,omitempty"`
+	AmountInUSD      float32                `protobuf:"fixed32,5,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -388,23 +388,23 @@ func (x *CurrencyBalanceUpdate) GetCurrency() *Currency {
 	return nil
 }
 
-func (x *CurrencyBalanceUpdate) GetPreBalanceInUsd() float32 {
+func (x *CurrencyBalanceUpdate) GetPreBalanceInUSD() float32 {
 	if x != nil {
-		return x.PreBalanceInUsd
+		return x.PreBalanceInUSD
 	}
 	return 0
 }
 
-func (x *CurrencyBalanceUpdate) GetPostBalanceInUsd() float32 {
+func (x *CurrencyBalanceUpdate) GetPostBalanceInUSD() float32 {
 	if x != nil {
-		return x.PostBalanceInUsd
+		return x.PostBalanceInUSD
 	}
 	return 0
 }
 
-func (x *CurrencyBalanceUpdate) GetAmountInUsd() float32 {
+func (x *CurrencyBalanceUpdate) GetAmountInUSD() float32 {
 	if x != nil {
-		return x.AmountInUsd
+		return x.AmountInUSD
 	}
 	return 0
 }
@@ -418,7 +418,7 @@ type Transfer struct {
 	Authority        *Account               `protobuf:"bytes,5,opt,name=Authority,proto3" json:"Authority,omitempty"`
 	Currency         *Currency              `protobuf:"bytes,6,opt,name=Currency,proto3" json:"Currency,omitempty"`
 	Instruction      *ParsedIdlInstruction  `protobuf:"bytes,7,opt,name=Instruction,proto3" json:"Instruction,omitempty"`
-	AmountInUsd      float32                `protobuf:"fixed32,8,opt,name=AmountInUsd,proto3" json:"AmountInUsd,omitempty"`
+	AmountInUSD      float32                `protobuf:"fixed32,8,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -502,9 +502,9 @@ func (x *Transfer) GetInstruction() *ParsedIdlInstruction {
 	return nil
 }
 
-func (x *Transfer) GetAmountInUsd() float32 {
+func (x *Transfer) GetAmountInUSD() float32 {
 	if x != nil {
-		return x.AmountInUsd
+		return x.AmountInUSD
 	}
 	return 0
 }
@@ -594,7 +594,7 @@ type ParsedTokenTransaction struct {
 	Transfers                 []*Transfer                 `protobuf:"bytes,5,rep,name=Transfers,proto3" json:"Transfers,omitempty"`
 	BalanceUpdates            []*CurrencyBalanceUpdate    `protobuf:"bytes,6,rep,name=BalanceUpdates,proto3" json:"BalanceUpdates,omitempty"`
 	InstructionBalanceUpdates []*InstructionBalanceUpdate `protobuf:"bytes,7,rep,name=InstructionBalanceUpdates,proto3" json:"InstructionBalanceUpdates,omitempty"`
-	FeeInUsd                  float32                     `protobuf:"fixed32,8,opt,name=FeeInUsd,proto3" json:"FeeInUsd,omitempty"`
+	FeeInUSD                  float32                     `protobuf:"fixed32,8,opt,name=FeeInUSD,proto3" json:"FeeInUSD,omitempty"`
 	unknownFields             protoimpl.UnknownFields
 	sizeCache                 protoimpl.SizeCache
 }
@@ -678,9 +678,9 @@ func (x *ParsedTokenTransaction) GetInstructionBalanceUpdates() []*InstructionBa
 	return nil
 }
 
-func (x *ParsedTokenTransaction) GetFeeInUsd() float32 {
+func (x *ParsedTokenTransaction) GetFeeInUSD() float32 {
 	if x != nil {
-		return x.FeeInUsd
+		return x.FeeInUSD
 	}
 	return 0
 }
@@ -776,17 +776,17 @@ const file_solana_token_block_message_proto_rawDesc = "" +
 	"Multiplier\x18\x19 \x01(\x01R\n" +
 	"Multiplier\x12\x1e\n" +
 	"\n" +
-	"PriceInUsd\x18\x1a \x01(\x02R\n" +
-	"PriceInUsd\x12*\n" +
-	"\x10TotalSupplyInUsd\x18\x1b \x01(\x02R\x10TotalSupplyInUsdB\x0f\n" +
+	"PriceInUSD\x18\x1a \x01(\x02R\n" +
+	"PriceInUSD\x12*\n" +
+	"\x10TotalSupplyInUSD\x18\x1b \x01(\x02R\x10TotalSupplyInUSDB\x0f\n" +
 	"\r_EditionNonceB\x10\n" +
 	"\x0e_TokenStandard\"\x8c\x02\n" +
 	"\x15CurrencyBalanceUpdate\x12D\n" +
 	"\rBalanceUpdate\x18\x01 \x01(\v2\x1e.solana_messages.BalanceUpdateR\rBalanceUpdate\x125\n" +
 	"\bCurrency\x18\x02 \x01(\v2\x19.solana_messages.CurrencyR\bCurrency\x12(\n" +
-	"\x0fPreBalanceInUsd\x18\x03 \x01(\x02R\x0fPreBalanceInUsd\x12*\n" +
-	"\x10PostBalanceInUsd\x18\x04 \x01(\x02R\x10PostBalanceInUsd\x12 \n" +
-	"\vAmountInUsd\x18\x05 \x01(\x02R\vAmountInUsd\"\x90\x03\n" +
+	"\x0fPreBalanceInUSD\x18\x03 \x01(\x02R\x0fPreBalanceInUSD\x12*\n" +
+	"\x10PostBalanceInUSD\x18\x04 \x01(\x02R\x10PostBalanceInUSD\x12 \n" +
+	"\vAmountInUSD\x18\x05 \x01(\x02R\vAmountInUSD\"\x90\x03\n" +
 	"\bTransfer\x12*\n" +
 	"\x10InstructionIndex\x18\x01 \x01(\rR\x10InstructionIndex\x12\x16\n" +
 	"\x06Amount\x18\x02 \x01(\x04R\x06Amount\x120\n" +
@@ -795,7 +795,7 @@ const file_solana_token_block_message_proto_rawDesc = "" +
 	"\tAuthority\x18\x05 \x01(\v2\x18.solana_messages.AccountR\tAuthority\x125\n" +
 	"\bCurrency\x18\x06 \x01(\v2\x19.solana_messages.CurrencyR\bCurrency\x12G\n" +
 	"\vInstruction\x18\a \x01(\v2%.solana_messages.ParsedIdlInstructionR\vInstruction\x12 \n" +
-	"\vAmountInUsd\x18\b \x01(\x02R\vAmountInUsd\"\xb7\x03\n" +
+	"\vAmountInUSD\x18\b \x01(\x02R\vAmountInUSD\"\xb7\x03\n" +
 	"\x18InstructionBalanceUpdate\x12*\n" +
 	"\x10InstructionIndex\x18\x01 \x01(\rR\x10InstructionIndex\x12h\n" +
 	"\x1bTotalCurrencyBalanceUpdates\x18\x02 \x03(\v2&.solana_messages.CurrencyBalanceUpdateR\x1bTotalCurrencyBalanceUpdates\x12d\n" +
@@ -810,7 +810,7 @@ const file_solana_token_block_message_proto_rawDesc = "" +
 	"\tTransfers\x18\x05 \x03(\v2\x19.solana_messages.TransferR\tTransfers\x12N\n" +
 	"\x0eBalanceUpdates\x18\x06 \x03(\v2&.solana_messages.CurrencyBalanceUpdateR\x0eBalanceUpdates\x12g\n" +
 	"\x19InstructionBalanceUpdates\x18\a \x03(\v2).solana_messages.InstructionBalanceUpdateR\x19InstructionBalanceUpdates\x12\x1a\n" +
-	"\bFeeInUsd\x18\b \x01(\x02R\bFeeInUsd\"\x96\x01\n" +
+	"\bFeeInUSD\x18\b \x01(\x02R\bFeeInUSD\"\x96\x01\n" +
 	"\x11TokenBlockMessage\x124\n" +
 	"\x06Header\x18\x01 \x01(\v2\x1c.solana_messages.BlockHeaderR\x06Header\x12K\n" +
 	"\fTransactions\x18\x02 \x03(\v2'.solana_messages.ParsedTokenTransactionR\fTransactionsb\x06proto3"

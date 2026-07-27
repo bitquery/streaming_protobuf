@@ -63,7 +63,7 @@ message ParsedIdlTransaction {
   repeated BalanceUpdate TotalTokenBalanceUpdates = 6;
   repeated ParsedIdlInstruction ParsedIdlInstructions = 7;
 
-  float FeeInUsd = 8;
+  float FeeInUSD = 8;
 }
 
 message ParsedIdlBlockMessage {

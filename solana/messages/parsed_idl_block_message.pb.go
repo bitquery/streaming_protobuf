@@ -456,7 +456,7 @@ type ParsedIdlTransaction struct {
 	TotalBalanceUpdates      []*BalanceUpdate        `protobuf:"bytes,5,rep,name=TotalBalanceUpdates,proto3" json:"TotalBalanceUpdates,omitempty"`
 	TotalTokenBalanceUpdates []*BalanceUpdate        `protobuf:"bytes,6,rep,name=TotalTokenBalanceUpdates,proto3" json:"TotalTokenBalanceUpdates,omitempty"`
 	ParsedIdlInstructions    []*ParsedIdlInstruction `protobuf:"bytes,7,rep,name=ParsedIdlInstructions,proto3" json:"ParsedIdlInstructions,omitempty"`
-	FeeInUsd                 float32                 `protobuf:"fixed32,8,opt,name=FeeInUsd,proto3" json:"FeeInUsd,omitempty"`
+	FeeInUSD                 float32                 `protobuf:"fixed32,8,opt,name=FeeInUSD,proto3" json:"FeeInUSD,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -540,9 +540,9 @@ func (x *ParsedIdlTransaction) GetParsedIdlInstructions() []*ParsedIdlInstructio
 	return nil
 }
 
-func (x *ParsedIdlTransaction) GetFeeInUsd() float32 {
+func (x *ParsedIdlTransaction) GetFeeInUSD() float32 {
 	if x != nil {
-		return x.FeeInUsd
+		return x.FeeInUSD
 	}
 	return 0
 }
@@ -659,7 +659,7 @@ const file_solana_parsed_idl_block_message_proto_rawDesc = "" +
 	"\x13TotalBalanceUpdates\x18\x05 \x03(\v2\x1e.solana_messages.BalanceUpdateR\x13TotalBalanceUpdates\x12Z\n" +
 	"\x18TotalTokenBalanceUpdates\x18\x06 \x03(\v2\x1e.solana_messages.BalanceUpdateR\x18TotalTokenBalanceUpdates\x12[\n" +
 	"\x15ParsedIdlInstructions\x18\a \x03(\v2%.solana_messages.ParsedIdlInstructionR\x15ParsedIdlInstructions\x12\x1a\n" +
-	"\bFeeInUsd\x18\b \x01(\x02R\bFeeInUsd\"\xcb\x01\n" +
+	"\bFeeInUSD\x18\b \x01(\x02R\bFeeInUSD\"\xcb\x01\n" +
 	"\x15ParsedIdlBlockMessage\x124\n" +
 	"\x06Header\x18\x01 \x01(\v2\x1c.solana_messages.BlockHeaderR\x06Header\x12I\n" +
 	"\fTransactions\x18\x02 \x03(\v2%.solana_messages.ParsedIdlTransactionR\fTransactions\x121\n" +
