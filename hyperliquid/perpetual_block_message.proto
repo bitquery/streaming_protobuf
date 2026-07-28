@@ -10,7 +10,7 @@ message PerpetualBlockMessage {
   repeated PerpOrder          Orders          = 4;
   repeated PerpFunding        Funding         = 5;
   repeated PerpLiquidation    Liquidations    = 6;
-  repeated PerpLeverageUpdate LeverageChanges = 7;
+  repeated TraderLeverageUpdate LeverageChanges = 7;
   repeated PerpTwap           Twaps           = 8;
   repeated PerpPriceUpdate    Prices          = 9;
   repeated PerpBookUpdate     BookUpdates     = 10;
@@ -33,7 +33,7 @@ message PerpMarket {
   string Oracle      = 6;
 }
 
-// Realtime from stream: Side..IsCross. Snapshot/computed, empty in realtime: Collateral, LiquidationPx, UnrealizedPnl.
+// A trader's position as of an event — all fields from the stream (no snapshot/API data).
 message PerpPosition {
   string Side        = 1; // "Long" | "Short"
   string Size        = 2; // signed (negative = short)
@@ -43,11 +43,7 @@ message PerpPosition {
   string Funding     = 6; // signed
   uint32 Leverage    = 7; // 0 = not yet in map, NOT 1x
   bool   IsCross     = 8;
-
-  string Collateral    = 9;
-  string LiquidationPx = 10;
-  string UnrealizedPnl = 11;
-  bool   Closed        = 12;
+  bool   Closed      = 9;
 }
 
 
@@ -144,7 +140,7 @@ message PerpLiquidation {
 }
 
 // The leverage CHANGE itself; the value is also on every Position.Leverage.
-message PerpLeverageUpdate {
+message TraderLeverageUpdate {
   Trader     Trader = 1;
   PerpMarket Market = 2;
 
@@ -157,7 +153,7 @@ message PerpTwap {
   PerpMarket Market = 2;
 
   uint64 TwapId      = 3;
-  string Status      = 4; // "activated" | "finished" | "terminated" | "error"
+  string Status      = 4; // "activated" | "finished" | "terminated" | "stopped" | "error"
   string StatusError = 5;
   string Side        = 6; // "Buy" | "Sell"
 
@@ -191,7 +187,7 @@ message PerpPriceUpdate {
   PerpMarket Market      = 1;
   string     Price       = 2;
   string     Kind        = 3; // "mark" | "oracle" | "markInput" | "spotInput" | "extPerpInput" | "extPerp"
-  string     UpdateClass = 4; // "Deployer" | "Fallback"
+  string     UpdateClass = 4; // "Normal" | "Deployer" | "Fallback"
   string     DailyPx     = 5;
   int64      UpdateTime  = 6; // epoch ns
 }

@@ -22,17 +22,17 @@ const (
 )
 
 type PerpetualBlockMessage struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber     uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime       int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"` // epoch ns
-	Trades          []*PerpTrade           `protobuf:"bytes,3,rep,name=Trades,proto3" json:"Trades,omitempty"`
-	Orders          []*PerpOrder           `protobuf:"bytes,4,rep,name=Orders,proto3" json:"Orders,omitempty"`
-	Funding         []*PerpFunding         `protobuf:"bytes,5,rep,name=Funding,proto3" json:"Funding,omitempty"`
-	Liquidations    []*PerpLiquidation     `protobuf:"bytes,6,rep,name=Liquidations,proto3" json:"Liquidations,omitempty"`
-	LeverageChanges []*PerpLeverageUpdate  `protobuf:"bytes,7,rep,name=LeverageChanges,proto3" json:"LeverageChanges,omitempty"`
-	Twaps           []*PerpTwap            `protobuf:"bytes,8,rep,name=Twaps,proto3" json:"Twaps,omitempty"`
-	Prices          []*PerpPriceUpdate     `protobuf:"bytes,9,rep,name=Prices,proto3" json:"Prices,omitempty"`
-	BookUpdates     []*PerpBookUpdate      `protobuf:"bytes,10,rep,name=BookUpdates,proto3" json:"BookUpdates,omitempty"`
+	state           protoimpl.MessageState  `protogen:"open.v1"`
+	BlockNumber     uint64                  `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
+	BlockTime       int64                   `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"` // epoch ns
+	Trades          []*PerpTrade            `protobuf:"bytes,3,rep,name=Trades,proto3" json:"Trades,omitempty"`
+	Orders          []*PerpOrder            `protobuf:"bytes,4,rep,name=Orders,proto3" json:"Orders,omitempty"`
+	Funding         []*PerpFunding          `protobuf:"bytes,5,rep,name=Funding,proto3" json:"Funding,omitempty"`
+	Liquidations    []*PerpLiquidation      `protobuf:"bytes,6,rep,name=Liquidations,proto3" json:"Liquidations,omitempty"`
+	LeverageChanges []*TraderLeverageUpdate `protobuf:"bytes,7,rep,name=LeverageChanges,proto3" json:"LeverageChanges,omitempty"`
+	Twaps           []*PerpTwap             `protobuf:"bytes,8,rep,name=Twaps,proto3" json:"Twaps,omitempty"`
+	Prices          []*PerpPriceUpdate      `protobuf:"bytes,9,rep,name=Prices,proto3" json:"Prices,omitempty"`
+	BookUpdates     []*PerpBookUpdate       `protobuf:"bytes,10,rep,name=BookUpdates,proto3" json:"BookUpdates,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -109,7 +109,7 @@ func (x *PerpetualBlockMessage) GetLiquidations() []*PerpLiquidation {
 	return nil
 }
 
-func (x *PerpetualBlockMessage) GetLeverageChanges() []*PerpLeverageUpdate {
+func (x *PerpetualBlockMessage) GetLeverageChanges() []*TraderLeverageUpdate {
 	if x != nil {
 		return x.LeverageChanges
 	}
@@ -297,7 +297,7 @@ func (x *PerpMarket) GetOracle() string {
 	return ""
 }
 
-// Realtime from stream: Side..IsCross. Snapshot/computed, empty in realtime: Collateral, LiquidationPx, UnrealizedPnl.
+// A trader's position as of an event — all fields from the stream (no snapshot/API data).
 type PerpPosition struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Side          string                 `protobuf:"bytes,1,opt,name=Side,proto3" json:"Side,omitempty"` // "Long" | "Short"
@@ -308,10 +308,7 @@ type PerpPosition struct {
 	Funding       string                 `protobuf:"bytes,6,opt,name=Funding,proto3" json:"Funding,omitempty"`    // signed
 	Leverage      uint32                 `protobuf:"varint,7,opt,name=Leverage,proto3" json:"Leverage,omitempty"` // 0 = not yet in map, NOT 1x
 	IsCross       bool                   `protobuf:"varint,8,opt,name=IsCross,proto3" json:"IsCross,omitempty"`
-	Collateral    string                 `protobuf:"bytes,9,opt,name=Collateral,proto3" json:"Collateral,omitempty"`
-	LiquidationPx string                 `protobuf:"bytes,10,opt,name=LiquidationPx,proto3" json:"LiquidationPx,omitempty"`
-	UnrealizedPnl string                 `protobuf:"bytes,11,opt,name=UnrealizedPnl,proto3" json:"UnrealizedPnl,omitempty"`
-	Closed        bool                   `protobuf:"varint,12,opt,name=Closed,proto3" json:"Closed,omitempty"`
+	Closed        bool                   `protobuf:"varint,9,opt,name=Closed,proto3" json:"Closed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -400,27 +397,6 @@ func (x *PerpPosition) GetIsCross() bool {
 		return x.IsCross
 	}
 	return false
-}
-
-func (x *PerpPosition) GetCollateral() string {
-	if x != nil {
-		return x.Collateral
-	}
-	return ""
-}
-
-func (x *PerpPosition) GetLiquidationPx() string {
-	if x != nil {
-		return x.LiquidationPx
-	}
-	return ""
-}
-
-func (x *PerpPosition) GetUnrealizedPnl() string {
-	if x != nil {
-		return x.UnrealizedPnl
-	}
-	return ""
 }
 
 func (x *PerpPosition) GetClosed() bool {
@@ -1058,7 +1034,7 @@ func (x *PerpLiquidation) GetHash() string {
 }
 
 // The leverage CHANGE itself; the value is also on every Position.Leverage.
-type PerpLeverageUpdate struct {
+type TraderLeverageUpdate struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Trader        *Trader                `protobuf:"bytes,1,opt,name=Trader,proto3" json:"Trader,omitempty"`
 	Market        *PerpMarket            `protobuf:"bytes,2,opt,name=Market,proto3" json:"Market,omitempty"`
@@ -1068,20 +1044,20 @@ type PerpLeverageUpdate struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PerpLeverageUpdate) Reset() {
-	*x = PerpLeverageUpdate{}
+func (x *TraderLeverageUpdate) Reset() {
+	*x = TraderLeverageUpdate{}
 	mi := &file_hyperliquid_perpetual_block_message_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PerpLeverageUpdate) String() string {
+func (x *TraderLeverageUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PerpLeverageUpdate) ProtoMessage() {}
+func (*TraderLeverageUpdate) ProtoMessage() {}
 
-func (x *PerpLeverageUpdate) ProtoReflect() protoreflect.Message {
+func (x *TraderLeverageUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_hyperliquid_perpetual_block_message_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1093,33 +1069,33 @@ func (x *PerpLeverageUpdate) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PerpLeverageUpdate.ProtoReflect.Descriptor instead.
-func (*PerpLeverageUpdate) Descriptor() ([]byte, []int) {
+// Deprecated: Use TraderLeverageUpdate.ProtoReflect.Descriptor instead.
+func (*TraderLeverageUpdate) Descriptor() ([]byte, []int) {
 	return file_hyperliquid_perpetual_block_message_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *PerpLeverageUpdate) GetTrader() *Trader {
+func (x *TraderLeverageUpdate) GetTrader() *Trader {
 	if x != nil {
 		return x.Trader
 	}
 	return nil
 }
 
-func (x *PerpLeverageUpdate) GetMarket() *PerpMarket {
+func (x *TraderLeverageUpdate) GetMarket() *PerpMarket {
 	if x != nil {
 		return x.Market
 	}
 	return nil
 }
 
-func (x *PerpLeverageUpdate) GetLeverage() uint32 {
+func (x *TraderLeverageUpdate) GetLeverage() uint32 {
 	if x != nil {
 		return x.Leverage
 	}
 	return 0
 }
 
-func (x *PerpLeverageUpdate) GetIsCross() bool {
+func (x *TraderLeverageUpdate) GetIsCross() bool {
 	if x != nil {
 		return x.IsCross
 	}
@@ -1131,7 +1107,7 @@ type PerpTwap struct {
 	Trader           *Trader                `protobuf:"bytes,1,opt,name=Trader,proto3" json:"Trader,omitempty"`
 	Market           *PerpMarket            `protobuf:"bytes,2,opt,name=Market,proto3" json:"Market,omitempty"`
 	TwapId           uint64                 `protobuf:"varint,3,opt,name=TwapId,proto3" json:"TwapId,omitempty"`
-	Status           string                 `protobuf:"bytes,4,opt,name=Status,proto3" json:"Status,omitempty"` // "activated" | "finished" | "terminated" | "error"
+	Status           string                 `protobuf:"bytes,4,opt,name=Status,proto3" json:"Status,omitempty"` // "activated" | "finished" | "terminated" | "stopped" | "error"
 	StatusError      string                 `protobuf:"bytes,5,opt,name=StatusError,proto3" json:"StatusError,omitempty"`
 	Side             string                 `protobuf:"bytes,6,opt,name=Side,proto3" json:"Side,omitempty"` // "Buy" | "Sell"
 	Size             string                 `protobuf:"bytes,7,opt,name=Size,proto3" json:"Size,omitempty"`
@@ -1388,7 +1364,7 @@ type PerpPriceUpdate struct {
 	Market        *PerpMarket            `protobuf:"bytes,1,opt,name=Market,proto3" json:"Market,omitempty"`
 	Price         string                 `protobuf:"bytes,2,opt,name=Price,proto3" json:"Price,omitempty"`
 	Kind          string                 `protobuf:"bytes,3,opt,name=Kind,proto3" json:"Kind,omitempty"`               // "mark" | "oracle" | "markInput" | "spotInput" | "extPerpInput" | "extPerp"
-	UpdateClass   string                 `protobuf:"bytes,4,opt,name=UpdateClass,proto3" json:"UpdateClass,omitempty"` // "Deployer" | "Fallback"
+	UpdateClass   string                 `protobuf:"bytes,4,opt,name=UpdateClass,proto3" json:"UpdateClass,omitempty"` // "Normal" | "Deployer" | "Fallback"
 	DailyPx       string                 `protobuf:"bytes,5,opt,name=DailyPx,proto3" json:"DailyPx,omitempty"`
 	UpdateTime    int64                  `protobuf:"varint,6,opt,name=UpdateTime,proto3" json:"UpdateTime,omitempty"` // epoch ns
 	unknownFields protoimpl.UnknownFields
@@ -1471,15 +1447,15 @@ var File_hyperliquid_perpetual_block_message_proto protoreflect.FileDescriptor
 
 const file_hyperliquid_perpetual_block_message_proto_rawDesc = "" +
 	"\n" +
-	")hyperliquid/perpetual_block_message.proto\x12\x14hyperliquid_messages\"\xe2\x04\n" +
+	")hyperliquid/perpetual_block_message.proto\x12\x14hyperliquid_messages\"\xe4\x04\n" +
 	"\x15PerpetualBlockMessage\x12 \n" +
 	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
 	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x127\n" +
 	"\x06Trades\x18\x03 \x03(\v2\x1f.hyperliquid_messages.PerpTradeR\x06Trades\x127\n" +
 	"\x06Orders\x18\x04 \x03(\v2\x1f.hyperliquid_messages.PerpOrderR\x06Orders\x12;\n" +
 	"\aFunding\x18\x05 \x03(\v2!.hyperliquid_messages.PerpFundingR\aFunding\x12I\n" +
-	"\fLiquidations\x18\x06 \x03(\v2%.hyperliquid_messages.PerpLiquidationR\fLiquidations\x12R\n" +
-	"\x0fLeverageChanges\x18\a \x03(\v2(.hyperliquid_messages.PerpLeverageUpdateR\x0fLeverageChanges\x124\n" +
+	"\fLiquidations\x18\x06 \x03(\v2%.hyperliquid_messages.PerpLiquidationR\fLiquidations\x12T\n" +
+	"\x0fLeverageChanges\x18\a \x03(\v2*.hyperliquid_messages.TraderLeverageUpdateR\x0fLeverageChanges\x124\n" +
 	"\x05Twaps\x18\b \x03(\v2\x1e.hyperliquid_messages.PerpTwapR\x05Twaps\x12=\n" +
 	"\x06Prices\x18\t \x03(\v2%.hyperliquid_messages.PerpPriceUpdateR\x06Prices\x12F\n" +
 	"\vBookUpdates\x18\n" +
@@ -1497,7 +1473,7 @@ const file_hyperliquid_perpetual_block_message_proto_rawDesc = "" +
 	"\bProtocol\x18\x03 \x01(\tR\bProtocol\x12\x18\n" +
 	"\aCoinRaw\x18\x04 \x01(\tR\aCoinRaw\x12 \n" +
 	"\vMaxLeverage\x18\x05 \x01(\rR\vMaxLeverage\x12\x16\n" +
-	"\x06Oracle\x18\x06 \x01(\tR\x06Oracle\"\xec\x02\n" +
+	"\x06Oracle\x18\x06 \x01(\tR\x06Oracle\"\x80\x02\n" +
 	"\fPerpPosition\x12\x12\n" +
 	"\x04Side\x18\x01 \x01(\tR\x04Side\x12\x12\n" +
 	"\x04Size\x18\x02 \x01(\tR\x04Size\x12\x1e\n" +
@@ -1510,14 +1486,8 @@ const file_hyperliquid_perpetual_block_message_proto_rawDesc = "" +
 	"\vRealizedPnl\x18\x05 \x01(\tR\vRealizedPnl\x12\x18\n" +
 	"\aFunding\x18\x06 \x01(\tR\aFunding\x12\x1a\n" +
 	"\bLeverage\x18\a \x01(\rR\bLeverage\x12\x18\n" +
-	"\aIsCross\x18\b \x01(\bR\aIsCross\x12\x1e\n" +
-	"\n" +
-	"Collateral\x18\t \x01(\tR\n" +
-	"Collateral\x12$\n" +
-	"\rLiquidationPx\x18\n" +
-	" \x01(\tR\rLiquidationPx\x12$\n" +
-	"\rUnrealizedPnl\x18\v \x01(\tR\rUnrealizedPnl\x12\x16\n" +
-	"\x06Closed\x18\f \x01(\bR\x06Closed\"\xfb\x04\n" +
+	"\aIsCross\x18\b \x01(\bR\aIsCross\x12\x16\n" +
+	"\x06Closed\x18\t \x01(\bR\x06Closed\"\xfb\x04\n" +
 	"\tPerpTrade\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x128\n" +
 	"\x06Market\x18\x02 \x01(\v2 .hyperliquid_messages.PerpMarketR\x06Market\x12\x12\n" +
@@ -1594,8 +1564,8 @@ const file_hyperliquid_perpetual_block_message_proto_rawDesc = "" +
 	"\bPosition\x18\b \x01(\v2\".hyperliquid_messages.PerpPositionR\bPosition\x12\x10\n" +
 	"\x03Tid\x18\t \x01(\x04R\x03Tid\x12\x12\n" +
 	"\x04Hash\x18\n" +
-	" \x01(\tR\x04Hash\"\xba\x01\n" +
-	"\x12PerpLeverageUpdate\x124\n" +
+	" \x01(\tR\x04Hash\"\xbc\x01\n" +
+	"\x14TraderLeverageUpdate\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x128\n" +
 	"\x06Market\x18\x02 \x01(\v2 .hyperliquid_messages.PerpMarketR\x06Market\x12\x1a\n" +
 	"\bLeverage\x18\x03 \x01(\rR\bLeverage\x12\x18\n" +
@@ -1663,7 +1633,7 @@ var file_hyperliquid_perpetual_block_message_proto_goTypes = []any{
 	(*PerpOrder)(nil),             // 5: hyperliquid_messages.PerpOrder
 	(*PerpFunding)(nil),           // 6: hyperliquid_messages.PerpFunding
 	(*PerpLiquidation)(nil),       // 7: hyperliquid_messages.PerpLiquidation
-	(*PerpLeverageUpdate)(nil),    // 8: hyperliquid_messages.PerpLeverageUpdate
+	(*TraderLeverageUpdate)(nil),  // 8: hyperliquid_messages.TraderLeverageUpdate
 	(*PerpTwap)(nil),              // 9: hyperliquid_messages.PerpTwap
 	(*PerpBookUpdate)(nil),        // 10: hyperliquid_messages.PerpBookUpdate
 	(*PerpPriceUpdate)(nil),       // 11: hyperliquid_messages.PerpPriceUpdate
@@ -1673,7 +1643,7 @@ var file_hyperliquid_perpetual_block_message_proto_depIdxs = []int32{
 	5,  // 1: hyperliquid_messages.PerpetualBlockMessage.Orders:type_name -> hyperliquid_messages.PerpOrder
 	6,  // 2: hyperliquid_messages.PerpetualBlockMessage.Funding:type_name -> hyperliquid_messages.PerpFunding
 	7,  // 3: hyperliquid_messages.PerpetualBlockMessage.Liquidations:type_name -> hyperliquid_messages.PerpLiquidation
-	8,  // 4: hyperliquid_messages.PerpetualBlockMessage.LeverageChanges:type_name -> hyperliquid_messages.PerpLeverageUpdate
+	8,  // 4: hyperliquid_messages.PerpetualBlockMessage.LeverageChanges:type_name -> hyperliquid_messages.TraderLeverageUpdate
 	9,  // 5: hyperliquid_messages.PerpetualBlockMessage.Twaps:type_name -> hyperliquid_messages.PerpTwap
 	11, // 6: hyperliquid_messages.PerpetualBlockMessage.Prices:type_name -> hyperliquid_messages.PerpPriceUpdate
 	10, // 7: hyperliquid_messages.PerpetualBlockMessage.BookUpdates:type_name -> hyperliquid_messages.PerpBookUpdate
@@ -1688,8 +1658,8 @@ var file_hyperliquid_perpetual_block_message_proto_depIdxs = []int32{
 	1,  // 16: hyperliquid_messages.PerpLiquidation.Trader:type_name -> hyperliquid_messages.Trader
 	2,  // 17: hyperliquid_messages.PerpLiquidation.Market:type_name -> hyperliquid_messages.PerpMarket
 	3,  // 18: hyperliquid_messages.PerpLiquidation.Position:type_name -> hyperliquid_messages.PerpPosition
-	1,  // 19: hyperliquid_messages.PerpLeverageUpdate.Trader:type_name -> hyperliquid_messages.Trader
-	2,  // 20: hyperliquid_messages.PerpLeverageUpdate.Market:type_name -> hyperliquid_messages.PerpMarket
+	1,  // 19: hyperliquid_messages.TraderLeverageUpdate.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 20: hyperliquid_messages.TraderLeverageUpdate.Market:type_name -> hyperliquid_messages.PerpMarket
 	1,  // 21: hyperliquid_messages.PerpTwap.Trader:type_name -> hyperliquid_messages.Trader
 	2,  // 22: hyperliquid_messages.PerpTwap.Market:type_name -> hyperliquid_messages.PerpMarket
 	1,  // 23: hyperliquid_messages.PerpBookUpdate.Trader:type_name -> hyperliquid_messages.Trader
