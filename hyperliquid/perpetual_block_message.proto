@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+package hyperliquid_messages;
+
+message PerpetualBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2; // epoch ns
+
+  repeated PerpTrade          Trades          = 3;
+  repeated PerpOrder          Orders          = 4;
+  repeated PerpFunding        Funding         = 5;
+  repeated PerpLiquidation    Liquidations    = 6;
+  repeated PerpLeverageUpdate LeverageChanges = 7;
+  repeated PerpTwap           Twaps           = 8;
+  repeated PerpPriceUpdate    Prices          = 9;
+  repeated PerpBookUpdate     BookUpdates     = 10;
+}
+
+message Trader {
+  string Address     = 1;
+  string Signer      = 2; // signing agent (ecrecover)
+  string Vault       = 3;
+  string Broadcaster = 4;
+  int64  SignedAt    = 5; // epoch ms
+}
+
+message PerpMarket {
+  string Symbol      = 1;
+  string Kind        = 2; // "perp" | "hip3" | "spot" | "outcome"
+  string Protocol    = 3; // "hypercore" native, else HIP-3 dex
+  string CoinRaw     = 4; // "HYPE", "xyz:NFLX", "@107", "#1890"
+  uint32 MaxLeverage = 5; // 0 = unknown
+  string Oracle      = 6;
+}
+
+// Realtime from stream: Side..IsCross. Snapshot/computed, empty in realtime: Collateral, LiquidationPx, UnrealizedPnl.
+message PerpPosition {
+  string Side        = 1; // "Long" | "Short"
+  string Size        = 2; // signed (negative = short)
+  string SizeBefore  = 3;
+  string EntryPrice  = 4; // empty if opened pre-window
+  string RealizedPnl = 5;
+  string Funding     = 6; // signed
+  uint32 Leverage    = 7; // 0 = not yet in map, NOT 1x
+  bool   IsCross     = 8;
+
+  string Collateral    = 9;
+  string LiquidationPx = 10;
+  string UnrealizedPnl = 11;
+  bool   Closed        = 12;
+}
+
+
+message PerpTrade {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  string Side        = 3; // "Buy" | "Sell"
+  string Direction   = 4; // "Open Long", "Close Short", …
+  bool   IsAggressor = 5; // taker
+
+  string Price     = 6;
+  string Size      = 7;
+  string Fee       = 8; // negative = maker rebate
+  string FeeToken  = 9; // not always USDC
+  string MarkPx    = 10; // empty if no oracle republish this block
+
+  PerpPosition Position = 11;
+
+  string Builder     = 12;
+  string BuilderFee  = 13;
+  string DeployerFee = 14; // HIP-3 asset deployer
+
+  uint64 Tid         = 15; // join both sides on (BlockNumber, Market, Tid)
+  uint64 Oid         = 16;
+  string Hash        = 17; // zero on TWAP — never a join key
+  bool   IsTwap      = 18;
+  uint64 TwapId      = 19; // 0 when not a TWAP
+  string Cloid       = 20;
+  string PriorityGas = 21; // NOT a component of Fee
+}
+
+// Status carries the rejection reasons — the exclusive the public API omits.
+message PerpOrder {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  string Side       = 3; // "Buy" | "Sell"
+  string Status     = 4; // "filled" | "open" | "canceled" | "badAloPxRejected" | …
+  bool   IsReject   = 5;
+
+  string OrderType  = 6; // "Limit" | "Market" | "Stop Market" | …
+  string Tif        = 7; // "Alo" | "Ioc" | "Gtc" | …
+  bool   ReduceOnly = 8;
+
+  string LimitPx = 9;
+  string Size    = 10; // remaining
+  string OrigSz  = 11;
+
+  string TriggerPx        = 12;
+  string TriggerCondition = 13;
+  bool   IsTrigger        = 14;
+  bool   IsPositionTpsl   = 15;
+
+  // TP/SL bracket: legs share Oid+Status; Leg tells them apart, ParentOid ties a leg to its parent.
+  uint64 ParentOid = 16;
+  uint32 Leg       = 17;
+
+  PerpPosition Position = 18;
+
+  uint64 Oid        = 19;
+  string Cloid      = 20;
+  string Hash       = 21; // empty if never on chain
+  int64  PlacedTime = 22; // epoch ms
+
+  string Builder    = 23; // order builder address (usually empty)
+  uint32 BuilderFee = 24;
+}
+
+// Hourly funding, per (trader, market).
+message PerpFunding {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  string Amount = 3; // signed (+ received, − paid)
+  string Rate   = 4; // signed
+  string Size   = 5; // signed
+}
+
+message PerpLiquidation {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  string Size       = 3;
+  string MarkPx     = 4;
+  string Method     = 5; // "market" | "backstop"
+  string Liquidator = 6;
+  string Fee        = 7;
+
+  PerpPosition Position = 8;
+
+  uint64 Tid  = 9;
+  string Hash = 10;
+}
+
+// The leverage CHANGE itself; the value is also on every Position.Leverage.
+message PerpLeverageUpdate {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  uint32 Leverage = 3;
+  bool   IsCross  = 4;
+}
+
+message PerpTwap {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  uint64 TwapId      = 3;
+  string Status      = 4; // "activated" | "finished" | "terminated" | "error"
+  string StatusError = 5;
+  string Side        = 6; // "Buy" | "Sell"
+
+  string Size             = 7;
+  string ExecutedSize     = 8;
+  string ExecutedNotional = 9;
+  uint32 DurationMinutes  = 10;
+  bool   ReduceOnly       = 11;
+  bool   Randomize        = 12;
+  int64  StartTime        = 13; // epoch ms
+}
+
+// Per-order book change — market microstructure, distinct from an order's lifecycle in PerpOrder.
+message PerpBookUpdate {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  uint64 Oid  = 3;
+  string Side = 4; // "Buy" | "Sell"
+  string Px   = 5; // price level
+  string Kind = 6; // "new" | "update" | "remove"
+
+  string Size       = 7; // new size / size after
+  string SizeBefore = 8; // update only
+
+  PerpPosition Position = 9;
+  uint32       Index    = 10; // ordinal within block
+}
+
+message PerpPriceUpdate {
+  PerpMarket Market      = 1;
+  string     Price       = 2;
+  string     Kind        = 3; // "mark" | "oracle" | "markInput" | "spotInput" | "extPerpInput" | "extPerp"
+  string     UpdateClass = 4; // "Deployer" | "Fallback"
+  string     DailyPx     = 5;
+  int64      UpdateTime  = 6; // epoch ns
+}
