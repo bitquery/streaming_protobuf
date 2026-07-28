@@ -110,8 +110,8 @@ message PerpetualCurrency {
 // COLLATERAL FLOWS ARE OUT OF SCOPE for all three event types below. Deposits, withdrawals,
 // internal transfers and funding settlement move exchange-wide collateral rather than a position
 // in a market, and this stream reports positions, orders and trades. Funding is not lost — the
-// protocol repeats each funding payment on the PnL event of the same batch (Position.Funding), and
-// the collateral backing a position on each fill (Position.Collateral).
+// protocol repeats each funding payment on the PnL event of the same batch (PerpetualPositionEvent.Funding), and
+// the collateral backing a position on each fill (PerpetualFillEvent.Collateral).
 //
 // Every account field is empty when the chain named no account — never the all-zero address, which
 // would read as the System program. An expiry crank, for one, cancels orders it does not own:
@@ -179,9 +179,24 @@ message PerpetualFillEvent {
   PerpetualExchange Exchange = 9;
   PerpetualAsset Asset = 10;
 
-  PerpetualAmount Amount = 11;    // .Filled, .Quote, .Fee
-  PerpetualPrice Price = 12;      // .Execution, .Mark
+  PerpetualAmount Amount = 11;    // .Size, .Quote, .Fee, and .Remaining of the maker's order
   PerpetualPosition Position = 13; // the taker's position after the fill
+
+  // Plain doubles rather than a PerpetualPrice: a fill has no limit and no trigger, so the shared
+  // message would carry two permanently empty columns into the table.
+  double ExecutionPrice = 16;
+  double MarkPrice = 17; // mark of this transaction, denormalized so a PnL query needs no join
+
+  // Collateral of the whole *account*, as the protocol reports it on TradeSummary — NOT this
+  // position's margin. Phoenix Eternal is cross-margin: one TraderState.quoteLotCollateral covers
+  // every market the trader is in, and live accounts hold up to 51 at once.
+  //
+  // So do not divide one position's notional by this and call it leverage. Measured on staging:
+  // traders holding a single market land at a median of 2.78x, matching what the venue's own UI
+  // shows, while the three accounts holding 51 markets come out at 0.0003x. Real leverage is
+  // sum(|Size * MarkPrice|) over all of that trader's markets at that slot divided by this — a
+  // query over this table, which is why no Leverage field is published.
+  double Collateral = 18;
 
   // This fill is part of a forced liquidation of Trader's position — see PerpetualPositionEvent.
   bool Liquidation = 14;
@@ -202,8 +217,27 @@ message PerpetualPositionEvent {
   PerpetualAsset Asset = 7;
 
   PerpetualPosition Position = 8;
-  PerpetualPrice Price = 9;   // .Mark
-  PerpetualAmount Amount = 10; // liquidated size and quote, on "Liquidation"
+
+  // What a forced close took, on "Liquidation" only -- plain doubles rather than a PerpetualAmount
+  // because the other five fields of that message (Size, Remaining, MinToFill, MinQuoteToFill, Fee)
+  // describe an order, which this event is not: measured empty on all 26659 sampled rows.
+  double LiquidatedSize = 18;
+  double LiquidatedQuote = 19;
+
+  // A plain double rather than a PerpetualPrice: this event has no limit, execution or trigger
+  // price, so the shared message would carry three permanently empty columns into the table.
+  // The venue's PnL event publishes no mark of its own — this is denormalized from the market-state
+  // events of the same transaction, so it is present on the ~62% of PnL events whose transaction
+  // also republished a price for the asset. For the rest, asof-join perpetual_prices on
+  // (asset, slot).
+  double MarkPrice = 14;
+
+  // Realized on this event, in quote currency. Only the PnL/Liquidation events carry these: a fill
+  // reports the position it produced, not what that position released, which is why these live
+  // here and not on PerpetualPosition.
+  double RealizedPnl = 15;
+  double Funding = 16;   // funding paid (negative) or received (positive)
+  bool Closed = 17;      // the position went flat on this event
 
   // Trader is protocol liquidity, not a user. A spline's position moves like anyone else's and
   // emits its own PnL events, so without this flag an aggregate over traders ranks the protocol's
@@ -275,38 +309,6 @@ message PerpetualPosition {
   double Size = 1;       // position after the event, signed (negative = short)
   double SizeBefore = 2;
   double EntryPrice = 3; // average entry, folded from the protocol's virtual-quote balance
-  double RealizedPnl = 4;
-  double Funding = 5;    // funding paid (negative) or received (positive)
-
-  // Collateral backing the trader, NOT this position. Phoenix Eternal is cross-margin: one
-  // TraderState.quoteLotCollateral covers every market the trader is in, and traders do use many
-  // — a live sample had accounts holding 15 to 30 markets at once. So this is the account's
-  // collateral seen at this event, and a leverage computed from it and one position's notional
-  // would be that position's share of the account, not its leverage. Real leverage needs the sum
-  // of |Size * Mark| over all of the trader's markets at that slot, which is a query, not a field.
-  //
-  // Only fills carry it: the protocol reports it on TradeSummary, and PnL events do not restate it.
-  double Collateral = 6;
-
-  // |Size * Price.Mark| / Collateral — the ratio Phoenix's own UI shows as "Order Leverage"
-  // (position value 4.07 over isolated collateral 1.29 reads as 3.2x). Computed, not published by
-  // the chain: no event or instruction carries a leverage figure, and LeverageTier.maxLeverage is
-  // the *permitted* maximum per size tier, not the actual one.
-  //
-  // READ IT AS "LEVERAGE AGAINST THE COLLATERAL OF THIS ACCOUNT". Phoenix has two account kinds —
-  // a parent (cross-margin) and its children (isolated margin), with TransferCollateralChildToParent
-  // between them. On an isolated account the denominator is that position's own collateral and the
-  // number matches the UI. On a cross-margin account the same collateral backs every market the
-  // trader is in — a live sample had accounts in 15 to 30 markets at once — so it is that
-  // position's share of the account, not its leverage. Which kind an account is does not appear in
-  // the event; it is Trader.traderSubaccountIndex in chain state.
-  //
-  // Present only where all three inputs are (fills with a mark), and worth a sanity check before
-  // trusting it: across 120 sampled fills every value came out below 1, i.e. those accounts held
-  // more collateral than notional.
-  double Leverage = 7;
-
-  bool Closed = 9;
 }
 
 // Market / oracle state, republished on every price move. Type is one of:
