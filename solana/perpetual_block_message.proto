@@ -135,7 +135,15 @@ message PerpetualOrderEvent {
   // "OrderCancelled"  removed or reduced; see Order.CancelReason
   // "OrderRejected"   see Order.RejectReason
   // "TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted"      conditional orders
-  // "StopLossPlaced" / "StopLossCancelled" / "StopLossExecuted"   stop-loss orders
+  // "StopLossPlaced" / "TakeProfitPlaced"    a protective order, and which kind it is: the chain
+  //     states the side and the price condition on the placement, and those two together say
+  //     whether it protects a loss or a gain.
+  // "ConditionalCancelled" / "ConditionalExecuted"   the same mechanism ending. Deliberately NOT
+  //     named after a kind: the raw cancellation and execution do not restate the side, so which
+  //     of the two ended cannot be known from the event, and a StopLoss* name there would be the
+  //     wrong name for every take-profit. Order.ConditionalId identifies the order that ended —
+  //     join it back to its placement on (Trader, Asset.Id, ConditionalId) to learn the kind. An
+  //     execution also carries Order.Id, the book order the trigger created.
   string Type = 3;
   string Side = 4;   // "bid" / "ask"
 
@@ -201,6 +209,22 @@ message PerpetualFillEvent {
   // This fill is part of a forced liquidation of Trader's position — see PerpetualPositionEvent.
   bool Liquidation = 14;
   bytes Liquidator = 15;
+
+  // Which resting side this fill matched, as the chain names it — the join key a fill otherwise
+  // lacks. `OrderFilled` names the maker's book order, and MakerOrderId is encoded exactly like
+  // PerpetualOrder.Id, so it joins a fill straight back to that order's placement and
+  // cancellation. `SplineFilled` matched protocol liquidity instead (CounterpartyIsAmm), which is
+  // not a book order and is named by SplineId. Exactly one of the two is ever set.
+  //
+  // Without these a fill can only be tied to an order by (transaction, instruction) ordering,
+  // which stops being unique the moment one instruction fills several orders — measured on
+  // staging, that already happens (one instruction produced three fill/position pairings that no
+  // join could separate).
+  bytes MakerOrderId = 19;
+  // `optional` because spline 0 is a real spline: a plain uint64 would drop it from the wire and
+  // make it indistinguishable from "no spline at all" — the same absent-reads-as-zero trap
+  // ConditionalId documents above.
+  optional uint64 SplineId = 20;
 }
 
 // What happened to a position: realized PnL, funding, and liquidations.
@@ -266,7 +290,13 @@ message PerpetualOrder {
   // Empty when the chain named none — never eight zero bytes.
   bytes Id = 1;
   bytes ClientId = 2;        // caller's own id; empty when none was sent
-  string Type = 3;           // "limit", "market", "post-only", "stop-loss", "take-profit"
+  // "limit", "market", "post-only" for book orders; "stop-loss" or "take-profit" for conditional
+  // ones. EMPTY on a conditional order's cancellation and execution: those events do not restate
+  // the side, so which of the two it was cannot be known from the event, and a fallback would be a
+  // definite-looking label that is wrong for every cancelled take-profit. Empty means unknown
+  // here, not absent — the row still identifies the order through ConditionalId. Use the event
+  // Type, not this field, to tell a conditional order from a book order.
+  string Type = 3;
   uint64 ValidUntilSlot = 4; // 0 = good-till-cancel
   string CancelReason = 5;   // "UserRequested", "Expired", "SelfTradeCancelProvide", ...
   string RejectReason = 6;

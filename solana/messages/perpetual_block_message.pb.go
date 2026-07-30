@@ -443,7 +443,12 @@ type PerpetualOrderEvent struct {
 	// "OrderCancelled"  removed or reduced; see Order.CancelReason
 	// "OrderRejected"   see Order.RejectReason
 	// "TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted"      conditional orders
-	// "StopLossPlaced" / "StopLossCancelled" / "StopLossExecuted"   stop-loss orders
+	// "StopLossPlaced" / "StopLossCancelled" / "StopLossExecuted"   protective orders
+	// "TakeProfitPlaced"                                            a protective order that the
+	//     chain's price condition marks as protecting a gain rather than a loss. Only the placement
+	//     carries the side needed to tell the two apart, so there is no TakeProfitCancelled or
+	//     TakeProfitExecuted: those keep the StopLoss* names whichever kind they end. Join back to
+	//     the placement on (Trader, Asset.Id, Order.ConditionalId) to resolve them.
 	Type string `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"`
 	Side string `protobuf:"bytes,4,opt,name=Side,proto3" json:"Side,omitempty"` // "bid" / "ask"
 	// Position in the transaction, shared across all four lists, so an order can be ordered against
@@ -626,8 +631,23 @@ type PerpetualFillEvent struct {
 	// query over this table, which is why no Leverage field is published.
 	Collateral float64 `protobuf:"fixed64,18,opt,name=Collateral,proto3" json:"Collateral,omitempty"`
 	// This fill is part of a forced liquidation of Trader's position — see PerpetualPositionEvent.
-	Liquidation   bool   `protobuf:"varint,14,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
-	Liquidator    []byte `protobuf:"bytes,15,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
+	Liquidation bool   `protobuf:"varint,14,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
+	Liquidator  []byte `protobuf:"bytes,15,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
+	// Which resting side this fill matched, as the chain names it — the join key a fill otherwise
+	// lacks. `OrderFilled` names the maker's book order, and MakerOrderId is encoded exactly like
+	// PerpetualOrder.Id, so it joins a fill straight back to that order's placement and
+	// cancellation. `SplineFilled` matched protocol liquidity instead (CounterpartyIsAmm), which is
+	// not a book order and is named by SplineId. Exactly one of the two is ever set.
+	//
+	// Without these a fill can only be tied to an order by (transaction, instruction) ordering,
+	// which stops being unique the moment one instruction fills several orders — measured on
+	// staging, that already happens (one instruction produced three fill/position pairings that no
+	// join could separate).
+	MakerOrderId []byte `protobuf:"bytes,19,opt,name=MakerOrderId,proto3" json:"MakerOrderId,omitempty"`
+	// `optional` because spline 0 is a real spline: a plain uint64 would drop it from the wire and
+	// make it indistinguishable from "no spline at all" — the same absent-reads-as-zero trap
+	// ConditionalId documents above.
+	SplineId      *uint64 `protobuf:"varint,20,opt,name=SplineId,proto3,oneof" json:"SplineId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -779,6 +799,20 @@ func (x *PerpetualFillEvent) GetLiquidator() []byte {
 		return x.Liquidator
 	}
 	return nil
+}
+
+func (x *PerpetualFillEvent) GetMakerOrderId() []byte {
+	if x != nil {
+		return x.MakerOrderId
+	}
+	return nil
+}
+
+func (x *PerpetualFillEvent) GetSplineId() uint64 {
+	if x != nil && x.SplineId != nil {
+		return *x.SplineId
+	}
+	return 0
 }
 
 // What happened to a position: realized PnL, funding, and liquidations.
@@ -986,9 +1020,15 @@ type PerpetualOrder struct {
 	// order it is a book order *related* to it, and which one depends on the event: the order the
 	// stop-loss created when it fired, or, for a trigger order, the resting order it is attached to.
 	// Empty when the chain named none — never eight zero bytes.
-	Id             []byte `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`
-	ClientId       []byte `protobuf:"bytes,2,opt,name=ClientId,proto3" json:"ClientId,omitempty"`              // caller's own id; empty when none was sent
-	Type           string `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"`                      // "limit", "market", "post-only", "stop-loss", "take-profit"
+	Id       []byte `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	ClientId []byte `protobuf:"bytes,2,opt,name=ClientId,proto3" json:"ClientId,omitempty"` // caller's own id; empty when none was sent
+	// "limit", "market", "post-only" for book orders; "stop-loss" or "take-profit" for conditional
+	// ones. EMPTY on a conditional order's cancellation and execution: those events do not restate
+	// the side, so which of the two it was cannot be known from the event, and a fallback would be a
+	// definite-looking label that is wrong for every cancelled take-profit. Empty means unknown
+	// here, not absent — the row still identifies the order through ConditionalId. Use the event
+	// Type, not this field, to tell a conditional order from a book order.
+	Type           string `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"`
 	ValidUntilSlot uint64 `protobuf:"varint,4,opt,name=ValidUntilSlot,proto3" json:"ValidUntilSlot,omitempty"` // 0 = good-till-cancel
 	CancelReason   string `protobuf:"bytes,5,opt,name=CancelReason,proto3" json:"CancelReason,omitempty"`      // "UserRequested", "Expired", "SelfTradeCancelProvide", ...
 	RejectReason   string `protobuf:"bytes,6,opt,name=RejectReason,proto3" json:"RejectReason,omitempty"`
@@ -1582,7 +1622,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\vLiquidation\x18\r \x01(\bR\vLiquidation\x12\x1e\n" +
 	"\n" +
 	"Liquidator\x18\x0e \x01(\fR\n" +
-	"Liquidator\"\xb1\x05\n" +
+	"Liquidator\"\x83\x06\n" +
 	"\x12PerpetualFillEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\"\n" +
@@ -1607,7 +1647,10 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\vLiquidation\x18\x0e \x01(\bR\vLiquidation\x12\x1e\n" +
 	"\n" +
 	"Liquidator\x18\x0f \x01(\fR\n" +
-	"Liquidator\"\x87\x05\n" +
+	"Liquidator\x12\"\n" +
+	"\fMakerOrderId\x18\x13 \x01(\fR\fMakerOrderId\x12\x1f\n" +
+	"\bSplineId\x18\x14 \x01(\x04H\x00R\bSplineId\x88\x01\x01B\v\n" +
+	"\t_SplineId\"\x87\x05\n" +
 	"\x16PerpetualPositionEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\x12\n" +
@@ -1755,6 +1798,7 @@ func file_solana_perpetual_block_message_proto_init() {
 		return
 	}
 	file_solana_block_message_proto_init()
+	file_solana_perpetual_block_message_proto_msgTypes[6].OneofWrappers = []any{}
 	file_solana_perpetual_block_message_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
