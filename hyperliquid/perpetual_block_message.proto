@@ -2,19 +2,55 @@ syntax = "proto3";
 
 package hyperliquid_messages;
 
-message PerpetualBlockMessage {
+
+message PerpTradesBlockMessage {
   uint64 BlockNumber = 1;
   int64  BlockTime   = 2; // epoch ns
-
-  repeated PerpTrade          Trades          = 3;
-  repeated PerpOrder          Orders          = 4;
-  repeated PerpFunding        Funding         = 5;
-  repeated PerpLiquidation    Liquidations    = 6;
-  repeated TraderLeverageUpdate LeverageChanges = 7;
-  repeated PerpTwap           Twaps           = 8;
-  repeated PerpPriceUpdate    Prices          = 9;
-  repeated PerpBookUpdate     BookUpdates     = 10;
+  repeated PerpTrade Trades = 3;
 }
+
+message PerpLiquidationsBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2;
+  repeated PerpLiquidation Liquidations = 3;
+}
+
+message PerpOrdersBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2;
+  repeated PerpOrder Orders = 3;
+}
+
+message PerpTwapsBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2;
+  repeated PerpTwap Twaps = 3;
+}
+
+message PerpBookUpdatesBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2;
+  repeated PerpBookUpdate BookUpdates = 3;
+}
+
+message PerpFundingsBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2;
+  repeated PerpFunding Funding = 3;
+}
+
+message TraderLeverageUpdatesBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2;
+  repeated TraderLeverageUpdate LeverageChanges = 3;
+}
+
+message PerpPriceUpdatesBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2;
+  repeated PerpPriceUpdate Prices = 3;
+}
+
 
 message Trader {
   string Address     = 1;
@@ -33,7 +69,9 @@ message PerpMarket {
   string Oracle      = 6;
 }
 
-// A trader's position as of an event — all fields from the stream (no snapshot/API data).
+// The trader's position AS OF this event — realtime fields come straight from the stream; the
+// snapshot fields (Collateral/LiquidationPx/UnrealizedPnl) are intentionally absent here because
+// HL only exposes them in a snapshot/API, not the realtime feed. Empty = source silent, NOT zero.
 message PerpPosition {
   string Side        = 1; // "Long" | "Short"
   string Size        = 2; // signed (negative = short)
@@ -46,37 +84,67 @@ message PerpPosition {
   bool   Closed      = 9;
 }
 
-
-message PerpTrade {
-  Trader     Trader = 1;
-  PerpMarket Market = 2;
-
-  string Side        = 3; // "Buy" | "Sell"
-  string Direction   = 4; // "Open Long", "Close Short", …
-  bool   IsAggressor = 5; // taker
-
-  string Price     = 6;
-  string Size      = 7;
-  string Fee       = 8; // negative = maker rebate
-  string FeeToken  = 9; // not always USDC
-  string MarkPx    = 10; // empty if no oracle republish this block
-
-  PerpPosition Position = 11;
-
-  string Builder     = 12;
-  string BuilderFee  = 13;
-  string DeployerFee = 14; // HIP-3 asset deployer
-
-  uint64 Tid         = 15; // join both sides on (BlockNumber, Market, Tid)
-  uint64 Oid         = 16;
-  string Hash        = 17; // zero on TWAP — never a join key
-  bool   IsTwap      = 18;
-  uint64 TwapId      = 19; // 0 when not a TWAP
-  string Cloid       = 20;
-  string PriorityGas = 21; // NOT a component of Fee
+// Money charged/credited on an execution. Reused by PerpTrade and PerpLiquidation (only executions
+// carry fees — an unfilled order does not). BuilderFee and DeployerFee are COMPONENTS of Fee (same
+// unit = FeeToken); PriorityGas is NOT part of Fee and may be in a different unit.
+message Fees {
+  string Fee         = 1; // negative = maker rebate
+  string FeeToken    = 2; // not always USDC
+  string BuilderFee  = 3;
+  string DeployerFee = 4; // HIP-3 asset deployer
+  string PriorityGas = 5; // NOT a component of Fee
 }
 
-// Status carries the rejection reasons — the exclusive the public API omits.
+// The execution itself — the shared core of PerpTrade and PerpLiquidation (both come from one Fill).
+// A liquidation IS an Execution plus liquidation-specific details. Pair both sides of a match on
+// (BlockNumber, Market, Tid).
+message Execution {
+  string Side        = 1; // "Buy" | "Sell"
+  string Direction   = 2; // "Open Long", "Close Short", …
+  bool   IsAggressor = 3; // taker
+  string Price       = 4;
+  string Size        = 5;
+  uint64 Oid         = 6;
+  string Cloid       = 7;
+  uint64 Tid         = 8; // join both sides on (BlockNumber, Market, Tid)
+  string Hash        = 9; // zero on TWAP — never a join key
+  int64  EventTime   = 10; // per-fill event time, epoch ms (Fill.Time) — finer than block BlockTime
+}
+
+// PerpTrade ← Fill (fills.proto), non-liquidation. One execution for one side; pair both sides on
+// (BlockNumber, Market, Tid), never on Hash (zero on TWAP).
+message PerpTrade {
+  Trader       Trader    = 1;
+  PerpMarket   Market    = 2;
+  Execution    Execution = 3; // Side/Direction/Price/Size/Oid/Cloid/Tid/Hash/IsAggressor
+  Fees         Fees      = 4; // Fee/FeeToken/BuilderFee/DeployerFee/PriorityGas
+  PerpPosition Position  = 5;
+
+  string MarkPx  = 6; // empty if no oracle republish this block
+  string Builder = 7; // builder address (usually empty)
+
+  bool   IsTwap  = 8;
+  uint64 TwapId  = 9; // 0 when not a TWAP
+}
+
+// PerpLiquidation ← Fill (fills.proto) with Liquidation set. A forced close IS an execution, so it
+// shares the same Execution/Fees/Position objects as PerpTrade, plus 4 liquidation-only fields. These
+// fills are routed HERE only (excluded from PerpTrade), so this row is the sole record — nothing lost.
+message PerpLiquidation {
+  Trader       Trader    = 1;
+  PerpMarket   Market    = 2;
+  Execution    Execution = 3; // the forced-close fill (Side/Price/Size/Oid/Tid/Hash/…)
+  Fees         Fees      = 4;
+  PerpPosition Position  = 5;
+
+  // The 4 fields that make this a liquidation, not a plain trade — the product's exclusive value.
+  string MarkPx         = 6; // mark price at liquidation — NOT the execution price (Execution.Price)
+  string Method         = 7; // "market" | "backstop" — backstop = HLP absorbed it, market-stress signal
+  string Liquidator     = 8; // backstop liquidator address, when the source names one
+  string LiquidatedUser = 9; // FillLiquidation.LiquidatedUser (0x address being liquidated)
+}
+
+
 message PerpOrder {
   Trader     Trader = 1;
   PerpMarket Market = 2;
@@ -111,42 +179,9 @@ message PerpOrder {
 
   string Builder    = 23; // order builder address (usually empty)
   uint32 BuilderFee = 24;
+  int64  EventTime  = 25; // status-event time, epoch ns (OrderStatus.Time) — vs PlacedTime = placement
 }
 
-// Hourly funding, per (trader, market).
-message PerpFunding {
-  Trader     Trader = 1;
-  PerpMarket Market = 2;
-
-  string Amount = 3; // signed (+ received, − paid)
-  string Rate   = 4; // signed
-  string Size   = 5; // signed
-}
-
-message PerpLiquidation {
-  Trader     Trader = 1;
-  PerpMarket Market = 2;
-
-  string Size       = 3;
-  string MarkPx     = 4;
-  string Method     = 5; // "market" | "backstop"
-  string Liquidator = 6;
-  string Fee        = 7;
-
-  PerpPosition Position = 8;
-
-  uint64 Tid  = 9;
-  string Hash = 10;
-}
-
-// The leverage CHANGE itself; the value is also on every Position.Leverage.
-message TraderLeverageUpdate {
-  Trader     Trader = 1;
-  PerpMarket Market = 2;
-
-  uint32 Leverage = 3;
-  bool   IsCross  = 4;
-}
 
 message PerpTwap {
   Trader     Trader = 1;
@@ -164,9 +199,11 @@ message PerpTwap {
   bool   ReduceOnly       = 11;
   bool   Randomize        = 12;
   int64  StartTime        = 13; // epoch ms
+  int64  EventTime        = 14; // status-event time, epoch ns (TwapStatus.Time) — vs StartTime = TWAP start
 }
 
-// Per-order book change — market microstructure, distinct from an order's lifecycle in PerpOrder.
+// PerpBookUpdate ← BookDiff (raw_book_diffs.proto). Per-order book change (L4) — market
+// microstructure, distinct from an order's lifecycle in PerpOrder.
 message PerpBookUpdate {
   Trader     Trader = 1;
   PerpMarket Market = 2;
@@ -183,6 +220,29 @@ message PerpBookUpdate {
   uint32       Index    = 10; // ordinal within block
 }
 
+// PerpFunding ← misc_events Funding/FundingDelta. Hourly funding, per (trader, market).
+message PerpFunding {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  string Amount = 3; // signed (+ received, − paid)
+  string Rate   = 4; // signed
+  string Size   = 5; // signed
+}
+
+// TraderLeverageUpdate ← transactions SignedAction updateLeverage (accepted only). The leverage
+// CHANGE itself; the resulting value is also on every Position.Leverage.
+message TraderLeverageUpdate {
+  Trader     Trader = 1;
+  PerpMarket Market = 2;
+
+  uint32 Leverage = 3;
+  bool   IsCross  = 4;
+}
+
+
+// PerpPriceUpdate ← OracleUpdate (oracle_updates.proto), flattened: each input list and each
+// oracle_pxs list becomes one row per (Market, Kind).
 message PerpPriceUpdate {
   PerpMarket Market      = 1;
   string     Price       = 2;
