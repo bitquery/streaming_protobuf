@@ -1,5 +1,11 @@
 syntax = "proto3";
 
+// HyperCore trading canon for Bitquery streaming. ALL market kinds flow here — perp, HIP-3, spot and
+// outcome (prediction) — told apart by PerpMarket.Kind and the PerpMarket.IsPerp flag. Perp markets
+// (perp + hip3) carry the full object set (Position/Leverage + Funding/Liquidation events); spot and
+// outcome share the same execution core but leave the perp-only fields empty, until they get their own
+// canons (spot pair, prediction sibling/probability). Filter clean perps with PerpMarket.IsPerp.
+
 package hyperliquid_messages;
 
 
@@ -67,6 +73,7 @@ message PerpMarket {
   string CoinRaw     = 4; // "HYPE", "xyz:NFLX", "@107", "#1890"
   uint32 MaxLeverage = 5; // 0 = unknown
   string Oracle      = 6;
+  bool   IsPerp      = 7; // true for perp+hip3 (full object set), false for spot/outcome — filter on this
 }
 
 // The trader's position AS OF this event — realtime fields come straight from the stream; the
