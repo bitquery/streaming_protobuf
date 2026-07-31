@@ -71,9 +71,7 @@ message Market {
   string Kind        = 2; // "perp" | "hip3" | "spot" | "outcome"
   string Protocol    = 3; // "hypercore" native, else HIP-3 dex
   string CoinRaw     = 4; // "HYPE", "xyz:NFLX", "@107", "#1890"
-  uint32 MaxLeverage = 5; // 0 = unknown
-  string Oracle      = 6;
-  bool   IsPerp      = 7; // true for perp+hip3 (full object set), false for spot/outcome — filter on this
+  bool   IsPerp      = 5; // true for perp+hip3 (full object set), false for spot/outcome — filter on this
 }
 
 // The trader's position AS OF this event — realtime fields come straight from the stream; the

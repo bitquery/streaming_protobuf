@@ -586,12 +586,10 @@ func (x *Trader) GetSignedAt() int64 {
 type Market struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Symbol        string                 `protobuf:"bytes,1,opt,name=Symbol,proto3" json:"Symbol,omitempty"`
-	Kind          string                 `protobuf:"bytes,2,opt,name=Kind,proto3" json:"Kind,omitempty"`                // "perp" | "hip3" | "spot" | "outcome"
-	Protocol      string                 `protobuf:"bytes,3,opt,name=Protocol,proto3" json:"Protocol,omitempty"`        // "hypercore" native, else HIP-3 dex
-	CoinRaw       string                 `protobuf:"bytes,4,opt,name=CoinRaw,proto3" json:"CoinRaw,omitempty"`          // "HYPE", "xyz:NFLX", "@107", "#1890"
-	MaxLeverage   uint32                 `protobuf:"varint,5,opt,name=MaxLeverage,proto3" json:"MaxLeverage,omitempty"` // 0 = unknown
-	Oracle        string                 `protobuf:"bytes,6,opt,name=Oracle,proto3" json:"Oracle,omitempty"`
-	IsPerp        bool                   `protobuf:"varint,7,opt,name=IsPerp,proto3" json:"IsPerp,omitempty"` // true for perp+hip3 (full object set), false for spot/outcome — filter on this
+	Kind          string                 `protobuf:"bytes,2,opt,name=Kind,proto3" json:"Kind,omitempty"`         // "perp" | "hip3" | "spot" | "outcome"
+	Protocol      string                 `protobuf:"bytes,3,opt,name=Protocol,proto3" json:"Protocol,omitempty"` // "hypercore" native, else HIP-3 dex
+	CoinRaw       string                 `protobuf:"bytes,4,opt,name=CoinRaw,proto3" json:"CoinRaw,omitempty"`   // "HYPE", "xyz:NFLX", "@107", "#1890"
+	IsPerp        bool                   `protobuf:"varint,5,opt,name=IsPerp,proto3" json:"IsPerp,omitempty"`    // true for perp+hip3 (full object set), false for spot/outcome — filter on this
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -650,20 +648,6 @@ func (x *Market) GetProtocol() string {
 func (x *Market) GetCoinRaw() string {
 	if x != nil {
 		return x.CoinRaw
-	}
-	return ""
-}
-
-func (x *Market) GetMaxLeverage() uint32 {
-	if x != nil {
-		return x.MaxLeverage
-	}
-	return 0
-}
-
-func (x *Market) GetOracle() string {
-	if x != nil {
-		return x.Oracle
 	}
 	return ""
 }
@@ -1984,15 +1968,13 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\x06Signer\x18\x02 \x01(\tR\x06Signer\x12\x14\n" +
 	"\x05Vault\x18\x03 \x01(\tR\x05Vault\x12 \n" +
 	"\vBroadcaster\x18\x04 \x01(\tR\vBroadcaster\x12\x1a\n" +
-	"\bSignedAt\x18\x05 \x01(\x03R\bSignedAt\"\xbc\x01\n" +
+	"\bSignedAt\x18\x05 \x01(\x03R\bSignedAt\"\x82\x01\n" +
 	"\x06Market\x12\x16\n" +
 	"\x06Symbol\x18\x01 \x01(\tR\x06Symbol\x12\x12\n" +
 	"\x04Kind\x18\x02 \x01(\tR\x04Kind\x12\x1a\n" +
 	"\bProtocol\x18\x03 \x01(\tR\bProtocol\x12\x18\n" +
-	"\aCoinRaw\x18\x04 \x01(\tR\aCoinRaw\x12 \n" +
-	"\vMaxLeverage\x18\x05 \x01(\rR\vMaxLeverage\x12\x16\n" +
-	"\x06Oracle\x18\x06 \x01(\tR\x06Oracle\x12\x16\n" +
-	"\x06IsPerp\x18\a \x01(\bR\x06IsPerp\"\x80\x02\n" +
+	"\aCoinRaw\x18\x04 \x01(\tR\aCoinRaw\x12\x16\n" +
+	"\x06IsPerp\x18\x05 \x01(\bR\x06IsPerp\"\x80\x02\n" +
 	"\fPerpPosition\x12\x12\n" +
 	"\x04Side\x18\x01 \x01(\tR\x04Side\x12\x12\n" +
 	"\x04Size\x18\x02 \x01(\tR\x04Size\x12\x1e\n" +
