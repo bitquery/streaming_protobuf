@@ -55,7 +55,8 @@ message ParsedPerpetualTransaction {
   repeated PerpetualOrderEvent Orders = 7;       // requested / placed / cancelled / rejected, incl. conditional
   repeated PerpetualFillEvent Fills = 8;         // executions
   repeated PerpetualPositionEvent Positions = 9; // PnL and liquidations
-  repeated PerpetualPriceEvent Prices = 6;       // market / oracle state
+  repeated PerpetualPriceEvent Prices = 6;       // top of book and mark
+  repeated PerpetualMarketSummaryEvent MarketSummaries = 10; // open interest, spot, fee totals
 }
 
 message PerpetualExchange {
@@ -221,10 +222,11 @@ message PerpetualFillEvent {
   // staging, that already happens (one instruction produced three fill/position pairings that no
   // join could separate).
   bytes MakerOrderId = 19;
-  // `optional` because spline 0 is a real spline: a plain uint64 would drop it from the wire and
-  // make it indistinguishable from "no spline at all" — the same absent-reads-as-zero trap
-  // ConditionalId documents above.
-  optional uint64 SplineId = 20;
+  // Opaque bytes for the same reason as MakerOrderId: another venue names its liquidity source by
+  // a pool address or a string, not by a counter. Emptiness is absence, which a number could not
+  // express here — spline 0 is a real spline, and ClickHouse drops the `optional` that used to
+  // carry its presence.
+  bytes SplineId = 21;
 }
 
 // What happened to a position: realized PnL, funding, and liquidations.
@@ -309,12 +311,13 @@ message PerpetualOrder {
   // identifies it by slot rather than by id and restates none of its parameters — side, size and
   // prices are recovered by joining back to the placement.
   //
-  // Present on conditional orders only. `optional` on purpose: slot 0 is a real slot and the most
-  // common one, so a plain uint64 would drop it from the wire and make "slot 0" indistinguishable
-  // from "not a conditional order" — the same absent-reads-as-zero trap this schema fixed
-  // elsewhere. Id stays empty on placement and cancellation for these, and carries the real book
-  // id once the order fires and enters the book.
-  optional uint64 ConditionalId = 8;
+  // Present on conditional orders only, and opaque bytes like every other identifier here: the
+  // next venue may address a conditional order by a hash or a string rather than by a slot index.
+  // Emptiness is absence, and it is absence that is meant — slot 0 is a real slot and the most
+  // common one, which a plain uint64 could not express once ClickHouse flattened its `optional`
+  // away. Id stays empty on placement and cancellation for these, and carries the real book id
+  // once the order fires and enters the book.
+  bytes ConditionalId = 9;
 }
 
 message PerpetualAmount {
@@ -372,24 +375,43 @@ message PerpetualPriceEvent {
   double LastTrade = 12;
   double Mark = 13;
 
-  // Reference prices from *outside* this venue, which is what a perpetual is marked against.
-  // SpotIndex is the spot price of the underlying elsewhere; PerpIndex is what the same perpetual
-  // trades at on other venues. Phoenix Eternal calls them exchangeSpotPrice and exchangePerpPrice
-  // and keeps an EMA of the gap between its own book and SpotIndex; other venues expose the first
-  // as the oracle price and usually not the second.
+  // The market-summary half of this message — SpotIndex, OpenInterest, the fee schedule — moved
+  // to PerpetualMarketSummaryEvent, which the venue emits as its own event and which shares only
+  // Mark with this one. PerpIndex, FundingRate, FundingInterval, MaxFundingRate and Status went
+  // with it and were dropped: Eternal sends the first two as null on every row, and the last three
+  // came from admin events that are no longer published.
+}
+
+// PerpetualMarketSummaryEvent is the venue's periodic statement about a market as a whole, as
+// opposed to PerpetualPriceEvent which is the top of its book. The two are separate events on
+// chain and share only the mark price, so they are separate here too.
+//
+// No SequenceNumber: the summary carries none. Order it by the block and EventIndex like any other
+// event.
+message PerpetualMarketSummaryEvent {
+  string Type = 1;
+  // Same counter as PerpetualEvent.EventIndex, and no per-row time or slot for the same reason —
+  // see the note there.
+  uint32 EventIndex = 2;
+  uint32 InstructionIndex = 3;
+
+  PerpetualExchange Exchange = 4;
+  PerpetualAsset Asset = 5;
+
+  // The venue's own mark, repeated here so a summary reads on its own without joining to a price.
+  double Mark = 6;
+
+  // Spot price of the underlying *outside* this venue, which is what a perpetual is marked
+  // against. Phoenix Eternal calls it spotPrice on the summary and exchangeSpotPrice on the price
+  // update, where it sends null; other venues expose it as the oracle price.
   //
-  // Not named Index: flattened into ClickHouse that would collide with Price_Index, the row's
-  // position within its transaction.
-  double SpotIndex = 14;
-  double PerpIndex = 15;
+  // Not named Index: flattened into ClickHouse that would collide with MarketSummary_Index, the
+  // row's position within its transaction.
+  double SpotIndex = 7;
 
-  double FundingRate = 16;     // cumulative funding rate
-  double FundingInterval = 17; // seconds
-  double MaxFundingRate = 18;
+  double OpenInterest = 8;
 
-  double OpenInterest = 19;
-  double MakerFees = 20;
-  double TakerFees = 21;
-
-  string Status = 22;
+  // Fees the market has accumulated, not a rate.
+  double MakerFees = 9;
+  double TakerFees = 10;
 }

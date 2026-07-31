@@ -88,17 +88,18 @@ func (x *PerpetualBlockMessage) GetTransactions() []*ParsedPerpetualTransaction 
 // Ordering across all four is EventIndex, a single counter over the whole transaction, so a fill
 // can be placed against the order that caused it and against the mark of the same moment.
 type ParsedPerpetualTransaction struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	Index         uint32                    `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"` // transaction index in the block
-	Signature     []byte                    `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
-	Status        *TransactionStatus        `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
-	Header        *TransactionHeader        `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
-	Orders        []*PerpetualOrderEvent    `protobuf:"bytes,7,rep,name=Orders,proto3" json:"Orders,omitempty"`       // requested / placed / cancelled / rejected, incl. conditional
-	Fills         []*PerpetualFillEvent     `protobuf:"bytes,8,rep,name=Fills,proto3" json:"Fills,omitempty"`         // executions
-	Positions     []*PerpetualPositionEvent `protobuf:"bytes,9,rep,name=Positions,proto3" json:"Positions,omitempty"` // PnL and liquidations
-	Prices        []*PerpetualPriceEvent    `protobuf:"bytes,6,rep,name=Prices,proto3" json:"Prices,omitempty"`       // market / oracle state
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState         `protogen:"open.v1"`
+	Index           uint32                         `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"` // transaction index in the block
+	Signature       []byte                         `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	Status          *TransactionStatus             `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
+	Header          *TransactionHeader             `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
+	Orders          []*PerpetualOrderEvent         `protobuf:"bytes,7,rep,name=Orders,proto3" json:"Orders,omitempty"`                    // requested / placed / cancelled / rejected, incl. conditional
+	Fills           []*PerpetualFillEvent          `protobuf:"bytes,8,rep,name=Fills,proto3" json:"Fills,omitempty"`                      // executions
+	Positions       []*PerpetualPositionEvent      `protobuf:"bytes,9,rep,name=Positions,proto3" json:"Positions,omitempty"`              // PnL and liquidations
+	Prices          []*PerpetualPriceEvent         `protobuf:"bytes,6,rep,name=Prices,proto3" json:"Prices,omitempty"`                    // top of book and mark
+	MarketSummaries []*PerpetualMarketSummaryEvent `protobuf:"bytes,10,rep,name=MarketSummaries,proto3" json:"MarketSummaries,omitempty"` // open interest, spot, fee totals
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ParsedPerpetualTransaction) Reset() {
@@ -183,6 +184,13 @@ func (x *ParsedPerpetualTransaction) GetPositions() []*PerpetualPositionEvent {
 func (x *ParsedPerpetualTransaction) GetPrices() []*PerpetualPriceEvent {
 	if x != nil {
 		return x.Prices
+	}
+	return nil
+}
+
+func (x *ParsedPerpetualTransaction) GetMarketSummaries() []*PerpetualMarketSummaryEvent {
+	if x != nil {
+		return x.MarketSummaries
 	}
 	return nil
 }
@@ -647,10 +655,11 @@ type PerpetualFillEvent struct {
 	// staging, that already happens (one instruction produced three fill/position pairings that no
 	// join could separate).
 	MakerOrderId []byte `protobuf:"bytes,19,opt,name=MakerOrderId,proto3" json:"MakerOrderId,omitempty"`
-	// `optional` because spline 0 is a real spline: a plain uint64 would drop it from the wire and
-	// make it indistinguishable from "no spline at all" — the same absent-reads-as-zero trap
-	// ConditionalId documents above.
-	SplineId      *uint64 `protobuf:"varint,20,opt,name=SplineId,proto3,oneof" json:"SplineId,omitempty"`
+	// Opaque bytes for the same reason as MakerOrderId: another venue names its liquidity source by
+	// a pool address or a string, not by a counter. Emptiness is absence, which a number could not
+	// express here — spline 0 is a real spline, and ClickHouse drops the `optional` that used to
+	// carry its presence.
+	SplineId      []byte `protobuf:"bytes,21,opt,name=SplineId,proto3" json:"SplineId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -811,11 +820,11 @@ func (x *PerpetualFillEvent) GetMakerOrderId() []byte {
 	return nil
 }
 
-func (x *PerpetualFillEvent) GetSplineId() uint64 {
-	if x != nil && x.SplineId != nil {
-		return *x.SplineId
+func (x *PerpetualFillEvent) GetSplineId() []byte {
+	if x != nil {
+		return x.SplineId
 	}
-	return 0
+	return nil
 }
 
 // What happened to a position: realized PnL, funding, and liquidations.
@@ -1043,12 +1052,13 @@ type PerpetualOrder struct {
 	// identifies it by slot rather than by id and restates none of its parameters — side, size and
 	// prices are recovered by joining back to the placement.
 	//
-	// Present on conditional orders only. `optional` on purpose: slot 0 is a real slot and the most
-	// common one, so a plain uint64 would drop it from the wire and make "slot 0" indistinguishable
-	// from "not a conditional order" — the same absent-reads-as-zero trap this schema fixed
-	// elsewhere. Id stays empty on placement and cancellation for these, and carries the real book
-	// id once the order fires and enters the book.
-	ConditionalId *uint64 `protobuf:"varint,8,opt,name=ConditionalId,proto3,oneof" json:"ConditionalId,omitempty"`
+	// Present on conditional orders only, and opaque bytes like every other identifier here: the
+	// next venue may address a conditional order by a hash or a string rather than by a slot index.
+	// Emptiness is absence, and it is absence that is meant — slot 0 is a real slot and the most
+	// common one, which a plain uint64 could not express once ClickHouse flattened its `optional`
+	// away. Id stays empty on placement and cancellation for these, and carries the real book id
+	// once the order fires and enters the book.
+	ConditionalId []byte `protobuf:"bytes,9,opt,name=ConditionalId,proto3" json:"ConditionalId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1132,11 +1142,11 @@ func (x *PerpetualOrder) GetReduceOnly() bool {
 	return false
 }
 
-func (x *PerpetualOrder) GetConditionalId() uint64 {
-	if x != nil && x.ConditionalId != nil {
-		return *x.ConditionalId
+func (x *PerpetualOrder) GetConditionalId() []byte {
+	if x != nil {
+		return x.ConditionalId
 	}
-	return 0
+	return nil
 }
 
 type PerpetualAmount struct {
@@ -1388,25 +1398,8 @@ type PerpetualPriceEvent struct {
 	BestAsk          float64            `protobuf:"fixed64,11,opt,name=BestAsk,proto3" json:"BestAsk,omitempty"`
 	LastTrade        float64            `protobuf:"fixed64,12,opt,name=LastTrade,proto3" json:"LastTrade,omitempty"`
 	Mark             float64            `protobuf:"fixed64,13,opt,name=Mark,proto3" json:"Mark,omitempty"`
-	// Reference prices from *outside* this venue, which is what a perpetual is marked against.
-	// SpotIndex is the spot price of the underlying elsewhere; PerpIndex is what the same perpetual
-	// trades at on other venues. Phoenix Eternal calls them exchangeSpotPrice and exchangePerpPrice
-	// and keeps an EMA of the gap between its own book and SpotIndex; other venues expose the first
-	// as the oracle price and usually not the second.
-	//
-	// Not named Index: flattened into ClickHouse that would collide with Price_Index, the row's
-	// position within its transaction.
-	SpotIndex       float64 `protobuf:"fixed64,14,opt,name=SpotIndex,proto3" json:"SpotIndex,omitempty"`
-	PerpIndex       float64 `protobuf:"fixed64,15,opt,name=PerpIndex,proto3" json:"PerpIndex,omitempty"`
-	FundingRate     float64 `protobuf:"fixed64,16,opt,name=FundingRate,proto3" json:"FundingRate,omitempty"`         // cumulative funding rate
-	FundingInterval float64 `protobuf:"fixed64,17,opt,name=FundingInterval,proto3" json:"FundingInterval,omitempty"` // seconds
-	MaxFundingRate  float64 `protobuf:"fixed64,18,opt,name=MaxFundingRate,proto3" json:"MaxFundingRate,omitempty"`
-	OpenInterest    float64 `protobuf:"fixed64,19,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"`
-	MakerFees       float64 `protobuf:"fixed64,20,opt,name=MakerFees,proto3" json:"MakerFees,omitempty"`
-	TakerFees       float64 `protobuf:"fixed64,21,opt,name=TakerFees,proto3" json:"TakerFees,omitempty"`
-	Status          string  `protobuf:"bytes,22,opt,name=Status,proto3" json:"Status,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *PerpetualPriceEvent) Reset() {
@@ -1509,67 +1502,136 @@ func (x *PerpetualPriceEvent) GetMark() float64 {
 	return 0
 }
 
-func (x *PerpetualPriceEvent) GetSpotIndex() float64 {
+// PerpetualMarketSummaryEvent is the venue's periodic statement about a market as a whole, as
+// opposed to PerpetualPriceEvent which is the top of its book. The two are separate events on
+// chain and share only the mark price, so they are separate here too.
+//
+// No SequenceNumber: the summary carries none. Order it by the block and EventIndex like any other
+// event.
+type PerpetualMarketSummaryEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Type  string                 `protobuf:"bytes,1,opt,name=Type,proto3" json:"Type,omitempty"`
+	// Same counter as PerpetualEvent.EventIndex, and no per-row time or slot for the same reason —
+	// see the note there.
+	EventIndex       uint32             `protobuf:"varint,2,opt,name=EventIndex,proto3" json:"EventIndex,omitempty"`
+	InstructionIndex uint32             `protobuf:"varint,3,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"`
+	Exchange         *PerpetualExchange `protobuf:"bytes,4,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
+	Asset            *PerpetualAsset    `protobuf:"bytes,5,opt,name=Asset,proto3" json:"Asset,omitempty"`
+	// The venue's own mark, repeated here so a summary reads on its own without joining to a price.
+	Mark float64 `protobuf:"fixed64,6,opt,name=Mark,proto3" json:"Mark,omitempty"`
+	// Spot price of the underlying *outside* this venue, which is what a perpetual is marked
+	// against. Phoenix Eternal calls it spotPrice on the summary and exchangeSpotPrice on the price
+	// update, where it sends null; other venues expose it as the oracle price.
+	//
+	// Not named Index: flattened into ClickHouse that would collide with MarketSummary_Index, the
+	// row's position within its transaction.
+	SpotIndex    float64 `protobuf:"fixed64,7,opt,name=SpotIndex,proto3" json:"SpotIndex,omitempty"`
+	OpenInterest float64 `protobuf:"fixed64,8,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"`
+	// Fees the market has accumulated, not a rate.
+	MakerFees     float64 `protobuf:"fixed64,9,opt,name=MakerFees,proto3" json:"MakerFees,omitempty"`
+	TakerFees     float64 `protobuf:"fixed64,10,opt,name=TakerFees,proto3" json:"TakerFees,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PerpetualMarketSummaryEvent) Reset() {
+	*x = PerpetualMarketSummaryEvent{}
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PerpetualMarketSummaryEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PerpetualMarketSummaryEvent) ProtoMessage() {}
+
+func (x *PerpetualMarketSummaryEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_solana_perpetual_block_message_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PerpetualMarketSummaryEvent.ProtoReflect.Descriptor instead.
+func (*PerpetualMarketSummaryEvent) Descriptor() ([]byte, []int) {
+	return file_solana_perpetual_block_message_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *PerpetualMarketSummaryEvent) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *PerpetualMarketSummaryEvent) GetEventIndex() uint32 {
+	if x != nil {
+		return x.EventIndex
+	}
+	return 0
+}
+
+func (x *PerpetualMarketSummaryEvent) GetInstructionIndex() uint32 {
+	if x != nil {
+		return x.InstructionIndex
+	}
+	return 0
+}
+
+func (x *PerpetualMarketSummaryEvent) GetExchange() *PerpetualExchange {
+	if x != nil {
+		return x.Exchange
+	}
+	return nil
+}
+
+func (x *PerpetualMarketSummaryEvent) GetAsset() *PerpetualAsset {
+	if x != nil {
+		return x.Asset
+	}
+	return nil
+}
+
+func (x *PerpetualMarketSummaryEvent) GetMark() float64 {
+	if x != nil {
+		return x.Mark
+	}
+	return 0
+}
+
+func (x *PerpetualMarketSummaryEvent) GetSpotIndex() float64 {
 	if x != nil {
 		return x.SpotIndex
 	}
 	return 0
 }
 
-func (x *PerpetualPriceEvent) GetPerpIndex() float64 {
-	if x != nil {
-		return x.PerpIndex
-	}
-	return 0
-}
-
-func (x *PerpetualPriceEvent) GetFundingRate() float64 {
-	if x != nil {
-		return x.FundingRate
-	}
-	return 0
-}
-
-func (x *PerpetualPriceEvent) GetFundingInterval() float64 {
-	if x != nil {
-		return x.FundingInterval
-	}
-	return 0
-}
-
-func (x *PerpetualPriceEvent) GetMaxFundingRate() float64 {
-	if x != nil {
-		return x.MaxFundingRate
-	}
-	return 0
-}
-
-func (x *PerpetualPriceEvent) GetOpenInterest() float64 {
+func (x *PerpetualMarketSummaryEvent) GetOpenInterest() float64 {
 	if x != nil {
 		return x.OpenInterest
 	}
 	return 0
 }
 
-func (x *PerpetualPriceEvent) GetMakerFees() float64 {
+func (x *PerpetualMarketSummaryEvent) GetMakerFees() float64 {
 	if x != nil {
 		return x.MakerFees
 	}
 	return 0
 }
 
-func (x *PerpetualPriceEvent) GetTakerFees() float64 {
+func (x *PerpetualMarketSummaryEvent) GetTakerFees() float64 {
 	if x != nil {
 		return x.TakerFees
 	}
 	return 0
-}
-
-func (x *PerpetualPriceEvent) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
 }
 
 var File_solana_perpetual_block_message_proto protoreflect.FileDescriptor
@@ -1579,7 +1641,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"$solana/perpetual_block_message.proto\x12\x0fsolana_messages\x1a\x1asolana/block_message.proto\"\x9e\x01\n" +
 	"\x15PerpetualBlockMessage\x124\n" +
 	"\x06Header\x18\x01 \x01(\v2\x1c.solana_messages.BlockHeaderR\x06Header\x12O\n" +
-	"\fTransactions\x18\x02 \x03(\v2+.solana_messages.ParsedPerpetualTransactionR\fTransactions\"\xc6\x03\n" +
+	"\fTransactions\x18\x02 \x03(\v2+.solana_messages.ParsedPerpetualTransactionR\fTransactions\"\x9e\x04\n" +
 	"\x1aParsedPerpetualTransaction\x12\x14\n" +
 	"\x05Index\x18\x01 \x01(\rR\x05Index\x12\x1c\n" +
 	"\tSignature\x18\x02 \x01(\fR\tSignature\x12:\n" +
@@ -1588,7 +1650,9 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\x06Orders\x18\a \x03(\v2$.solana_messages.PerpetualOrderEventR\x06Orders\x129\n" +
 	"\x05Fills\x18\b \x03(\v2#.solana_messages.PerpetualFillEventR\x05Fills\x12E\n" +
 	"\tPositions\x18\t \x03(\v2'.solana_messages.PerpetualPositionEventR\tPositions\x12<\n" +
-	"\x06Prices\x18\x06 \x03(\v2$.solana_messages.PerpetualPriceEventR\x06Prices\"s\n" +
+	"\x06Prices\x18\x06 \x03(\v2$.solana_messages.PerpetualPriceEventR\x06Prices\x12V\n" +
+	"\x0fMarketSummaries\x18\n" +
+	" \x03(\v2,.solana_messages.PerpetualMarketSummaryEventR\x0fMarketSummaries\"s\n" +
 	"\x11PerpetualExchange\x12\x18\n" +
 	"\aProgram\x18\x01 \x01(\fR\aProgram\x12\x12\n" +
 	"\x04Name\x18\x02 \x01(\tR\x04Name\x12\x16\n" +
@@ -1625,7 +1689,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\vLiquidation\x18\r \x01(\bR\vLiquidation\x12\x1e\n" +
 	"\n" +
 	"Liquidator\x18\x0e \x01(\fR\n" +
-	"Liquidator\"\x83\x06\n" +
+	"Liquidator\"\xf1\x05\n" +
 	"\x12PerpetualFillEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\"\n" +
@@ -1651,9 +1715,8 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\n" +
 	"Liquidator\x18\x0f \x01(\fR\n" +
 	"Liquidator\x12\"\n" +
-	"\fMakerOrderId\x18\x13 \x01(\fR\fMakerOrderId\x12\x1f\n" +
-	"\bSplineId\x18\x14 \x01(\x04H\x00R\bSplineId\x88\x01\x01B\v\n" +
-	"\t_SplineId\"\x87\x05\n" +
+	"\fMakerOrderId\x18\x13 \x01(\fR\fMakerOrderId\x12\x1a\n" +
+	"\bSplineId\x18\x15 \x01(\fR\bSplineId\"\x87\x05\n" +
 	"\x16PerpetualPositionEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\x12\n" +
@@ -1675,7 +1738,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\vLiquidation\x18\f \x01(\bR\vLiquidation\x12\x1e\n" +
 	"\n" +
 	"Liquidator\x18\r \x01(\fR\n" +
-	"Liquidator\"\x9d\x02\n" +
+	"Liquidator\"\x86\x02\n" +
 	"\x0ePerpetualOrder\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12\x1a\n" +
 	"\bClientId\x18\x02 \x01(\fR\bClientId\x12\x12\n" +
@@ -1685,9 +1748,8 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\fRejectReason\x18\x06 \x01(\tR\fRejectReason\x12\x1e\n" +
 	"\n" +
 	"ReduceOnly\x18\a \x01(\bR\n" +
-	"ReduceOnly\x12)\n" +
-	"\rConditionalId\x18\b \x01(\x04H\x00R\rConditionalId\x88\x01\x01B\x10\n" +
-	"\x0e_ConditionalId\"\xc9\x01\n" +
+	"ReduceOnly\x12$\n" +
+	"\rConditionalId\x18\t \x01(\fR\rConditionalId\"\xc9\x01\n" +
 	"\x0fPerpetualAmount\x12\x12\n" +
 	"\x04Size\x18\x01 \x01(\x01R\x04Size\x12\x16\n" +
 	"\x06Filled\x18\x02 \x01(\x01R\x06Filled\x12\x1c\n" +
@@ -1708,7 +1770,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"SizeBefore\x12\x1e\n" +
 	"\n" +
 	"EntryPrice\x18\x03 \x01(\x01R\n" +
-	"EntryPrice\"\xa2\x05\n" +
+	"EntryPrice\"\xfa\x02\n" +
 	"\x13PerpetualPriceEvent\x12\x12\n" +
 	"\x04Type\x18\x01 \x01(\tR\x04Type\x12\x1e\n" +
 	"\n" +
@@ -1722,16 +1784,21 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	" \x01(\x01R\aBestBid\x12\x18\n" +
 	"\aBestAsk\x18\v \x01(\x01R\aBestAsk\x12\x1c\n" +
 	"\tLastTrade\x18\f \x01(\x01R\tLastTrade\x12\x12\n" +
-	"\x04Mark\x18\r \x01(\x01R\x04Mark\x12\x1c\n" +
-	"\tSpotIndex\x18\x0e \x01(\x01R\tSpotIndex\x12\x1c\n" +
-	"\tPerpIndex\x18\x0f \x01(\x01R\tPerpIndex\x12 \n" +
-	"\vFundingRate\x18\x10 \x01(\x01R\vFundingRate\x12(\n" +
-	"\x0fFundingInterval\x18\x11 \x01(\x01R\x0fFundingInterval\x12&\n" +
-	"\x0eMaxFundingRate\x18\x12 \x01(\x01R\x0eMaxFundingRate\x12\"\n" +
-	"\fOpenInterest\x18\x13 \x01(\x01R\fOpenInterest\x12\x1c\n" +
-	"\tMakerFees\x18\x14 \x01(\x01R\tMakerFees\x12\x1c\n" +
-	"\tTakerFees\x18\x15 \x01(\x01R\tTakerFees\x12\x16\n" +
-	"\x06Status\x18\x16 \x01(\tR\x06Statusb\x06proto3"
+	"\x04Mark\x18\r \x01(\x01R\x04Mark\"\x86\x03\n" +
+	"\x1bPerpetualMarketSummaryEvent\x12\x12\n" +
+	"\x04Type\x18\x01 \x01(\tR\x04Type\x12\x1e\n" +
+	"\n" +
+	"EventIndex\x18\x02 \x01(\rR\n" +
+	"EventIndex\x12*\n" +
+	"\x10InstructionIndex\x18\x03 \x01(\rR\x10InstructionIndex\x12>\n" +
+	"\bExchange\x18\x04 \x01(\v2\".solana_messages.PerpetualExchangeR\bExchange\x125\n" +
+	"\x05Asset\x18\x05 \x01(\v2\x1f.solana_messages.PerpetualAssetR\x05Asset\x12\x12\n" +
+	"\x04Mark\x18\x06 \x01(\x01R\x04Mark\x12\x1c\n" +
+	"\tSpotIndex\x18\a \x01(\x01R\tSpotIndex\x12\"\n" +
+	"\fOpenInterest\x18\b \x01(\x01R\fOpenInterest\x12\x1c\n" +
+	"\tMakerFees\x18\t \x01(\x01R\tMakerFees\x12\x1c\n" +
+	"\tTakerFees\x18\n" +
+	" \x01(\x01R\tTakerFeesb\x06proto3"
 
 var (
 	file_solana_perpetual_block_message_proto_rawDescOnce sync.Once
@@ -1745,54 +1812,58 @@ func file_solana_perpetual_block_message_proto_rawDescGZIP() []byte {
 	return file_solana_perpetual_block_message_proto_rawDescData
 }
 
-var file_solana_perpetual_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_solana_perpetual_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_solana_perpetual_block_message_proto_goTypes = []any{
-	(*PerpetualBlockMessage)(nil),      // 0: solana_messages.PerpetualBlockMessage
-	(*ParsedPerpetualTransaction)(nil), // 1: solana_messages.ParsedPerpetualTransaction
-	(*PerpetualExchange)(nil),          // 2: solana_messages.PerpetualExchange
-	(*PerpetualAsset)(nil),             // 3: solana_messages.PerpetualAsset
-	(*PerpetualCurrency)(nil),          // 4: solana_messages.PerpetualCurrency
-	(*PerpetualOrderEvent)(nil),        // 5: solana_messages.PerpetualOrderEvent
-	(*PerpetualFillEvent)(nil),         // 6: solana_messages.PerpetualFillEvent
-	(*PerpetualPositionEvent)(nil),     // 7: solana_messages.PerpetualPositionEvent
-	(*PerpetualOrder)(nil),             // 8: solana_messages.PerpetualOrder
-	(*PerpetualAmount)(nil),            // 9: solana_messages.PerpetualAmount
-	(*PerpetualPrice)(nil),             // 10: solana_messages.PerpetualPrice
-	(*PerpetualPosition)(nil),          // 11: solana_messages.PerpetualPosition
-	(*PerpetualPriceEvent)(nil),        // 12: solana_messages.PerpetualPriceEvent
-	(*BlockHeader)(nil),                // 13: solana_messages.BlockHeader
-	(*TransactionStatus)(nil),          // 14: solana_messages.TransactionStatus
-	(*TransactionHeader)(nil),          // 15: solana_messages.TransactionHeader
+	(*PerpetualBlockMessage)(nil),       // 0: solana_messages.PerpetualBlockMessage
+	(*ParsedPerpetualTransaction)(nil),  // 1: solana_messages.ParsedPerpetualTransaction
+	(*PerpetualExchange)(nil),           // 2: solana_messages.PerpetualExchange
+	(*PerpetualAsset)(nil),              // 3: solana_messages.PerpetualAsset
+	(*PerpetualCurrency)(nil),           // 4: solana_messages.PerpetualCurrency
+	(*PerpetualOrderEvent)(nil),         // 5: solana_messages.PerpetualOrderEvent
+	(*PerpetualFillEvent)(nil),          // 6: solana_messages.PerpetualFillEvent
+	(*PerpetualPositionEvent)(nil),      // 7: solana_messages.PerpetualPositionEvent
+	(*PerpetualOrder)(nil),              // 8: solana_messages.PerpetualOrder
+	(*PerpetualAmount)(nil),             // 9: solana_messages.PerpetualAmount
+	(*PerpetualPrice)(nil),              // 10: solana_messages.PerpetualPrice
+	(*PerpetualPosition)(nil),           // 11: solana_messages.PerpetualPosition
+	(*PerpetualPriceEvent)(nil),         // 12: solana_messages.PerpetualPriceEvent
+	(*PerpetualMarketSummaryEvent)(nil), // 13: solana_messages.PerpetualMarketSummaryEvent
+	(*BlockHeader)(nil),                 // 14: solana_messages.BlockHeader
+	(*TransactionStatus)(nil),           // 15: solana_messages.TransactionStatus
+	(*TransactionHeader)(nil),           // 16: solana_messages.TransactionHeader
 }
 var file_solana_perpetual_block_message_proto_depIdxs = []int32{
-	13, // 0: solana_messages.PerpetualBlockMessage.Header:type_name -> solana_messages.BlockHeader
+	14, // 0: solana_messages.PerpetualBlockMessage.Header:type_name -> solana_messages.BlockHeader
 	1,  // 1: solana_messages.PerpetualBlockMessage.Transactions:type_name -> solana_messages.ParsedPerpetualTransaction
-	14, // 2: solana_messages.ParsedPerpetualTransaction.Status:type_name -> solana_messages.TransactionStatus
-	15, // 3: solana_messages.ParsedPerpetualTransaction.Header:type_name -> solana_messages.TransactionHeader
+	15, // 2: solana_messages.ParsedPerpetualTransaction.Status:type_name -> solana_messages.TransactionStatus
+	16, // 3: solana_messages.ParsedPerpetualTransaction.Header:type_name -> solana_messages.TransactionHeader
 	5,  // 4: solana_messages.ParsedPerpetualTransaction.Orders:type_name -> solana_messages.PerpetualOrderEvent
 	6,  // 5: solana_messages.ParsedPerpetualTransaction.Fills:type_name -> solana_messages.PerpetualFillEvent
 	7,  // 6: solana_messages.ParsedPerpetualTransaction.Positions:type_name -> solana_messages.PerpetualPositionEvent
 	12, // 7: solana_messages.ParsedPerpetualTransaction.Prices:type_name -> solana_messages.PerpetualPriceEvent
-	4,  // 8: solana_messages.PerpetualAsset.QuoteCurrency:type_name -> solana_messages.PerpetualCurrency
-	2,  // 9: solana_messages.PerpetualOrderEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 10: solana_messages.PerpetualOrderEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	8,  // 11: solana_messages.PerpetualOrderEvent.Order:type_name -> solana_messages.PerpetualOrder
-	9,  // 12: solana_messages.PerpetualOrderEvent.Amount:type_name -> solana_messages.PerpetualAmount
-	10, // 13: solana_messages.PerpetualOrderEvent.Price:type_name -> solana_messages.PerpetualPrice
-	2,  // 14: solana_messages.PerpetualFillEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 15: solana_messages.PerpetualFillEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	9,  // 16: solana_messages.PerpetualFillEvent.Amount:type_name -> solana_messages.PerpetualAmount
-	11, // 17: solana_messages.PerpetualFillEvent.Position:type_name -> solana_messages.PerpetualPosition
-	2,  // 18: solana_messages.PerpetualPositionEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 19: solana_messages.PerpetualPositionEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	11, // 20: solana_messages.PerpetualPositionEvent.Position:type_name -> solana_messages.PerpetualPosition
-	2,  // 21: solana_messages.PerpetualPriceEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 22: solana_messages.PerpetualPriceEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	23, // [23:23] is the sub-list for method output_type
-	23, // [23:23] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	13, // 8: solana_messages.ParsedPerpetualTransaction.MarketSummaries:type_name -> solana_messages.PerpetualMarketSummaryEvent
+	4,  // 9: solana_messages.PerpetualAsset.QuoteCurrency:type_name -> solana_messages.PerpetualCurrency
+	2,  // 10: solana_messages.PerpetualOrderEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 11: solana_messages.PerpetualOrderEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	8,  // 12: solana_messages.PerpetualOrderEvent.Order:type_name -> solana_messages.PerpetualOrder
+	9,  // 13: solana_messages.PerpetualOrderEvent.Amount:type_name -> solana_messages.PerpetualAmount
+	10, // 14: solana_messages.PerpetualOrderEvent.Price:type_name -> solana_messages.PerpetualPrice
+	2,  // 15: solana_messages.PerpetualFillEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 16: solana_messages.PerpetualFillEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	9,  // 17: solana_messages.PerpetualFillEvent.Amount:type_name -> solana_messages.PerpetualAmount
+	11, // 18: solana_messages.PerpetualFillEvent.Position:type_name -> solana_messages.PerpetualPosition
+	2,  // 19: solana_messages.PerpetualPositionEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 20: solana_messages.PerpetualPositionEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	11, // 21: solana_messages.PerpetualPositionEvent.Position:type_name -> solana_messages.PerpetualPosition
+	2,  // 22: solana_messages.PerpetualPriceEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 23: solana_messages.PerpetualPriceEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	2,  // 24: solana_messages.PerpetualMarketSummaryEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 25: solana_messages.PerpetualMarketSummaryEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_solana_perpetual_block_message_proto_init() }
@@ -1801,15 +1872,13 @@ func file_solana_perpetual_block_message_proto_init() {
 		return
 	}
 	file_solana_block_message_proto_init()
-	file_solana_perpetual_block_message_proto_msgTypes[6].OneofWrappers = []any{}
-	file_solana_perpetual_block_message_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solana_perpetual_block_message_proto_rawDesc), len(file_solana_perpetual_block_message_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
