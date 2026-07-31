@@ -443,12 +443,15 @@ type PerpetualOrderEvent struct {
 	// "OrderCancelled"  removed or reduced; see Order.CancelReason
 	// "OrderRejected"   see Order.RejectReason
 	// "TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted"      conditional orders
-	// "StopLossPlaced" / "StopLossCancelled" / "StopLossExecuted"   protective orders
-	// "TakeProfitPlaced"                                            a protective order that the
-	//     chain's price condition marks as protecting a gain rather than a loss. Only the placement
-	//     carries the side needed to tell the two apart, so there is no TakeProfitCancelled or
-	//     TakeProfitExecuted: those keep the StopLoss* names whichever kind they end. Join back to
-	//     the placement on (Trader, Asset.Id, Order.ConditionalId) to resolve them.
+	// "StopLossPlaced" / "TakeProfitPlaced"    a protective order, and which kind it is: the chain
+	//     states the side and the price condition on the placement, and those two together say
+	//     whether it protects a loss or a gain.
+	// "ConditionalCancelled" / "ConditionalExecuted"   the same mechanism ending. Deliberately NOT
+	//     named after a kind: the raw cancellation and execution do not restate the side, so which
+	//     of the two ended cannot be known from the event, and a StopLoss* name there would be the
+	//     wrong name for every take-profit. Order.ConditionalId identifies the order that ended —
+	//     join it back to its placement on (Trader, Asset.Id, ConditionalId) to learn the kind. An
+	//     execution also carries Order.Id, the book order the trigger created.
 	Type string `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"`
 	Side string `protobuf:"bytes,4,opt,name=Side,proto3" json:"Side,omitempty"` // "bid" / "ask"
 	// Position in the transaction, shared across all four lists, so an order can be ordered against
