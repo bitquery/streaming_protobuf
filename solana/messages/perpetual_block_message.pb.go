@@ -472,8 +472,7 @@ type PerpetualOrderEvent struct {
 	Asset            *PerpetualAsset    `protobuf:"bytes,8,opt,name=Asset,proto3" json:"Asset,omitempty"`
 	Order            *PerpetualOrder    `protobuf:"bytes,9,opt,name=Order,proto3" json:"Order,omitempty"`
 	Amount           *PerpetualAmount   `protobuf:"bytes,10,opt,name=Amount,proto3" json:"Amount,omitempty"`
-	Price            *PerpetualPrice    `protobuf:"bytes,11,opt,name=Price,proto3" json:"Price,omitempty"`              // .Limit, and .Trigger for conditional orders
-	TraderIsAmm      bool               `protobuf:"varint,12,opt,name=TraderIsAmm,proto3" json:"TraderIsAmm,omitempty"` // see the note on PerpetualPositionEvent
+	Price            *PerpetualPrice    `protobuf:"bytes,11,opt,name=Price,proto3" json:"Price,omitempty"` // .Limit, and .Trigger for conditional orders
 	// Orders are placed during a forced liquidation too: the venue submits one on the liquidated
 	// trader's account to close the position, and it reaches this list like any other. Marked the
 	// same way as the fills and PnL it belongs with — see PerpetualPositionEvent.
@@ -590,13 +589,6 @@ func (x *PerpetualOrderEvent) GetPrice() *PerpetualPrice {
 	return nil
 }
 
-func (x *PerpetualOrderEvent) GetTraderIsAmm() bool {
-	if x != nil {
-		return x.TraderIsAmm
-	}
-	return false
-}
-
 func (x *PerpetualOrderEvent) GetLiquidation() bool {
 	if x != nil {
 		return x.Liquidation
@@ -654,11 +646,12 @@ type PerpetualFillEvent struct {
 	// which stops being unique the moment one instruction fills several orders — measured on
 	// staging, that already happens (one instruction produced three fill/position pairings that no
 	// join could separate).
-	MakerOrderId []byte `protobuf:"bytes,19,opt,name=MakerOrderId,proto3" json:"MakerOrderId,omitempty"`
-	// Opaque bytes for the same reason as MakerOrderId: another venue names its liquidity source by
-	// a pool address or a string, not by a counter. Emptiness is absence, which a number could not
-	// express here — spline 0 is a real spline, and ClickHouse drops the `optional` that used to
-	// carry its presence.
+	//
+	// Both are opaque bytes, and for the same reason: another venue names an order or a liquidity
+	// source by a hash, a pool address or a string, not by a counter. Emptiness is absence, which a
+	// number could not express here — spline 0 is a real spline and order 0 is a real ask, and
+	// ClickHouse drops the `optional` that used to carry presence.
+	MakerOrderId  []byte `protobuf:"bytes,19,opt,name=MakerOrderId,proto3" json:"MakerOrderId,omitempty"`
 	SplineId      []byte `protobuf:"bytes,21,opt,name=SplineId,proto3" json:"SplineId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1669,7 +1662,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\vMintAddress\x18\x01 \x01(\fR\vMintAddress\x12\x16\n" +
 	"\x06Symbol\x18\x02 \x01(\tR\x06Symbol\x12\x1a\n" +
 	"\bDecimals\x18\x03 \x01(\rR\bDecimals\x12&\n" +
-	"\x0eProgramAddress\x18\x04 \x01(\fR\x0eProgramAddress\"\xbc\x04\n" +
+	"\x0eProgramAddress\x18\x04 \x01(\fR\x0eProgramAddress\"\x9a\x04\n" +
 	"\x13PerpetualOrderEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\x12\n" +
@@ -1685,7 +1678,6 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\x06Amount\x18\n" +
 	" \x01(\v2 .solana_messages.PerpetualAmountR\x06Amount\x125\n" +
 	"\x05Price\x18\v \x01(\v2\x1f.solana_messages.PerpetualPriceR\x05Price\x12 \n" +
-	"\vTraderIsAmm\x18\f \x01(\bR\vTraderIsAmm\x12 \n" +
 	"\vLiquidation\x18\r \x01(\bR\vLiquidation\x12\x1e\n" +
 	"\n" +
 	"Liquidator\x18\x0e \x01(\fR\n" +

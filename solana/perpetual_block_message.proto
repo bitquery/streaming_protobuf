@@ -162,7 +162,10 @@ message PerpetualOrderEvent {
   PerpetualAmount Amount = 10;
   PerpetualPrice Price = 11;  // .Limit, and .Trigger for conditional orders
 
-  bool TraderIsAmm = 12; // see the note on PerpetualPositionEvent
+  // No TraderIsAmm here, unlike the fill and position events. Protocol liquidity is a counterparty
+  // on the maker side of a fill, not an order placer: a Phoenix spline is only ever learned from a
+  // SplineFilled naming it as the maker, so a spline address never reaches this list as Trader.
+  // Zero on all 834463 order rows of a staging sample.
 
   // Orders are placed during a forced liquidation too: the venue submits one on the liquidated
   // trader's account to close the position, and it reaches this list like any other. Marked the
@@ -221,11 +224,12 @@ message PerpetualFillEvent {
   // which stops being unique the moment one instruction fills several orders — measured on
   // staging, that already happens (one instruction produced three fill/position pairings that no
   // join could separate).
+  //
+  // Both are opaque bytes, and for the same reason: another venue names an order or a liquidity
+  // source by a hash, a pool address or a string, not by a counter. Emptiness is absence, which a
+  // number could not express here — spline 0 is a real spline and order 0 is a real ask, and
+  // ClickHouse drops the `optional` that used to carry presence.
   bytes MakerOrderId = 19;
-  // Opaque bytes for the same reason as MakerOrderId: another venue names its liquidity source by
-  // a pool address or a string, not by a counter. Emptiness is absence, which a number could not
-  // express here — spline 0 is a real spline, and ClickHouse drops the `optional` that used to
-  // carry its presence.
   bytes SplineId = 21;
 }
 
