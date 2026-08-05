@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+
+package hyperliquid_messages;
+
+import "hyperliquid/hyperliquid_block_message.proto"; // for the shared Market message
+
+// TimeInterval identifies a candle bucket. All values are epoch SECONDS (not ns) to
+// match toStartOfInterval semantics; Duration is the bucket width in seconds
+// (60/300/900/3600 = 1m/5m/15m/1h).
+message TimeInterval {
+  uint32 Duration = 1; // bucket width, seconds
+  uint32 Start    = 2; // bar open, epoch seconds (toStartOfInterval)
+  uint32 End      = 3; // bar close boundary, epoch seconds (Start + Duration)
+}
+
+// Ohlc carries the price/volume aggregates of one bar. double (Float64) so high-priced
+// assets (e.g. BTC ~100k) keep full precision — float32 would lose the low digits.
+message Ohlc {
+  double Open   = 1;
+  double High   = 2;
+  double Low    = 3;
+  double Close  = 4;
+  double Volume = 5;
+}
+
+// Candle is one OHLC bar for one market at one interval width.
+message Candle {
+  Market       Market   = 1; // reused hyperliquid_messages.Market (Symbol/Kind/CoinRaw/IsPerp/…)
+  TimeInterval Interval = 2;
+  Ohlc         Ohlc     = 3;
+}
+
+// CandlesBlockMessage batches the bars touched by one trades block, mirroring the
+// TradesBlockMessage envelope (BlockNumber + epoch-ns BlockTime + repeated payload).
+message CandlesBlockMessage {
+  uint64 BlockNumber = 1;
+  int64  BlockTime   = 2; // epoch ns
+  repeated Candle Candles = 3;
+}
