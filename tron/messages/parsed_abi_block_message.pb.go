@@ -91,6 +91,7 @@ type ParsedAbiTransaction struct {
 	ContractInfo      *ContractInfo                        `protobuf:"bytes,5,opt,name=ContractInfo,proto3" json:"ContractInfo,omitempty"`
 	Calls             []*messages.ParsedAbiCall            `protobuf:"bytes,6,rep,name=Calls,proto3" json:"Calls,omitempty"`
 	RewardWithdraw    *RewardWithdraw                      `protobuf:"bytes,7,opt,name=RewardWithdraw,proto3" json:"RewardWithdraw,omitempty"`
+	FeeInUSD          float32                              `protobuf:"fixed32,8,opt,name=FeeInUSD,proto3" json:"FeeInUSD,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -174,6 +175,13 @@ func (x *ParsedAbiTransaction) GetRewardWithdraw() *RewardWithdraw {
 	return nil
 }
 
+func (x *ParsedAbiTransaction) GetFeeInUSD() float32 {
+	if x != nil {
+		return x.FeeInUSD
+	}
+	return 0
+}
+
 type ParsedAbiBlockMessage struct {
 	state         protoimpl.MessageState  `protogen:"open.v1"`
 	Chain         *Chain                  `protobuf:"bytes,1,opt,name=Chain,proto3" json:"Chain,omitempty"`
@@ -250,7 +258,7 @@ const file_tron_parsed_abi_block_message_proto_rawDesc = "" +
 	"\fContractInfo\x12\x18\n" +
 	"\aAddress\x18\x01 \x01(\fR\aAddress\x12\x12\n" +
 	"\x04Type\x18\x02 \x01(\tR\x04Type\x12\x18\n" +
-	"\aTypeUrl\x18\x03 \x01(\tR\aTypeUrl\"\xfb\x03\n" +
+	"\aTypeUrl\x18\x03 \x01(\tR\aTypeUrl\"\x97\x04\n" +
 	"\x14ParsedAbiTransaction\x12N\n" +
 	"\x11TransactionHeader\x18\x01 \x01(\v2 .tron_messages.TransactionHeaderR\x11TransactionHeader\x120\n" +
 	"\aReceipt\x18\x02 \x01(\v2\x16.tron_messages.ReceiptR\aReceipt\x12V\n" +
@@ -258,7 +266,8 @@ const file_tron_parsed_abi_block_message_proto_rawDesc = "" +
 	"\x11TransactionResult\x18\x04 \x01(\v2 .tron_messages.TransactionResultR\x11TransactionResult\x12?\n" +
 	"\fContractInfo\x18\x05 \x01(\v2\x1b.tron_messages.ContractInfoR\fContractInfo\x121\n" +
 	"\x05Calls\x18\x06 \x03(\v2\x1b.evm_messages.ParsedAbiCallR\x05Calls\x12E\n" +
-	"\x0eRewardWithdraw\x18\a \x01(\v2\x1d.tron_messages.RewardWithdrawR\x0eRewardWithdraw\"\xf2\x01\n" +
+	"\x0eRewardWithdraw\x18\a \x01(\v2\x1d.tron_messages.RewardWithdrawR\x0eRewardWithdraw\x12\x1a\n" +
+	"\bFeeInUSD\x18\b \x01(\x02R\bFeeInUSD\"\xf2\x01\n" +
 	"\x15ParsedAbiBlockMessage\x12*\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x14.tron_messages.ChainR\x05Chain\x122\n" +
 	"\x06Header\x18\x02 \x01(\v2\x1a.tron_messages.BlockHeaderR\x06Header\x120\n" +

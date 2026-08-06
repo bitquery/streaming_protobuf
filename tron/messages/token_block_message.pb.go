@@ -32,6 +32,7 @@ type BalanceUpdate struct {
 	Currency          *messages.TokenInfo    `protobuf:"bytes,6,opt,name=Currency,proto3" json:"Currency,omitempty"`
 	Index             uint32                 `protobuf:"varint,7,opt,name=Index,proto3" json:"Index,omitempty"`
 	Type              string                 `protobuf:"bytes,8,opt,name=Type,proto3" json:"Type,omitempty"`
+	AmountInUSD       float32                `protobuf:"fixed32,9,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -122,6 +123,13 @@ func (x *BalanceUpdate) GetType() string {
 	return ""
 }
 
+func (x *BalanceUpdate) GetAmountInUSD() float32 {
+	if x != nil {
+		return x.AmountInUSD
+	}
+	return 0
+}
+
 type TokenBlockMessage struct {
 	state          protoimpl.MessageState    `protogen:"open.v1"`
 	Chain          *Chain                    `protobuf:"bytes,1,opt,name=Chain,proto3" json:"Chain,omitempty"`
@@ -194,7 +202,7 @@ var File_tron_token_block_message_proto protoreflect.FileDescriptor
 
 const file_tron_token_block_message_proto_rawDesc = "" +
 	"\n" +
-	"\x1etron/token_block_message.proto\x12\rtron_messages\x1a\x18tron/block_message.proto\x1a\x1devm/token_block_message.proto\"\xaa\x02\n" +
+	"\x1etron/token_block_message.proto\x12\rtron_messages\x1a\x18tron/block_message.proto\x1a\x1devm/token_block_message.proto\"\xcc\x02\n" +
 	"\rBalanceUpdate\x12N\n" +
 	"\x11TransactionHeader\x18\x01 \x01(\v2 .tron_messages.TransactionHeaderR\x11TransactionHeader\x12\x1c\n" +
 	"\tCallIndex\x18\x02 \x01(\x04R\tCallIndex\x12\x1a\n" +
@@ -203,7 +211,8 @@ const file_tron_token_block_message_proto_rawDesc = "" +
 	"\x06Amount\x18\x05 \x01(\fR\x06Amount\x123\n" +
 	"\bCurrency\x18\x06 \x01(\v2\x17.evm_messages.TokenInfoR\bCurrency\x12\x14\n" +
 	"\x05Index\x18\a \x01(\rR\x05Index\x12\x12\n" +
-	"\x04Type\x18\b \x01(\tR\x04Type\"\xf4\x01\n" +
+	"\x04Type\x18\b \x01(\tR\x04Type\x12 \n" +
+	"\vAmountInUSD\x18\t \x01(\x02R\vAmountInUSD\"\xf4\x01\n" +
 	"\x11TokenBlockMessage\x12*\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x14.tron_messages.ChainR\x05Chain\x122\n" +
 	"\x06Header\x18\x02 \x01(\v2\x1a.tron_messages.BlockHeaderR\x06Header\x129\n" +

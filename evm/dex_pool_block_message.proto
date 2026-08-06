@@ -50,6 +50,9 @@ message PoolInfo {
 message PoolLiquidity {
   float AmountCurrencyA = 1;
   float AmountCurrencyB = 2;
+
+  float AmountCurrencyAInUSD = 3;
+  float AmountCurrencyBInUSD = 4;
 }
 
 message PoolPrice {
@@ -57,6 +60,9 @@ message PoolPrice {
   float  MaxAmountIn = 2;
   float  MinAmountOut = 3;
   float  Price = 4;
+
+  float MaxAmountInInUSD = 5;
+  float MinAmountOutInUSD = 6;
 }
 
 message PoolPriceTable {
@@ -66,6 +72,9 @@ message PoolPriceTable {
 
   float AtoBPrice = 3;
   float BtoAPrice = 4;
+
+  float AtoBPriceInUSD = 5;
+  float BtoAPriceInUSD = 6;
 }
 
 

@@ -169,6 +169,7 @@ type TokenTransfer struct {
 	Index                uint32                 `protobuf:"varint,13,opt,name=Index,proto3" json:"Index,omitempty"`
 	TransactionHeader    *TransactionHeader     `protobuf:"bytes,14,opt,name=TransactionHeader,proto3" json:"TransactionHeader,omitempty"`
 	TransactionSignature *Signature             `protobuf:"bytes,15,opt,name=TransactionSignature,proto3" json:"TransactionSignature,omitempty"`
+	AmountInUSD          float32                `protobuf:"fixed32,16,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -301,6 +302,13 @@ func (x *TokenTransfer) GetTransactionSignature() *Signature {
 	return nil
 }
 
+func (x *TokenTransfer) GetAmountInUSD() float32 {
+	if x != nil {
+		return x.AmountInUSD
+	}
+	return 0
+}
+
 type TransactionBalances struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	TransactionIndex     uint64                 `protobuf:"varint,1,opt,name=TransactionIndex,proto3" json:"TransactionIndex,omitempty"`
@@ -378,6 +386,9 @@ type TokenBalance struct {
 	BalanceChangeReasonCode int32                  `protobuf:"varint,5,opt,name=BalanceChangeReasonCode,proto3" json:"BalanceChangeReasonCode,omitempty"`
 	TokenOwnership          *TokenOwnership        `protobuf:"bytes,6,opt,name=TokenOwnership,proto3" json:"TokenOwnership,omitempty"`
 	TotalSupply             []byte                 `protobuf:"bytes,7,opt,name=TotalSupply,proto3" json:"TotalSupply,omitempty"`
+	PreBalanceInUSD         float32                `protobuf:"fixed32,8,opt,name=PreBalanceInUSD,proto3" json:"PreBalanceInUSD,omitempty"`
+	PostBalanceInUSD        float32                `protobuf:"fixed32,9,opt,name=PostBalanceInUSD,proto3" json:"PostBalanceInUSD,omitempty"`
+	TotalSupplyInUSD        float32                `protobuf:"fixed32,10,opt,name=TotalSupplyInUSD,proto3" json:"TotalSupplyInUSD,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -459,6 +470,27 @@ func (x *TokenBalance) GetTotalSupply() []byte {
 		return x.TotalSupply
 	}
 	return nil
+}
+
+func (x *TokenBalance) GetPreBalanceInUSD() float32 {
+	if x != nil {
+		return x.PreBalanceInUSD
+	}
+	return 0
+}
+
+func (x *TokenBalance) GetPostBalanceInUSD() float32 {
+	if x != nil {
+		return x.PostBalanceInUSD
+	}
+	return 0
+}
+
+func (x *TokenBalance) GetTotalSupplyInUSD() float32 {
+	if x != nil {
+		return x.TotalSupplyInUSD
+	}
+	return 0
 }
 
 type TokenBlockMessage struct {
@@ -555,7 +587,7 @@ const file_evm_token_block_message_proto_rawDesc = "" +
 	"\aAssetId\x18\n" +
 	" \x01(\tR\aAssetId\x12*\n" +
 	"\x10BalanceSlotIndex\x18\v \x01(\x05R\x10BalanceSlotIndex\x12 \n" +
-	"\vTotalSupply\x18\f \x01(\fR\vTotalSupply\"\xf8\x03\n" +
+	"\vTotalSupply\x18\f \x01(\fR\vTotalSupply\"\x9a\x04\n" +
 	"\rTokenTransfer\x12*\n" +
 	"\x10TransactionIndex\x18\x01 \x01(\x04R\x10TransactionIndex\x12\x1c\n" +
 	"\tCallIndex\x18\x02 \x01(\x04R\tCallIndex\x12\x1a\n" +
@@ -571,12 +603,13 @@ const file_evm_token_block_message_proto_rawDesc = "" +
 	"\x04Data\x18\f \x01(\fR\x04Data\x12\x14\n" +
 	"\x05Index\x18\r \x01(\rR\x05Index\x12M\n" +
 	"\x11TransactionHeader\x18\x0e \x01(\v2\x1f.evm_messages.TransactionHeaderR\x11TransactionHeader\x12K\n" +
-	"\x14TransactionSignature\x18\x0f \x01(\v2\x17.evm_messages.SignatureR\x14TransactionSignature\"\x9f\x02\n" +
+	"\x14TransactionSignature\x18\x0f \x01(\v2\x17.evm_messages.SignatureR\x14TransactionSignature\x12 \n" +
+	"\vAmountInUSD\x18\x10 \x01(\x02R\vAmountInUSD\"\x9f\x02\n" +
 	"\x13TransactionBalances\x12*\n" +
 	"\x10TransactionIndex\x18\x01 \x01(\x04R\x10TransactionIndex\x12M\n" +
 	"\x11TransactionHeader\x18\x02 \x01(\v2\x1f.evm_messages.TransactionHeaderR\x11TransactionHeader\x12K\n" +
 	"\x14TransactionSignature\x18\x03 \x01(\v2\x17.evm_messages.SignatureR\x14TransactionSignature\x12@\n" +
-	"\rTokenBalances\x18\x04 \x03(\v2\x1a.evm_messages.TokenBalanceR\rTokenBalances\"\xd5\x02\n" +
+	"\rTokenBalances\x18\x04 \x03(\v2\x1a.evm_messages.TokenBalanceR\rTokenBalances\"\xd7\x03\n" +
 	"\fTokenBalance\x12\x18\n" +
 	"\aAddress\x18\x01 \x01(\fR\aAddress\x123\n" +
 	"\bCurrency\x18\x02 \x01(\v2\x17.evm_messages.TokenInfoR\bCurrency\x12#\n" +
@@ -586,7 +619,11 @@ const file_evm_token_block_message_proto_rawDesc = "" +
 	"\vPostBalance\x18\x04 \x01(\fR\vPostBalance\x128\n" +
 	"\x17BalanceChangeReasonCode\x18\x05 \x01(\x05R\x17BalanceChangeReasonCode\x12D\n" +
 	"\x0eTokenOwnership\x18\x06 \x01(\v2\x1c.evm_messages.TokenOwnershipR\x0eTokenOwnership\x12 \n" +
-	"\vTotalSupply\x18\a \x01(\fR\vTotalSupplyB\r\n" +
+	"\vTotalSupply\x18\a \x01(\fR\vTotalSupply\x12(\n" +
+	"\x0fPreBalanceInUSD\x18\b \x01(\x02R\x0fPreBalanceInUSD\x12*\n" +
+	"\x10PostBalanceInUSD\x18\t \x01(\x02R\x10PostBalanceInUSD\x12*\n" +
+	"\x10TotalSupplyInUSD\x18\n" +
+	" \x01(\x02R\x10TotalSupplyInUSDB\r\n" +
 	"\v_PreBalance\"\xca\x02\n" +
 	"\x11TokenBlockMessage\x12)\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x13.evm_messages.ChainR\x05Chain\x121\n" +
