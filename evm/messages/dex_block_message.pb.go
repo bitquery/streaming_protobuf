@@ -152,6 +152,7 @@ type TradeAsset struct {
 	Id            []byte                 `protobuf:"bytes,3,opt,name=Id,proto3" json:"Id,omitempty"`
 	URI           string                 `protobuf:"bytes,4,opt,name=URI,proto3" json:"URI,omitempty"`
 	Data          []byte                 `protobuf:"bytes,5,opt,name=Data,proto3" json:"Data,omitempty"`
+	AmountInUSD   float32                `protobuf:"fixed32,6,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -219,6 +220,13 @@ func (x *TradeAsset) GetData() []byte {
 		return x.Data
 	}
 	return nil
+}
+
+func (x *TradeAsset) GetAmountInUSD() float32 {
+	if x != nil {
+		return x.AmountInUSD
+	}
+	return 0
 }
 
 type TradeSide struct {
@@ -296,6 +304,7 @@ type TradeFee struct {
 	Id            []byte                 `protobuf:"bytes,3,opt,name=Id,proto3" json:"Id,omitempty"`
 	Payer         []byte                 `protobuf:"bytes,4,opt,name=Payer,proto3" json:"Payer,omitempty"`
 	Recipient     []byte                 `protobuf:"bytes,5,opt,name=Recipient,proto3" json:"Recipient,omitempty"`
+	AmountInUSD   float32                `protobuf:"fixed32,6,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -365,6 +374,13 @@ func (x *TradeFee) GetRecipient() []byte {
 	return nil
 }
 
+func (x *TradeFee) GetAmountInUSD() float32 {
+	if x != nil {
+		return x.AmountInUSD
+	}
+	return 0
+}
+
 type DexTrade struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	TransactionIndex     uint64                 `protobuf:"varint,1,opt,name=TransactionIndex,proto3" json:"TransactionIndex,omitempty"`
@@ -382,6 +398,7 @@ type DexTrade struct {
 	TransactionSignature *Signature             `protobuf:"bytes,13,opt,name=TransactionSignature,proto3" json:"TransactionSignature,omitempty"`
 	PoolId               []byte                 `protobuf:"bytes,14,opt,name=PoolId,proto3" json:"PoolId,omitempty"`
 	TransactionFee       *TransactionFee        `protobuf:"bytes,15,opt,name=TransactionFee,proto3" json:"TransactionFee,omitempty"`
+	TransactionFeeInUSD  float32                `protobuf:"fixed32,16,opt,name=TransactionFeeInUSD,proto3" json:"TransactionFeeInUSD,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -521,6 +538,13 @@ func (x *DexTrade) GetTransactionFee() *TransactionFee {
 	return nil
 }
 
+func (x *DexTrade) GetTransactionFeeInUSD() float32 {
+	if x != nil {
+		return x.TransactionFeeInUSD
+	}
+	return 0
+}
+
 type DexBlockMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Chain         *Chain                 `protobuf:"bytes,1,opt,name=Chain,proto3" json:"Chain,omitempty"`
@@ -608,25 +632,27 @@ const file_evm_dex_block_message_proto_rawDesc = "" +
 	"Currencies\x18\n" +
 	" \x03(\v2\x17.evm_messages.TokenInfoR\n" +
 	"Currencies\x12K\n" +
-	"\x14UnderlyingCurrencies\x18\v \x03(\v2\x17.evm_messages.TokenInfoR\x14UnderlyingCurrencies\"\x8f\x01\n" +
+	"\x14UnderlyingCurrencies\x18\v \x03(\v2\x17.evm_messages.TokenInfoR\x14UnderlyingCurrencies\"\xb1\x01\n" +
 	"\n" +
 	"TradeAsset\x123\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x17.evm_messages.TokenInfoR\bCurrency\x12\x16\n" +
 	"\x06Amount\x18\x02 \x01(\fR\x06Amount\x12\x0e\n" +
 	"\x02Id\x18\x03 \x01(\fR\x02Id\x12\x10\n" +
 	"\x03URI\x18\x04 \x01(\tR\x03URI\x12\x12\n" +
-	"\x04Data\x18\x05 \x01(\fR\x04Data\"\x85\x01\n" +
+	"\x04Data\x18\x05 \x01(\fR\x04Data\x12 \n" +
+	"\vAmountInUSD\x18\x06 \x01(\x02R\vAmountInUSD\"\x85\x01\n" +
 	"\tTradeSide\x12\x16\n" +
 	"\x06Seller\x18\x01 \x01(\fR\x06Seller\x12\x14\n" +
 	"\x05Buyer\x18\x02 \x01(\fR\x05Buyer\x12\x18\n" +
 	"\aOrderId\x18\x03 \x01(\fR\aOrderId\x120\n" +
-	"\x06Assets\x18\x04 \x03(\v2\x18.evm_messages.TradeAssetR\x06Assets\"\x9b\x01\n" +
+	"\x06Assets\x18\x04 \x03(\v2\x18.evm_messages.TradeAssetR\x06Assets\"\xbd\x01\n" +
 	"\bTradeFee\x123\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x17.evm_messages.TokenInfoR\bCurrency\x12\x16\n" +
 	"\x06Amount\x18\x02 \x01(\fR\x06Amount\x12\x0e\n" +
 	"\x02Id\x18\x03 \x01(\fR\x02Id\x12\x14\n" +
 	"\x05Payer\x18\x04 \x01(\fR\x05Payer\x12\x1c\n" +
-	"\tRecipient\x18\x05 \x01(\fR\tRecipient\"\xf7\x04\n" +
+	"\tRecipient\x18\x05 \x01(\fR\tRecipient\x12 \n" +
+	"\vAmountInUSD\x18\x06 \x01(\x02R\vAmountInUSD\"\xa9\x05\n" +
 	"\bDexTrade\x12*\n" +
 	"\x10TransactionIndex\x18\x01 \x01(\x04R\x10TransactionIndex\x12\x1c\n" +
 	"\tCallIndex\x18\x02 \x01(\x04R\tCallIndex\x12\x1a\n" +
@@ -643,7 +669,8 @@ const file_evm_dex_block_message_proto_rawDesc = "" +
 	"\x11TransactionHeader\x18\f \x01(\v2\x1f.evm_messages.TransactionHeaderR\x11TransactionHeader\x12K\n" +
 	"\x14TransactionSignature\x18\r \x01(\v2\x17.evm_messages.SignatureR\x14TransactionSignature\x12\x16\n" +
 	"\x06PoolId\x18\x0e \x01(\fR\x06PoolId\x12D\n" +
-	"\x0eTransactionFee\x18\x0f \x01(\v2\x1c.evm_messages.TransactionFeeR\x0eTransactionFee\"\xe8\x01\n" +
+	"\x0eTransactionFee\x18\x0f \x01(\v2\x1c.evm_messages.TransactionFeeR\x0eTransactionFee\x120\n" +
+	"\x13TransactionFeeInUSD\x18\x10 \x01(\x02R\x13TransactionFeeInUSD\"\xe8\x01\n" +
 	"\x0fDexBlockMessage\x12)\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x13.evm_messages.ChainR\x05Chain\x121\n" +
 	"\x06Header\x18\x02 \x01(\v2\x19.evm_messages.BlockHeaderR\x06Header\x12.\n" +

@@ -443,11 +443,13 @@ func (x *PredictionSettlementEvent) GetTransactionIndex() uint64 {
 }
 
 type OutcomeSettlement struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Amount           []byte                 `protobuf:"bytes,1,opt,name=Amount,proto3" json:"Amount,omitempty"`
-	CollateralAmount []byte                 `protobuf:"bytes,2,opt,name=CollateralAmount,proto3" json:"CollateralAmount,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	Amount                []byte                 `protobuf:"bytes,1,opt,name=Amount,proto3" json:"Amount,omitempty"`
+	CollateralAmount      []byte                 `protobuf:"bytes,2,opt,name=CollateralAmount,proto3" json:"CollateralAmount,omitempty"`
+	AmountInUSD           float32                `protobuf:"fixed32,3,opt,name=AmountInUSD,proto3" json:"AmountInUSD,omitempty"`
+	CollateralAmountInUSD float32                `protobuf:"fixed32,4,opt,name=CollateralAmountInUSD,proto3" json:"CollateralAmountInUSD,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *OutcomeSettlement) Reset() {
@@ -492,6 +494,20 @@ func (x *OutcomeSettlement) GetCollateralAmount() []byte {
 		return x.CollateralAmount
 	}
 	return nil
+}
+
+func (x *OutcomeSettlement) GetAmountInUSD() float32 {
+	if x != nil {
+		return x.AmountInUSD
+	}
+	return 0
+}
+
+func (x *OutcomeSettlement) GetCollateralAmountInUSD() float32 {
+	if x != nil {
+		return x.CollateralAmountInUSD
+	}
+	return 0
 }
 
 type PredictionTradeEvent struct {
@@ -579,16 +595,17 @@ func (x *PredictionTradeEvent) GetTransactionIndex() uint64 {
 }
 
 type OutcomeTrade struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Seller           []byte                 `protobuf:"bytes,1,opt,name=Seller,proto3" json:"Seller,omitempty"`                     // maker in Polymarket
-	Buyer            []byte                 `protobuf:"bytes,2,opt,name=Buyer,proto3" json:"Buyer,omitempty"`                       // taker in Polymarket
-	Amount           []byte                 `protobuf:"bytes,3,opt,name=Amount,proto3" json:"Amount,omitempty"`                     // amount of Option tokens
-	CollateralAmount []byte                 `protobuf:"bytes,4,opt,name=CollateralAmount,proto3" json:"CollateralAmount,omitempty"` // amount of paid collaterals ( USDC )
-	IsOutcomeBuy     bool                   `protobuf:"varint,5,opt,name=IsOutcomeBuy,proto3" json:"IsOutcomeBuy,omitempty"`        // true if Buyer takes Outcome token for Colleteral
-	Fee              *TradeFee              `protobuf:"bytes,6,opt,name=Fee,proto3" json:"Fee,omitempty"`
-	OrderId          []byte                 `protobuf:"bytes,7,opt,name=OrderId,proto3" json:"OrderId,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	Seller                []byte                 `protobuf:"bytes,1,opt,name=Seller,proto3" json:"Seller,omitempty"`                     // maker in Polymarket
+	Buyer                 []byte                 `protobuf:"bytes,2,opt,name=Buyer,proto3" json:"Buyer,omitempty"`                       // taker in Polymarket
+	Amount                []byte                 `protobuf:"bytes,3,opt,name=Amount,proto3" json:"Amount,omitempty"`                     // amount of Option tokens
+	CollateralAmount      []byte                 `protobuf:"bytes,4,opt,name=CollateralAmount,proto3" json:"CollateralAmount,omitempty"` // amount of paid collaterals ( USDC )
+	IsOutcomeBuy          bool                   `protobuf:"varint,5,opt,name=IsOutcomeBuy,proto3" json:"IsOutcomeBuy,omitempty"`        // true if Buyer takes Outcome token for Colleteral
+	Fee                   *TradeFee              `protobuf:"bytes,6,opt,name=Fee,proto3" json:"Fee,omitempty"`
+	OrderId               []byte                 `protobuf:"bytes,7,opt,name=OrderId,proto3" json:"OrderId,omitempty"`
+	CollateralAmountInUSD float32                `protobuf:"fixed32,8,opt,name=CollateralAmountInUSD,proto3" json:"CollateralAmountInUSD,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *OutcomeTrade) Reset() {
@@ -668,6 +685,13 @@ func (x *OutcomeTrade) GetOrderId() []byte {
 		return x.OrderId
 	}
 	return nil
+}
+
+func (x *OutcomeTrade) GetCollateralAmountInUSD() float32 {
+	if x != nil {
+		return x.CollateralAmountInUSD
+	}
+	return 0
 }
 
 type PredictionInfo struct {
@@ -1086,10 +1110,12 @@ const file_evm_prediction_market_block_message_proto_rawDesc = "" +
 	"\tIndexSets\x18\x05 \x03(\x05R\tIndexSets\x12\x16\n" +
 	"\x06Holder\x18\x06 \x01(\fR\x06Holder\x129\n" +
 	"\aAmounts\x18\a \x01(\v2\x1f.evm_messages.OutcomeSettlementR\aAmounts\x12*\n" +
-	"\x10TransactionIndex\x18\b \x01(\x04R\x10TransactionIndex\"W\n" +
+	"\x10TransactionIndex\x18\b \x01(\x04R\x10TransactionIndex\"\xaf\x01\n" +
 	"\x11OutcomeSettlement\x12\x16\n" +
 	"\x06Amount\x18\x01 \x01(\fR\x06Amount\x12*\n" +
-	"\x10CollateralAmount\x18\x02 \x01(\fR\x10CollateralAmount\"\x91\x03\n" +
+	"\x10CollateralAmount\x18\x02 \x01(\fR\x10CollateralAmount\x12 \n" +
+	"\vAmountInUSD\x18\x03 \x01(\x02R\vAmountInUSD\x124\n" +
+	"\x15CollateralAmountInUSD\x18\x04 \x01(\x02R\x15CollateralAmountInUSD\"\x91\x03\n" +
 	"\x14PredictionTradeEvent\x12M\n" +
 	"\x11TransactionHeader\x18\x01 \x01(\v2\x1f.evm_messages.TransactionHeaderR\x11TransactionHeader\x12K\n" +
 	"\x14TransactionSignature\x18\x02 \x01(\v2\x17.evm_messages.SignatureR\x14TransactionSignature\x123\n" +
@@ -1098,7 +1124,7 @@ const file_evm_prediction_market_block_message_proto_rawDesc = "" +
 	"Prediction\x18\x04 \x01(\v2\x1c.evm_messages.PredictionInfoR\n" +
 	"Prediction\x12>\n" +
 	"\fOutcomeTrade\x18\x05 \x01(\v2\x1a.evm_messages.OutcomeTradeR\fOutcomeTrade\x12*\n" +
-	"\x10TransactionIndex\x18\x06 \x01(\x04R\x10TransactionIndex\"\xe8\x01\n" +
+	"\x10TransactionIndex\x18\x06 \x01(\x04R\x10TransactionIndex\"\x9e\x02\n" +
 	"\fOutcomeTrade\x12\x16\n" +
 	"\x06Seller\x18\x01 \x01(\fR\x06Seller\x12\x14\n" +
 	"\x05Buyer\x18\x02 \x01(\fR\x05Buyer\x12\x16\n" +
@@ -1106,7 +1132,8 @@ const file_evm_prediction_market_block_message_proto_rawDesc = "" +
 	"\x10CollateralAmount\x18\x04 \x01(\fR\x10CollateralAmount\x12\"\n" +
 	"\fIsOutcomeBuy\x18\x05 \x01(\bR\fIsOutcomeBuy\x12(\n" +
 	"\x03Fee\x18\x06 \x01(\v2\x16.evm_messages.TradeFeeR\x03Fee\x12\x18\n" +
-	"\aOrderId\x18\a \x01(\fR\aOrderId\"\xc3\x03\n" +
+	"\aOrderId\x18\a \x01(\fR\aOrderId\x124\n" +
+	"\x15CollateralAmountInUSD\x18\b \x01(\x02R\x15CollateralAmountInUSD\"\xc3\x03\n" +
 	"\x0ePredictionInfo\x12I\n" +
 	"\vMarketplace\x18\x01 \x01(\v2'.evm_messages.PredictionMarketplaceInfoR\vMarketplace\x126\n" +
 	"\bQuestion\x18\x02 \x01(\v2\x1a.evm_messages.QuestionInfoR\bQuestion\x129\n" +

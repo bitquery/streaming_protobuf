@@ -28,6 +28,8 @@ message TradeAsset {
   bytes Id = 3;
   string URI = 4;
   bytes Data = 5;
+
+  float AmountInUSD = 6;
 }
 
 message TradeSide {
@@ -43,6 +45,8 @@ message TradeFee {
   bytes Id = 3;
   bytes Payer = 4;
   bytes Recipient = 5;
+
+  float AmountInUSD = 6;
 }
 
 message DexTrade {
@@ -66,6 +70,8 @@ message DexTrade {
 
   bytes PoolId = 14;
   TransactionFee TransactionFee = 15;
+
+  float TransactionFeeInUSD = 16;
 }
 
 message DexBlockMessage {

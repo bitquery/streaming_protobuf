@@ -37,6 +37,8 @@ message TokenTransfer {
 
   TransactionHeader TransactionHeader = 14;
   Signature TransactionSignature = 15;
+
+  float AmountInUSD = 16;
 }
 
 message TransactionBalances {
@@ -54,6 +56,10 @@ message TokenBalance {
   int32 BalanceChangeReasonCode = 5;
   TokenOwnership TokenOwnership = 6;
   bytes  TotalSupply = 7;
+
+  float PreBalanceInUSD = 8;
+  float PostBalanceInUSD = 9;
+  float TotalSupplyInUSD = 10;
 }
 
 message TokenBlockMessage {

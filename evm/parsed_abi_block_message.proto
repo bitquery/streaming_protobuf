@@ -129,6 +129,13 @@ message TransactionFee {
   bytes Burnt = 5;
   bytes Savings = 6;
   bytes MinerReward = 7;
+
+  float SenderFeeInUSD = 8;
+  float PriorityFeePerGasInUSD = 9;
+  float EffectiveGasPriceInUSD = 10;
+  float BurntInUSD = 11;
+  float SavingsInUSD = 12;
+  float MinerRewardInUSD = 13;
 }
 
 message ParsedAbiTransactionStatus {
@@ -147,6 +154,8 @@ message ParsedAbiTransaction {
   repeated TokenBalanceUpdate TokenBalanceUpdates = 7;
   repeated NativeBalanceUpdate NativeBalanceUpdates = 8;
   repeated StorageChange StorageChanges = 9;
+
+  float TransactionFeeInUSD = 10;
 }
 
 message MinerReward {
@@ -157,6 +166,13 @@ message MinerReward {
   bytes BurntFees = 5;
   bytes Uncle = 6;
   optional bytes Beneficiary = 7;
+
+  float TotalInUSD = 8;
+  float StaticInUSD = 9;
+  float DynamicInUSD = 10;
+  float TxFeesInUSD = 11;
+  float BurntFeesInUSD = 12;
+  float UncleInUSD = 13;
 }
 
 

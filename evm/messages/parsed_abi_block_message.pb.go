@@ -1035,16 +1035,22 @@ func (x *ParsedAbiCall) GetStateChanges() []*ParsedStateChange {
 }
 
 type TransactionFee struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	SenderFee         []byte                 `protobuf:"bytes,1,opt,name=SenderFee,proto3" json:"SenderFee,omitempty"`
-	PriorityFeePerGas []byte                 `protobuf:"bytes,2,opt,name=PriorityFeePerGas,proto3" json:"PriorityFeePerGas,omitempty"`
-	EffectiveGasPrice []byte                 `protobuf:"bytes,3,opt,name=EffectiveGasPrice,proto3" json:"EffectiveGasPrice,omitempty"`
-	GasRefund         uint64                 `protobuf:"varint,4,opt,name=GasRefund,proto3" json:"GasRefund,omitempty"`
-	Burnt             []byte                 `protobuf:"bytes,5,opt,name=Burnt,proto3" json:"Burnt,omitempty"`
-	Savings           []byte                 `protobuf:"bytes,6,opt,name=Savings,proto3" json:"Savings,omitempty"`
-	MinerReward       []byte                 `protobuf:"bytes,7,opt,name=MinerReward,proto3" json:"MinerReward,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	SenderFee              []byte                 `protobuf:"bytes,1,opt,name=SenderFee,proto3" json:"SenderFee,omitempty"`
+	PriorityFeePerGas      []byte                 `protobuf:"bytes,2,opt,name=PriorityFeePerGas,proto3" json:"PriorityFeePerGas,omitempty"`
+	EffectiveGasPrice      []byte                 `protobuf:"bytes,3,opt,name=EffectiveGasPrice,proto3" json:"EffectiveGasPrice,omitempty"`
+	GasRefund              uint64                 `protobuf:"varint,4,opt,name=GasRefund,proto3" json:"GasRefund,omitempty"`
+	Burnt                  []byte                 `protobuf:"bytes,5,opt,name=Burnt,proto3" json:"Burnt,omitempty"`
+	Savings                []byte                 `protobuf:"bytes,6,opt,name=Savings,proto3" json:"Savings,omitempty"`
+	MinerReward            []byte                 `protobuf:"bytes,7,opt,name=MinerReward,proto3" json:"MinerReward,omitempty"`
+	SenderFeeInUSD         float32                `protobuf:"fixed32,8,opt,name=SenderFeeInUSD,proto3" json:"SenderFeeInUSD,omitempty"`
+	PriorityFeePerGasInUSD float32                `protobuf:"fixed32,9,opt,name=PriorityFeePerGasInUSD,proto3" json:"PriorityFeePerGasInUSD,omitempty"`
+	EffectiveGasPriceInUSD float32                `protobuf:"fixed32,10,opt,name=EffectiveGasPriceInUSD,proto3" json:"EffectiveGasPriceInUSD,omitempty"`
+	BurntInUSD             float32                `protobuf:"fixed32,11,opt,name=BurntInUSD,proto3" json:"BurntInUSD,omitempty"`
+	SavingsInUSD           float32                `protobuf:"fixed32,12,opt,name=SavingsInUSD,proto3" json:"SavingsInUSD,omitempty"`
+	MinerRewardInUSD       float32                `protobuf:"fixed32,13,opt,name=MinerRewardInUSD,proto3" json:"MinerRewardInUSD,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *TransactionFee) Reset() {
@@ -1126,6 +1132,48 @@ func (x *TransactionFee) GetMinerReward() []byte {
 	return nil
 }
 
+func (x *TransactionFee) GetSenderFeeInUSD() float32 {
+	if x != nil {
+		return x.SenderFeeInUSD
+	}
+	return 0
+}
+
+func (x *TransactionFee) GetPriorityFeePerGasInUSD() float32 {
+	if x != nil {
+		return x.PriorityFeePerGasInUSD
+	}
+	return 0
+}
+
+func (x *TransactionFee) GetEffectiveGasPriceInUSD() float32 {
+	if x != nil {
+		return x.EffectiveGasPriceInUSD
+	}
+	return 0
+}
+
+func (x *TransactionFee) GetBurntInUSD() float32 {
+	if x != nil {
+		return x.BurntInUSD
+	}
+	return 0
+}
+
+func (x *TransactionFee) GetSavingsInUSD() float32 {
+	if x != nil {
+		return x.SavingsInUSD
+	}
+	return 0
+}
+
+func (x *TransactionFee) GetMinerRewardInUSD() float32 {
+	if x != nil {
+		return x.MinerRewardInUSD
+	}
+	return 0
+}
+
 type ParsedAbiTransactionStatus struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=Success,proto3" json:"Success,omitempty"`
@@ -1197,6 +1245,7 @@ type ParsedAbiTransaction struct {
 	TokenBalanceUpdates  []*TokenBalanceUpdate       `protobuf:"bytes,7,rep,name=TokenBalanceUpdates,proto3" json:"TokenBalanceUpdates,omitempty"`
 	NativeBalanceUpdates []*NativeBalanceUpdate      `protobuf:"bytes,8,rep,name=NativeBalanceUpdates,proto3" json:"NativeBalanceUpdates,omitempty"`
 	StorageChanges       []*StorageChange            `protobuf:"bytes,9,rep,name=StorageChanges,proto3" json:"StorageChanges,omitempty"`
+	TransactionFeeInUSD  float32                     `protobuf:"fixed32,10,opt,name=TransactionFeeInUSD,proto3" json:"TransactionFeeInUSD,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -1294,17 +1343,30 @@ func (x *ParsedAbiTransaction) GetStorageChanges() []*StorageChange {
 	return nil
 }
 
+func (x *ParsedAbiTransaction) GetTransactionFeeInUSD() float32 {
+	if x != nil {
+		return x.TransactionFeeInUSD
+	}
+	return 0
+}
+
 type MinerReward struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Total         []byte                 `protobuf:"bytes,1,opt,name=Total,proto3" json:"Total,omitempty"`
-	Static        []byte                 `protobuf:"bytes,2,opt,name=Static,proto3" json:"Static,omitempty"`
-	Dynamic       []byte                 `protobuf:"bytes,3,opt,name=Dynamic,proto3" json:"Dynamic,omitempty"`
-	TxFees        []byte                 `protobuf:"bytes,4,opt,name=TxFees,proto3" json:"TxFees,omitempty"`
-	BurntFees     []byte                 `protobuf:"bytes,5,opt,name=BurntFees,proto3" json:"BurntFees,omitempty"`
-	Uncle         []byte                 `protobuf:"bytes,6,opt,name=Uncle,proto3" json:"Uncle,omitempty"`
-	Beneficiary   []byte                 `protobuf:"bytes,7,opt,name=Beneficiary,proto3,oneof" json:"Beneficiary,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Total          []byte                 `protobuf:"bytes,1,opt,name=Total,proto3" json:"Total,omitempty"`
+	Static         []byte                 `protobuf:"bytes,2,opt,name=Static,proto3" json:"Static,omitempty"`
+	Dynamic        []byte                 `protobuf:"bytes,3,opt,name=Dynamic,proto3" json:"Dynamic,omitempty"`
+	TxFees         []byte                 `protobuf:"bytes,4,opt,name=TxFees,proto3" json:"TxFees,omitempty"`
+	BurntFees      []byte                 `protobuf:"bytes,5,opt,name=BurntFees,proto3" json:"BurntFees,omitempty"`
+	Uncle          []byte                 `protobuf:"bytes,6,opt,name=Uncle,proto3" json:"Uncle,omitempty"`
+	Beneficiary    []byte                 `protobuf:"bytes,7,opt,name=Beneficiary,proto3,oneof" json:"Beneficiary,omitempty"`
+	TotalInUSD     float32                `protobuf:"fixed32,8,opt,name=TotalInUSD,proto3" json:"TotalInUSD,omitempty"`
+	StaticInUSD    float32                `protobuf:"fixed32,9,opt,name=StaticInUSD,proto3" json:"StaticInUSD,omitempty"`
+	DynamicInUSD   float32                `protobuf:"fixed32,10,opt,name=DynamicInUSD,proto3" json:"DynamicInUSD,omitempty"`
+	TxFeesInUSD    float32                `protobuf:"fixed32,11,opt,name=TxFeesInUSD,proto3" json:"TxFeesInUSD,omitempty"`
+	BurntFeesInUSD float32                `protobuf:"fixed32,12,opt,name=BurntFeesInUSD,proto3" json:"BurntFeesInUSD,omitempty"`
+	UncleInUSD     float32                `protobuf:"fixed32,13,opt,name=UncleInUSD,proto3" json:"UncleInUSD,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *MinerReward) Reset() {
@@ -1384,6 +1446,48 @@ func (x *MinerReward) GetBeneficiary() []byte {
 		return x.Beneficiary
 	}
 	return nil
+}
+
+func (x *MinerReward) GetTotalInUSD() float32 {
+	if x != nil {
+		return x.TotalInUSD
+	}
+	return 0
+}
+
+func (x *MinerReward) GetStaticInUSD() float32 {
+	if x != nil {
+		return x.StaticInUSD
+	}
+	return 0
+}
+
+func (x *MinerReward) GetDynamicInUSD() float32 {
+	if x != nil {
+		return x.DynamicInUSD
+	}
+	return 0
+}
+
+func (x *MinerReward) GetTxFeesInUSD() float32 {
+	if x != nil {
+		return x.TxFeesInUSD
+	}
+	return 0
+}
+
+func (x *MinerReward) GetBurntFeesInUSD() float32 {
+	if x != nil {
+		return x.BurntFeesInUSD
+	}
+	return 0
+}
+
+func (x *MinerReward) GetUncleInUSD() float32 {
+	if x != nil {
+		return x.UncleInUSD
+	}
+	return 0
 }
 
 type ParsedAbiBlockMessage struct {
@@ -1581,7 +1685,7 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\tArguments\x18\x02 \x03(\v2\x1c.evm_messages.ParsedArgumentR\tArguments\x12@\n" +
 	"\fReturnValues\x18\x03 \x03(\v2\x1c.evm_messages.ParsedArgumentR\fReturnValues\x12.\n" +
 	"\x04Logs\x18\x04 \x03(\v2\x1a.evm_messages.ParsedAbiLogR\x04Logs\x12C\n" +
-	"\fStateChanges\x18\x05 \x03(\v2\x1f.evm_messages.ParsedStateChangeR\fStateChanges\"\xfa\x01\n" +
+	"\fStateChanges\x18\x05 \x03(\v2\x1f.evm_messages.ParsedStateChangeR\fStateChanges\"\x82\x04\n" +
 	"\x0eTransactionFee\x12\x1c\n" +
 	"\tSenderFee\x18\x01 \x01(\fR\tSenderFee\x12,\n" +
 	"\x11PriorityFeePerGas\x18\x02 \x01(\fR\x11PriorityFeePerGas\x12,\n" +
@@ -1589,13 +1693,22 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\tGasRefund\x18\x04 \x01(\x04R\tGasRefund\x12\x14\n" +
 	"\x05Burnt\x18\x05 \x01(\fR\x05Burnt\x12\x18\n" +
 	"\aSavings\x18\x06 \x01(\fR\aSavings\x12 \n" +
-	"\vMinerReward\x18\a \x01(\fR\vMinerReward\"r\n" +
+	"\vMinerReward\x18\a \x01(\fR\vMinerReward\x12&\n" +
+	"\x0eSenderFeeInUSD\x18\b \x01(\x02R\x0eSenderFeeInUSD\x126\n" +
+	"\x16PriorityFeePerGasInUSD\x18\t \x01(\x02R\x16PriorityFeePerGasInUSD\x126\n" +
+	"\x16EffectiveGasPriceInUSD\x18\n" +
+	" \x01(\x02R\x16EffectiveGasPriceInUSD\x12\x1e\n" +
+	"\n" +
+	"BurntInUSD\x18\v \x01(\x02R\n" +
+	"BurntInUSD\x12\"\n" +
+	"\fSavingsInUSD\x18\f \x01(\x02R\fSavingsInUSD\x12*\n" +
+	"\x10MinerRewardInUSD\x18\r \x01(\x02R\x10MinerRewardInUSD\"r\n" +
 	"\x1aParsedAbiTransactionStatus\x12\x18\n" +
 	"\aSuccess\x18\x01 \x01(\bR\aSuccess\x12\x1a\n" +
 	"\bEndError\x18\x02 \x01(\tR\bEndError\x12\x1e\n" +
 	"\n" +
 	"FaultError\x18\x03 \x01(\tR\n" +
-	"FaultError\"\xa0\x05\n" +
+	"FaultError\"\xd2\x05\n" +
 	"\x14ParsedAbiTransaction\x12M\n" +
 	"\x11TransactionHeader\x18\x01 \x01(\v2\x1f.evm_messages.TransactionHeaderR\x11TransactionHeader\x12A\n" +
 	"\rReceiptHeader\x18\x02 \x01(\v2\x1b.evm_messages.ReceiptHeaderR\rReceiptHeader\x12D\n" +
@@ -1605,7 +1718,9 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\tSignature\x18\x06 \x01(\v2\x17.evm_messages.SignatureR\tSignature\x12R\n" +
 	"\x13TokenBalanceUpdates\x18\a \x03(\v2 .evm_messages.TokenBalanceUpdateR\x13TokenBalanceUpdates\x12U\n" +
 	"\x14NativeBalanceUpdates\x18\b \x03(\v2!.evm_messages.NativeBalanceUpdateR\x14NativeBalanceUpdates\x12C\n" +
-	"\x0eStorageChanges\x18\t \x03(\v2\x1b.evm_messages.StorageChangeR\x0eStorageChanges\"\xd8\x01\n" +
+	"\x0eStorageChanges\x18\t \x03(\v2\x1b.evm_messages.StorageChangeR\x0eStorageChanges\x120\n" +
+	"\x13TransactionFeeInUSD\x18\n" +
+	" \x01(\x02R\x13TransactionFeeInUSD\"\xa8\x03\n" +
 	"\vMinerReward\x12\x14\n" +
 	"\x05Total\x18\x01 \x01(\fR\x05Total\x12\x16\n" +
 	"\x06Static\x18\x02 \x01(\fR\x06Static\x12\x18\n" +
@@ -1613,7 +1728,18 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\x06TxFees\x18\x04 \x01(\fR\x06TxFees\x12\x1c\n" +
 	"\tBurntFees\x18\x05 \x01(\fR\tBurntFees\x12\x14\n" +
 	"\x05Uncle\x18\x06 \x01(\fR\x05Uncle\x12%\n" +
-	"\vBeneficiary\x18\a \x01(\fH\x00R\vBeneficiary\x88\x01\x01B\x0e\n" +
+	"\vBeneficiary\x18\a \x01(\fH\x00R\vBeneficiary\x88\x01\x01\x12\x1e\n" +
+	"\n" +
+	"TotalInUSD\x18\b \x01(\x02R\n" +
+	"TotalInUSD\x12 \n" +
+	"\vStaticInUSD\x18\t \x01(\x02R\vStaticInUSD\x12\"\n" +
+	"\fDynamicInUSD\x18\n" +
+	" \x01(\x02R\fDynamicInUSD\x12 \n" +
+	"\vTxFeesInUSD\x18\v \x01(\x02R\vTxFeesInUSD\x12&\n" +
+	"\x0eBurntFeesInUSD\x18\f \x01(\x02R\x0eBurntFeesInUSD\x12\x1e\n" +
+	"\n" +
+	"UncleInUSD\x18\r \x01(\x02R\n" +
+	"UncleInUSDB\x0e\n" +
 	"\f_Beneficiary\"\xea\x03\n" +
 	"\x15ParsedAbiBlockMessage\x12)\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x13.evm_messages.ChainR\x05Chain\x121\n" +

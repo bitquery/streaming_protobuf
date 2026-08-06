@@ -282,11 +282,13 @@ func (x *PoolInfo) GetPoolId() []byte {
 }
 
 type PoolLiquidity struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	AmountCurrencyA float32                `protobuf:"fixed32,1,opt,name=AmountCurrencyA,proto3" json:"AmountCurrencyA,omitempty"`
-	AmountCurrencyB float32                `protobuf:"fixed32,2,opt,name=AmountCurrencyB,proto3" json:"AmountCurrencyB,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	AmountCurrencyA      float32                `protobuf:"fixed32,1,opt,name=AmountCurrencyA,proto3" json:"AmountCurrencyA,omitempty"`
+	AmountCurrencyB      float32                `protobuf:"fixed32,2,opt,name=AmountCurrencyB,proto3" json:"AmountCurrencyB,omitempty"`
+	AmountCurrencyAInUSD float32                `protobuf:"fixed32,3,opt,name=AmountCurrencyAInUSD,proto3" json:"AmountCurrencyAInUSD,omitempty"`
+	AmountCurrencyBInUSD float32                `protobuf:"fixed32,4,opt,name=AmountCurrencyBInUSD,proto3" json:"AmountCurrencyBInUSD,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *PoolLiquidity) Reset() {
@@ -333,12 +335,28 @@ func (x *PoolLiquidity) GetAmountCurrencyB() float32 {
 	return 0
 }
 
+func (x *PoolLiquidity) GetAmountCurrencyAInUSD() float32 {
+	if x != nil {
+		return x.AmountCurrencyAInUSD
+	}
+	return 0
+}
+
+func (x *PoolLiquidity) GetAmountCurrencyBInUSD() float32 {
+	if x != nil {
+		return x.AmountCurrencyBInUSD
+	}
+	return 0
+}
+
 type PoolPrice struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	SlippageBasisPoints uint32                 `protobuf:"varint,1,opt,name=SlippageBasisPoints,proto3" json:"SlippageBasisPoints,omitempty"`
 	MaxAmountIn         float32                `protobuf:"fixed32,2,opt,name=MaxAmountIn,proto3" json:"MaxAmountIn,omitempty"`
 	MinAmountOut        float32                `protobuf:"fixed32,3,opt,name=MinAmountOut,proto3" json:"MinAmountOut,omitempty"`
 	Price               float32                `protobuf:"fixed32,4,opt,name=Price,proto3" json:"Price,omitempty"`
+	MaxAmountInInUSD    float32                `protobuf:"fixed32,5,opt,name=MaxAmountInInUSD,proto3" json:"MaxAmountInInUSD,omitempty"`
+	MinAmountOutInUSD   float32                `protobuf:"fixed32,6,opt,name=MinAmountOutInUSD,proto3" json:"MinAmountOutInUSD,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -401,14 +419,30 @@ func (x *PoolPrice) GetPrice() float32 {
 	return 0
 }
 
+func (x *PoolPrice) GetMaxAmountInInUSD() float32 {
+	if x != nil {
+		return x.MaxAmountInInUSD
+	}
+	return 0
+}
+
+func (x *PoolPrice) GetMinAmountOutInUSD() float32 {
+	if x != nil {
+		return x.MinAmountOutInUSD
+	}
+	return 0
+}
+
 type PoolPriceTable struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AtoBPrices    []*PoolPrice           `protobuf:"bytes,1,rep,name=AtoBPrices,proto3" json:"AtoBPrices,omitempty"`
-	BtoAPrices    []*PoolPrice           `protobuf:"bytes,2,rep,name=BtoAPrices,proto3" json:"BtoAPrices,omitempty"`
-	AtoBPrice     float32                `protobuf:"fixed32,3,opt,name=AtoBPrice,proto3" json:"AtoBPrice,omitempty"`
-	BtoAPrice     float32                `protobuf:"fixed32,4,opt,name=BtoAPrice,proto3" json:"BtoAPrice,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AtoBPrices     []*PoolPrice           `protobuf:"bytes,1,rep,name=AtoBPrices,proto3" json:"AtoBPrices,omitempty"`
+	BtoAPrices     []*PoolPrice           `protobuf:"bytes,2,rep,name=BtoAPrices,proto3" json:"BtoAPrices,omitempty"`
+	AtoBPrice      float32                `protobuf:"fixed32,3,opt,name=AtoBPrice,proto3" json:"AtoBPrice,omitempty"`
+	BtoAPrice      float32                `protobuf:"fixed32,4,opt,name=BtoAPrice,proto3" json:"BtoAPrice,omitempty"`
+	AtoBPriceInUSD float32                `protobuf:"fixed32,5,opt,name=AtoBPriceInUSD,proto3" json:"AtoBPriceInUSD,omitempty"`
+	BtoAPriceInUSD float32                `protobuf:"fixed32,6,opt,name=BtoAPriceInUSD,proto3" json:"BtoAPriceInUSD,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *PoolPriceTable) Reset() {
@@ -469,6 +503,20 @@ func (x *PoolPriceTable) GetBtoAPrice() float32 {
 	return 0
 }
 
+func (x *PoolPriceTable) GetAtoBPriceInUSD() float32 {
+	if x != nil {
+		return x.AtoBPriceInUSD
+	}
+	return 0
+}
+
+func (x *PoolPriceTable) GetBtoAPriceInUSD() float32 {
+	if x != nil {
+		return x.BtoAPriceInUSD
+	}
+	return 0
+}
+
 var File_evm_dex_pool_block_message_proto protoreflect.FileDescriptor
 
 const file_evm_dex_pool_block_message_proto_rawDesc = "" +
@@ -498,15 +546,19 @@ const file_evm_dex_pool_block_message_proto_rawDesc = "" +
 	"\tCurrencyA\x18\x02 \x01(\v2\x17.evm_messages.TokenInfoR\tCurrencyA\x125\n" +
 	"\tCurrencyB\x18\x03 \x01(\v2\x17.evm_messages.TokenInfoR\tCurrencyB\x12+\n" +
 	"\x04Pair\x18\x04 \x01(\v2\x17.evm_messages.TokenInfoR\x04Pair\x12\x16\n" +
-	"\x06PoolId\x18\x05 \x01(\fR\x06PoolId\"c\n" +
+	"\x06PoolId\x18\x05 \x01(\fR\x06PoolId\"\xcb\x01\n" +
 	"\rPoolLiquidity\x12(\n" +
 	"\x0fAmountCurrencyA\x18\x01 \x01(\x02R\x0fAmountCurrencyA\x12(\n" +
-	"\x0fAmountCurrencyB\x18\x02 \x01(\x02R\x0fAmountCurrencyB\"\x99\x01\n" +
+	"\x0fAmountCurrencyB\x18\x02 \x01(\x02R\x0fAmountCurrencyB\x122\n" +
+	"\x14AmountCurrencyAInUSD\x18\x03 \x01(\x02R\x14AmountCurrencyAInUSD\x122\n" +
+	"\x14AmountCurrencyBInUSD\x18\x04 \x01(\x02R\x14AmountCurrencyBInUSD\"\xf3\x01\n" +
 	"\tPoolPrice\x120\n" +
 	"\x13SlippageBasisPoints\x18\x01 \x01(\rR\x13SlippageBasisPoints\x12 \n" +
 	"\vMaxAmountIn\x18\x02 \x01(\x02R\vMaxAmountIn\x12\"\n" +
 	"\fMinAmountOut\x18\x03 \x01(\x02R\fMinAmountOut\x12\x14\n" +
-	"\x05Price\x18\x04 \x01(\x02R\x05Price\"\xbe\x01\n" +
+	"\x05Price\x18\x04 \x01(\x02R\x05Price\x12*\n" +
+	"\x10MaxAmountInInUSD\x18\x05 \x01(\x02R\x10MaxAmountInInUSD\x12,\n" +
+	"\x11MinAmountOutInUSD\x18\x06 \x01(\x02R\x11MinAmountOutInUSD\"\x8e\x02\n" +
 	"\x0ePoolPriceTable\x127\n" +
 	"\n" +
 	"AtoBPrices\x18\x01 \x03(\v2\x17.evm_messages.PoolPriceR\n" +
@@ -515,7 +567,9 @@ const file_evm_dex_pool_block_message_proto_rawDesc = "" +
 	"BtoAPrices\x18\x02 \x03(\v2\x17.evm_messages.PoolPriceR\n" +
 	"BtoAPrices\x12\x1c\n" +
 	"\tAtoBPrice\x18\x03 \x01(\x02R\tAtoBPrice\x12\x1c\n" +
-	"\tBtoAPrice\x18\x04 \x01(\x02R\tBtoAPriceb\x06proto3"
+	"\tBtoAPrice\x18\x04 \x01(\x02R\tBtoAPrice\x12&\n" +
+	"\x0eAtoBPriceInUSD\x18\x05 \x01(\x02R\x0eAtoBPriceInUSD\x12&\n" +
+	"\x0eBtoAPriceInUSD\x18\x06 \x01(\x02R\x0eBtoAPriceInUSDb\x06proto3"
 
 var (
 	file_evm_dex_pool_block_message_proto_rawDescOnce sync.Once

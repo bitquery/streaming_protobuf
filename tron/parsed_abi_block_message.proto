@@ -18,6 +18,8 @@ message ParsedAbiTransaction {
   ContractInfo ContractInfo = 5;
   repeated evm_messages.ParsedAbiCall Calls = 6;
   tron_messages.RewardWithdraw RewardWithdraw = 7;
+
+  float FeeInUSD = 8;
 }
 
 message ParsedAbiBlockMessage {
