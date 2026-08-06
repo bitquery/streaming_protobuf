@@ -9,52 +9,26 @@ syntax = "proto3";
 package hyperliquid_messages;
 
 
-message TradesBlockMessage {
+// ONE product message per HyperCore block — the single-stream canon (mirrors solana's
+// PerpetualBlockMessage). Every kind of event a block produced rides in its own list, so a subscriber
+// receives the whole block as one message and a downstream recorder projects each list into its own
+// ClickHouse table. Lists are empty when the block had nothing of that kind — that is the shape, not a
+// gap. The node delivers a block as several per-stream fragments (fills / order_statuses / book_diffs /
+// oracle / misc / twap) on hyperliquidcore.blocks plus a separate consensus stream
+// (hyperliquidcore.transactions); the processor reassembles them into this one message. LeverageChanges
+// is sourced from the consensus stream, the other seven lists from the core block.
+message HyperliquidCoreBlockMessage {
   uint64 BlockNumber = 1;
   int64  BlockTime   = 2; // epoch ns
-  repeated Trade Trades = 3;
-}
 
-message PerpLiquidationsBlockMessage {
-  uint64 BlockNumber = 1;
-  int64  BlockTime   = 2;
-  repeated PerpLiquidation Liquidations = 3;
-}
-
-message OrderUpdatesBlockMessage {
-  uint64 BlockNumber = 1;
-  int64  BlockTime   = 2;
-  repeated OrderUpdate Orders = 3;
-}
-
-message TwapsBlockMessage {
-  uint64 BlockNumber = 1;
-  int64  BlockTime   = 2;
-  repeated Twap Twaps = 3;
-}
-
-message BookUpdatesBlockMessage {
-  uint64 BlockNumber = 1;
-  int64  BlockTime   = 2;
-  repeated BookUpdate BookUpdates = 3;
-}
-
-message PerpFundingsBlockMessage {
-  uint64 BlockNumber = 1;
-  int64  BlockTime   = 2;
-  repeated PerpFunding Funding = 3;
-}
-
-message TraderLeverageUpdatesBlockMessage {
-  uint64 BlockNumber = 1;
-  int64  BlockTime   = 2;
-  repeated TraderLeverageUpdate LeverageChanges = 3;
-}
-
-message PriceUpdatesBlockMessage {
-  uint64 BlockNumber = 1;
-  int64  BlockTime   = 2;
-  repeated PriceUpdate Prices = 3;
+  repeated Trade                Trades          = 3;  // executions (non-liquidation)
+  repeated OrderUpdate          Orders          = 4;  // order lifecycle (incl. rejects, TP/SL legs)
+  repeated PerpFunding          Funding         = 5;  // hourly funding per (trader, market)
+  repeated PerpLiquidation      Liquidations    = 6;  // forced closes — their own product
+  repeated Twap                 Twaps           = 7;  // TWAP lifecycle
+  repeated BookUpdate           BookUpdates     = 8;  // per-order book changes (L4 microstructure)
+  repeated PriceUpdate          Prices          = 9;  // oracle / mark republishes
+  repeated TraderLeverageUpdate LeverageChanges = 10; // accepted updateLeverage (from the consensus stream)
 }
 
 

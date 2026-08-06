@@ -27,29 +27,44 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type TradesBlockMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime     int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"` // epoch ns
-	Trades        []*Trade               `protobuf:"bytes,3,rep,name=Trades,proto3" json:"Trades,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+// ONE product message per HyperCore block — the single-stream canon (mirrors solana's
+// PerpetualBlockMessage). Every kind of event a block produced rides in its own list, so a subscriber
+// receives the whole block as one message and a downstream recorder projects each list into its own
+// ClickHouse table. Lists are empty when the block had nothing of that kind — that is the shape, not a
+// gap. The node delivers a block as several per-stream fragments (fills / order_statuses / book_diffs /
+// oracle / misc / twap) on hyperliquidcore.blocks plus a separate consensus stream
+// (hyperliquidcore.transactions); the processor reassembles them into this one message. LeverageChanges
+// is sourced from the consensus stream, the other seven lists from the core block.
+type HyperliquidCoreBlockMessage struct {
+	state           protoimpl.MessageState  `protogen:"open.v1"`
+	BlockNumber     uint64                  `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
+	BlockTime       int64                   `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`             // epoch ns
+	Trades          []*Trade                `protobuf:"bytes,3,rep,name=Trades,proto3" json:"Trades,omitempty"`                    // executions (non-liquidation)
+	Orders          []*OrderUpdate          `protobuf:"bytes,4,rep,name=Orders,proto3" json:"Orders,omitempty"`                    // order lifecycle (incl. rejects, TP/SL legs)
+	Funding         []*PerpFunding          `protobuf:"bytes,5,rep,name=Funding,proto3" json:"Funding,omitempty"`                  // hourly funding per (trader, market)
+	Liquidations    []*PerpLiquidation      `protobuf:"bytes,6,rep,name=Liquidations,proto3" json:"Liquidations,omitempty"`        // forced closes — their own product
+	Twaps           []*Twap                 `protobuf:"bytes,7,rep,name=Twaps,proto3" json:"Twaps,omitempty"`                      // TWAP lifecycle
+	BookUpdates     []*BookUpdate           `protobuf:"bytes,8,rep,name=BookUpdates,proto3" json:"BookUpdates,omitempty"`          // per-order book changes (L4 microstructure)
+	Prices          []*PriceUpdate          `protobuf:"bytes,9,rep,name=Prices,proto3" json:"Prices,omitempty"`                    // oracle / mark republishes
+	LeverageChanges []*TraderLeverageUpdate `protobuf:"bytes,10,rep,name=LeverageChanges,proto3" json:"LeverageChanges,omitempty"` // accepted updateLeverage (from the consensus stream)
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
-func (x *TradesBlockMessage) Reset() {
-	*x = TradesBlockMessage{}
+func (x *HyperliquidCoreBlockMessage) Reset() {
+	*x = HyperliquidCoreBlockMessage{}
 	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TradesBlockMessage) String() string {
+func (x *HyperliquidCoreBlockMessage) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TradesBlockMessage) ProtoMessage() {}
+func (*HyperliquidCoreBlockMessage) ProtoMessage() {}
 
-func (x *TradesBlockMessage) ProtoReflect() protoreflect.Message {
+func (x *HyperliquidCoreBlockMessage) ProtoReflect() protoreflect.Message {
 	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -61,448 +76,77 @@ func (x *TradesBlockMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TradesBlockMessage.ProtoReflect.Descriptor instead.
-func (*TradesBlockMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use HyperliquidCoreBlockMessage.ProtoReflect.Descriptor instead.
+func (*HyperliquidCoreBlockMessage) Descriptor() ([]byte, []int) {
 	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *TradesBlockMessage) GetBlockNumber() uint64 {
+func (x *HyperliquidCoreBlockMessage) GetBlockNumber() uint64 {
 	if x != nil {
 		return x.BlockNumber
 	}
 	return 0
 }
 
-func (x *TradesBlockMessage) GetBlockTime() int64 {
+func (x *HyperliquidCoreBlockMessage) GetBlockTime() int64 {
 	if x != nil {
 		return x.BlockTime
 	}
 	return 0
 }
 
-func (x *TradesBlockMessage) GetTrades() []*Trade {
+func (x *HyperliquidCoreBlockMessage) GetTrades() []*Trade {
 	if x != nil {
 		return x.Trades
 	}
 	return nil
 }
 
-type PerpLiquidationsBlockMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime     int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
-	Liquidations  []*PerpLiquidation     `protobuf:"bytes,3,rep,name=Liquidations,proto3" json:"Liquidations,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PerpLiquidationsBlockMessage) Reset() {
-	*x = PerpLiquidationsBlockMessage{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PerpLiquidationsBlockMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PerpLiquidationsBlockMessage) ProtoMessage() {}
-
-func (x *PerpLiquidationsBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PerpLiquidationsBlockMessage.ProtoReflect.Descriptor instead.
-func (*PerpLiquidationsBlockMessage) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *PerpLiquidationsBlockMessage) GetBlockNumber() uint64 {
-	if x != nil {
-		return x.BlockNumber
-	}
-	return 0
-}
-
-func (x *PerpLiquidationsBlockMessage) GetBlockTime() int64 {
-	if x != nil {
-		return x.BlockTime
-	}
-	return 0
-}
-
-func (x *PerpLiquidationsBlockMessage) GetLiquidations() []*PerpLiquidation {
-	if x != nil {
-		return x.Liquidations
-	}
-	return nil
-}
-
-type OrderUpdatesBlockMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime     int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
-	Orders        []*OrderUpdate         `protobuf:"bytes,3,rep,name=Orders,proto3" json:"Orders,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OrderUpdatesBlockMessage) Reset() {
-	*x = OrderUpdatesBlockMessage{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OrderUpdatesBlockMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OrderUpdatesBlockMessage) ProtoMessage() {}
-
-func (x *OrderUpdatesBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OrderUpdatesBlockMessage.ProtoReflect.Descriptor instead.
-func (*OrderUpdatesBlockMessage) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *OrderUpdatesBlockMessage) GetBlockNumber() uint64 {
-	if x != nil {
-		return x.BlockNumber
-	}
-	return 0
-}
-
-func (x *OrderUpdatesBlockMessage) GetBlockTime() int64 {
-	if x != nil {
-		return x.BlockTime
-	}
-	return 0
-}
-
-func (x *OrderUpdatesBlockMessage) GetOrders() []*OrderUpdate {
+func (x *HyperliquidCoreBlockMessage) GetOrders() []*OrderUpdate {
 	if x != nil {
 		return x.Orders
 	}
 	return nil
 }
 
-type TwapsBlockMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime     int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
-	Twaps         []*Twap                `protobuf:"bytes,3,rep,name=Twaps,proto3" json:"Twaps,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TwapsBlockMessage) Reset() {
-	*x = TwapsBlockMessage{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TwapsBlockMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TwapsBlockMessage) ProtoMessage() {}
-
-func (x *TwapsBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TwapsBlockMessage.ProtoReflect.Descriptor instead.
-func (*TwapsBlockMessage) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *TwapsBlockMessage) GetBlockNumber() uint64 {
-	if x != nil {
-		return x.BlockNumber
-	}
-	return 0
-}
-
-func (x *TwapsBlockMessage) GetBlockTime() int64 {
-	if x != nil {
-		return x.BlockTime
-	}
-	return 0
-}
-
-func (x *TwapsBlockMessage) GetTwaps() []*Twap {
-	if x != nil {
-		return x.Twaps
-	}
-	return nil
-}
-
-type BookUpdatesBlockMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime     int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
-	BookUpdates   []*BookUpdate          `protobuf:"bytes,3,rep,name=BookUpdates,proto3" json:"BookUpdates,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *BookUpdatesBlockMessage) Reset() {
-	*x = BookUpdatesBlockMessage{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BookUpdatesBlockMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BookUpdatesBlockMessage) ProtoMessage() {}
-
-func (x *BookUpdatesBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BookUpdatesBlockMessage.ProtoReflect.Descriptor instead.
-func (*BookUpdatesBlockMessage) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *BookUpdatesBlockMessage) GetBlockNumber() uint64 {
-	if x != nil {
-		return x.BlockNumber
-	}
-	return 0
-}
-
-func (x *BookUpdatesBlockMessage) GetBlockTime() int64 {
-	if x != nil {
-		return x.BlockTime
-	}
-	return 0
-}
-
-func (x *BookUpdatesBlockMessage) GetBookUpdates() []*BookUpdate {
-	if x != nil {
-		return x.BookUpdates
-	}
-	return nil
-}
-
-type PerpFundingsBlockMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime     int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
-	Funding       []*PerpFunding         `protobuf:"bytes,3,rep,name=Funding,proto3" json:"Funding,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PerpFundingsBlockMessage) Reset() {
-	*x = PerpFundingsBlockMessage{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PerpFundingsBlockMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PerpFundingsBlockMessage) ProtoMessage() {}
-
-func (x *PerpFundingsBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PerpFundingsBlockMessage.ProtoReflect.Descriptor instead.
-func (*PerpFundingsBlockMessage) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *PerpFundingsBlockMessage) GetBlockNumber() uint64 {
-	if x != nil {
-		return x.BlockNumber
-	}
-	return 0
-}
-
-func (x *PerpFundingsBlockMessage) GetBlockTime() int64 {
-	if x != nil {
-		return x.BlockTime
-	}
-	return 0
-}
-
-func (x *PerpFundingsBlockMessage) GetFunding() []*PerpFunding {
+func (x *HyperliquidCoreBlockMessage) GetFunding() []*PerpFunding {
 	if x != nil {
 		return x.Funding
 	}
 	return nil
 }
 
-type TraderLeverageUpdatesBlockMessage struct {
-	state           protoimpl.MessageState  `protogen:"open.v1"`
-	BlockNumber     uint64                  `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime       int64                   `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
-	LeverageChanges []*TraderLeverageUpdate `protobuf:"bytes,3,rep,name=LeverageChanges,proto3" json:"LeverageChanges,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *TraderLeverageUpdatesBlockMessage) Reset() {
-	*x = TraderLeverageUpdatesBlockMessage{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TraderLeverageUpdatesBlockMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TraderLeverageUpdatesBlockMessage) ProtoMessage() {}
-
-func (x *TraderLeverageUpdatesBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[6]
+func (x *HyperliquidCoreBlockMessage) GetLiquidations() []*PerpLiquidation {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TraderLeverageUpdatesBlockMessage.ProtoReflect.Descriptor instead.
-func (*TraderLeverageUpdatesBlockMessage) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *TraderLeverageUpdatesBlockMessage) GetBlockNumber() uint64 {
-	if x != nil {
-		return x.BlockNumber
-	}
-	return 0
-}
-
-func (x *TraderLeverageUpdatesBlockMessage) GetBlockTime() int64 {
-	if x != nil {
-		return x.BlockTime
-	}
-	return 0
-}
-
-func (x *TraderLeverageUpdatesBlockMessage) GetLeverageChanges() []*TraderLeverageUpdate {
-	if x != nil {
-		return x.LeverageChanges
+		return x.Liquidations
 	}
 	return nil
 }
 
-type PriceUpdatesBlockMessage struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber   uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
-	BlockTime     int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`
-	Prices        []*PriceUpdate         `protobuf:"bytes,3,rep,name=Prices,proto3" json:"Prices,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PriceUpdatesBlockMessage) Reset() {
-	*x = PriceUpdatesBlockMessage{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PriceUpdatesBlockMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PriceUpdatesBlockMessage) ProtoMessage() {}
-
-func (x *PriceUpdatesBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[7]
+func (x *HyperliquidCoreBlockMessage) GetTwaps() []*Twap {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+		return x.Twaps
 	}
-	return mi.MessageOf(x)
+	return nil
 }
 
-// Deprecated: Use PriceUpdatesBlockMessage.ProtoReflect.Descriptor instead.
-func (*PriceUpdatesBlockMessage) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *PriceUpdatesBlockMessage) GetBlockNumber() uint64 {
+func (x *HyperliquidCoreBlockMessage) GetBookUpdates() []*BookUpdate {
 	if x != nil {
-		return x.BlockNumber
+		return x.BookUpdates
 	}
-	return 0
+	return nil
 }
 
-func (x *PriceUpdatesBlockMessage) GetBlockTime() int64 {
-	if x != nil {
-		return x.BlockTime
-	}
-	return 0
-}
-
-func (x *PriceUpdatesBlockMessage) GetPrices() []*PriceUpdate {
+func (x *HyperliquidCoreBlockMessage) GetPrices() []*PriceUpdate {
 	if x != nil {
 		return x.Prices
+	}
+	return nil
+}
+
+func (x *HyperliquidCoreBlockMessage) GetLeverageChanges() []*TraderLeverageUpdate {
+	if x != nil {
+		return x.LeverageChanges
 	}
 	return nil
 }
@@ -520,7 +164,7 @@ type Trader struct {
 
 func (x *Trader) Reset() {
 	*x = Trader{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[8]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -532,7 +176,7 @@ func (x *Trader) String() string {
 func (*Trader) ProtoMessage() {}
 
 func (x *Trader) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[8]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,7 +189,7 @@ func (x *Trader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Trader.ProtoReflect.Descriptor instead.
 func (*Trader) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{8}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Trader) GetAddress() string {
@@ -596,7 +240,7 @@ type Market struct {
 
 func (x *Market) Reset() {
 	*x = Market{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[9]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -608,7 +252,7 @@ func (x *Market) String() string {
 func (*Market) ProtoMessage() {}
 
 func (x *Market) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[9]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -621,7 +265,7 @@ func (x *Market) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Market.ProtoReflect.Descriptor instead.
 func (*Market) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{9}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Market) GetSymbol() string {
@@ -679,7 +323,7 @@ type PerpPosition struct {
 
 func (x *PerpPosition) Reset() {
 	*x = PerpPosition{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[10]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -691,7 +335,7 @@ func (x *PerpPosition) String() string {
 func (*PerpPosition) ProtoMessage() {}
 
 func (x *PerpPosition) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[10]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -704,7 +348,7 @@ func (x *PerpPosition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpPosition.ProtoReflect.Descriptor instead.
 func (*PerpPosition) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{10}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PerpPosition) GetSide() string {
@@ -786,7 +430,7 @@ type Fees struct {
 
 func (x *Fees) Reset() {
 	*x = Fees{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[11]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -798,7 +442,7 @@ func (x *Fees) String() string {
 func (*Fees) ProtoMessage() {}
 
 func (x *Fees) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[11]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +455,7 @@ func (x *Fees) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Fees.ProtoReflect.Descriptor instead.
 func (*Fees) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{11}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Fees) GetFee() string {
@@ -870,7 +514,7 @@ type Execution struct {
 
 func (x *Execution) Reset() {
 	*x = Execution{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[12]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -882,7 +526,7 @@ func (x *Execution) String() string {
 func (*Execution) ProtoMessage() {}
 
 func (x *Execution) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[12]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -895,7 +539,7 @@ func (x *Execution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Execution.ProtoReflect.Descriptor instead.
 func (*Execution) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{12}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Execution) GetSide() string {
@@ -987,7 +631,7 @@ type Trade struct {
 
 func (x *Trade) Reset() {
 	*x = Trade{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[13]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -999,7 +643,7 @@ func (x *Trade) String() string {
 func (*Trade) ProtoMessage() {}
 
 func (x *Trade) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[13]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1012,7 +656,7 @@ func (x *Trade) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Trade.ProtoReflect.Descriptor instead.
 func (*Trade) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{13}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Trade) GetTrader() *Trader {
@@ -1099,7 +743,7 @@ type PerpLiquidation struct {
 
 func (x *PerpLiquidation) Reset() {
 	*x = PerpLiquidation{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[14]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1111,7 +755,7 @@ func (x *PerpLiquidation) String() string {
 func (*PerpLiquidation) ProtoMessage() {}
 
 func (x *PerpLiquidation) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[14]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1124,7 +768,7 @@ func (x *PerpLiquidation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpLiquidation.ProtoReflect.Descriptor instead.
 func (*PerpLiquidation) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{14}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PerpLiquidation) GetTrader() *Trader {
@@ -1224,7 +868,7 @@ type OrderUpdate struct {
 
 func (x *OrderUpdate) Reset() {
 	*x = OrderUpdate{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[15]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1236,7 +880,7 @@ func (x *OrderUpdate) String() string {
 func (*OrderUpdate) ProtoMessage() {}
 
 func (x *OrderUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[15]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +893,7 @@ func (x *OrderUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OrderUpdate.ProtoReflect.Descriptor instead.
 func (*OrderUpdate) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{15}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *OrderUpdate) GetTrader() *Trader {
@@ -1449,7 +1093,7 @@ type Twap struct {
 
 func (x *Twap) Reset() {
 	*x = Twap{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[16]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1461,7 +1105,7 @@ func (x *Twap) String() string {
 func (*Twap) ProtoMessage() {}
 
 func (x *Twap) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[16]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1474,7 +1118,7 @@ func (x *Twap) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Twap.ProtoReflect.Descriptor instead.
 func (*Twap) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{16}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Twap) GetTrader() *Trader {
@@ -1595,7 +1239,7 @@ type BookUpdate struct {
 
 func (x *BookUpdate) Reset() {
 	*x = BookUpdate{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[17]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1607,7 +1251,7 @@ func (x *BookUpdate) String() string {
 func (*BookUpdate) ProtoMessage() {}
 
 func (x *BookUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[17]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1620,7 +1264,7 @@ func (x *BookUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BookUpdate.ProtoReflect.Descriptor instead.
 func (*BookUpdate) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{17}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *BookUpdate) GetTrader() *Trader {
@@ -1707,7 +1351,7 @@ type PerpFunding struct {
 
 func (x *PerpFunding) Reset() {
 	*x = PerpFunding{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[18]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1719,7 +1363,7 @@ func (x *PerpFunding) String() string {
 func (*PerpFunding) ProtoMessage() {}
 
 func (x *PerpFunding) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[18]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1732,7 +1376,7 @@ func (x *PerpFunding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PerpFunding.ProtoReflect.Descriptor instead.
 func (*PerpFunding) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{18}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PerpFunding) GetTrader() *Trader {
@@ -1784,7 +1428,7 @@ type TraderLeverageUpdate struct {
 
 func (x *TraderLeverageUpdate) Reset() {
 	*x = TraderLeverageUpdate{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[19]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1796,7 +1440,7 @@ func (x *TraderLeverageUpdate) String() string {
 func (*TraderLeverageUpdate) ProtoMessage() {}
 
 func (x *TraderLeverageUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[19]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1809,7 +1453,7 @@ func (x *TraderLeverageUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TraderLeverageUpdate.ProtoReflect.Descriptor instead.
 func (*TraderLeverageUpdate) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{19}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TraderLeverageUpdate) GetTrader() *Trader {
@@ -1856,7 +1500,7 @@ type PriceUpdate struct {
 
 func (x *PriceUpdate) Reset() {
 	*x = PriceUpdate{}
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[20]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1868,7 +1512,7 @@ func (x *PriceUpdate) String() string {
 func (*PriceUpdate) ProtoMessage() {}
 
 func (x *PriceUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[20]
+	mi := &file_hyperliquid_hyperliquid_block_message_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1881,7 +1525,7 @@ func (x *PriceUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PriceUpdate.ProtoReflect.Descriptor instead.
 func (*PriceUpdate) Descriptor() ([]byte, []int) {
-	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{20}
+	return file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PriceUpdate) GetMarket() *Market {
@@ -1930,39 +1574,19 @@ var File_hyperliquid_hyperliquid_block_message_proto protoreflect.FileDescriptor
 
 const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\n" +
-	"+hyperliquid/hyperliquid_block_message.proto\x12\x14hyperliquid_messages\"\x89\x01\n" +
-	"\x12TradesBlockMessage\x12 \n" +
+	"+hyperliquid/hyperliquid_block_message.proto\x12\x14hyperliquid_messages\"\xdc\x04\n" +
+	"\x1bHyperliquidCoreBlockMessage\x12 \n" +
 	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
 	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x123\n" +
-	"\x06Trades\x18\x03 \x03(\v2\x1b.hyperliquid_messages.TradeR\x06Trades\"\xa9\x01\n" +
-	"\x1cPerpLiquidationsBlockMessage\x12 \n" +
-	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
-	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x12I\n" +
-	"\fLiquidations\x18\x03 \x03(\v2%.hyperliquid_messages.PerpLiquidationR\fLiquidations\"\x95\x01\n" +
-	"\x18OrderUpdatesBlockMessage\x12 \n" +
-	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
-	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x129\n" +
-	"\x06Orders\x18\x03 \x03(\v2!.hyperliquid_messages.OrderUpdateR\x06Orders\"\x85\x01\n" +
-	"\x11TwapsBlockMessage\x12 \n" +
-	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
-	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x120\n" +
-	"\x05Twaps\x18\x03 \x03(\v2\x1a.hyperliquid_messages.TwapR\x05Twaps\"\x9d\x01\n" +
-	"\x17BookUpdatesBlockMessage\x12 \n" +
-	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
-	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x12B\n" +
-	"\vBookUpdates\x18\x03 \x03(\v2 .hyperliquid_messages.BookUpdateR\vBookUpdates\"\x97\x01\n" +
-	"\x18PerpFundingsBlockMessage\x12 \n" +
-	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
-	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x12;\n" +
-	"\aFunding\x18\x03 \x03(\v2!.hyperliquid_messages.PerpFundingR\aFunding\"\xb9\x01\n" +
-	"!TraderLeverageUpdatesBlockMessage\x12 \n" +
-	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
-	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x12T\n" +
-	"\x0fLeverageChanges\x18\x03 \x03(\v2*.hyperliquid_messages.TraderLeverageUpdateR\x0fLeverageChanges\"\x95\x01\n" +
-	"\x18PriceUpdatesBlockMessage\x12 \n" +
-	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
-	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x129\n" +
-	"\x06Prices\x18\x03 \x03(\v2!.hyperliquid_messages.PriceUpdateR\x06Prices\"\x8e\x01\n" +
+	"\x06Trades\x18\x03 \x03(\v2\x1b.hyperliquid_messages.TradeR\x06Trades\x129\n" +
+	"\x06Orders\x18\x04 \x03(\v2!.hyperliquid_messages.OrderUpdateR\x06Orders\x12;\n" +
+	"\aFunding\x18\x05 \x03(\v2!.hyperliquid_messages.PerpFundingR\aFunding\x12I\n" +
+	"\fLiquidations\x18\x06 \x03(\v2%.hyperliquid_messages.PerpLiquidationR\fLiquidations\x120\n" +
+	"\x05Twaps\x18\a \x03(\v2\x1a.hyperliquid_messages.TwapR\x05Twaps\x12B\n" +
+	"\vBookUpdates\x18\b \x03(\v2 .hyperliquid_messages.BookUpdateR\vBookUpdates\x129\n" +
+	"\x06Prices\x18\t \x03(\v2!.hyperliquid_messages.PriceUpdateR\x06Prices\x12T\n" +
+	"\x0fLeverageChanges\x18\n" +
+	" \x03(\v2*.hyperliquid_messages.TraderLeverageUpdateR\x0fLeverageChanges\"\x8e\x01\n" +
 	"\x06Trader\x12\x18\n" +
 	"\aAddress\x18\x01 \x01(\tR\aAddress\x12\x16\n" +
 	"\x06Signer\x18\x02 \x01(\tR\x06Signer\x12\x14\n" +
@@ -2130,62 +1754,55 @@ func file_hyperliquid_hyperliquid_block_message_proto_rawDescGZIP() []byte {
 	return file_hyperliquid_hyperliquid_block_message_proto_rawDescData
 }
 
-var file_hyperliquid_hyperliquid_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_hyperliquid_hyperliquid_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_hyperliquid_hyperliquid_block_message_proto_goTypes = []any{
-	(*TradesBlockMessage)(nil),                // 0: hyperliquid_messages.TradesBlockMessage
-	(*PerpLiquidationsBlockMessage)(nil),      // 1: hyperliquid_messages.PerpLiquidationsBlockMessage
-	(*OrderUpdatesBlockMessage)(nil),          // 2: hyperliquid_messages.OrderUpdatesBlockMessage
-	(*TwapsBlockMessage)(nil),                 // 3: hyperliquid_messages.TwapsBlockMessage
-	(*BookUpdatesBlockMessage)(nil),           // 4: hyperliquid_messages.BookUpdatesBlockMessage
-	(*PerpFundingsBlockMessage)(nil),          // 5: hyperliquid_messages.PerpFundingsBlockMessage
-	(*TraderLeverageUpdatesBlockMessage)(nil), // 6: hyperliquid_messages.TraderLeverageUpdatesBlockMessage
-	(*PriceUpdatesBlockMessage)(nil),          // 7: hyperliquid_messages.PriceUpdatesBlockMessage
-	(*Trader)(nil),                            // 8: hyperliquid_messages.Trader
-	(*Market)(nil),                            // 9: hyperliquid_messages.Market
-	(*PerpPosition)(nil),                      // 10: hyperliquid_messages.PerpPosition
-	(*Fees)(nil),                              // 11: hyperliquid_messages.Fees
-	(*Execution)(nil),                         // 12: hyperliquid_messages.Execution
-	(*Trade)(nil),                             // 13: hyperliquid_messages.Trade
-	(*PerpLiquidation)(nil),                   // 14: hyperliquid_messages.PerpLiquidation
-	(*OrderUpdate)(nil),                       // 15: hyperliquid_messages.OrderUpdate
-	(*Twap)(nil),                              // 16: hyperliquid_messages.Twap
-	(*BookUpdate)(nil),                        // 17: hyperliquid_messages.BookUpdate
-	(*PerpFunding)(nil),                       // 18: hyperliquid_messages.PerpFunding
-	(*TraderLeverageUpdate)(nil),              // 19: hyperliquid_messages.TraderLeverageUpdate
-	(*PriceUpdate)(nil),                       // 20: hyperliquid_messages.PriceUpdate
+	(*HyperliquidCoreBlockMessage)(nil), // 0: hyperliquid_messages.HyperliquidCoreBlockMessage
+	(*Trader)(nil),                      // 1: hyperliquid_messages.Trader
+	(*Market)(nil),                      // 2: hyperliquid_messages.Market
+	(*PerpPosition)(nil),                // 3: hyperliquid_messages.PerpPosition
+	(*Fees)(nil),                        // 4: hyperliquid_messages.Fees
+	(*Execution)(nil),                   // 5: hyperliquid_messages.Execution
+	(*Trade)(nil),                       // 6: hyperliquid_messages.Trade
+	(*PerpLiquidation)(nil),             // 7: hyperliquid_messages.PerpLiquidation
+	(*OrderUpdate)(nil),                 // 8: hyperliquid_messages.OrderUpdate
+	(*Twap)(nil),                        // 9: hyperliquid_messages.Twap
+	(*BookUpdate)(nil),                  // 10: hyperliquid_messages.BookUpdate
+	(*PerpFunding)(nil),                 // 11: hyperliquid_messages.PerpFunding
+	(*TraderLeverageUpdate)(nil),        // 12: hyperliquid_messages.TraderLeverageUpdate
+	(*PriceUpdate)(nil),                 // 13: hyperliquid_messages.PriceUpdate
 }
 var file_hyperliquid_hyperliquid_block_message_proto_depIdxs = []int32{
-	13, // 0: hyperliquid_messages.TradesBlockMessage.Trades:type_name -> hyperliquid_messages.Trade
-	14, // 1: hyperliquid_messages.PerpLiquidationsBlockMessage.Liquidations:type_name -> hyperliquid_messages.PerpLiquidation
-	15, // 2: hyperliquid_messages.OrderUpdatesBlockMessage.Orders:type_name -> hyperliquid_messages.OrderUpdate
-	16, // 3: hyperliquid_messages.TwapsBlockMessage.Twaps:type_name -> hyperliquid_messages.Twap
-	17, // 4: hyperliquid_messages.BookUpdatesBlockMessage.BookUpdates:type_name -> hyperliquid_messages.BookUpdate
-	18, // 5: hyperliquid_messages.PerpFundingsBlockMessage.Funding:type_name -> hyperliquid_messages.PerpFunding
-	19, // 6: hyperliquid_messages.TraderLeverageUpdatesBlockMessage.LeverageChanges:type_name -> hyperliquid_messages.TraderLeverageUpdate
-	20, // 7: hyperliquid_messages.PriceUpdatesBlockMessage.Prices:type_name -> hyperliquid_messages.PriceUpdate
-	8,  // 8: hyperliquid_messages.Trade.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 9: hyperliquid_messages.Trade.Market:type_name -> hyperliquid_messages.Market
-	12, // 10: hyperliquid_messages.Trade.Execution:type_name -> hyperliquid_messages.Execution
-	11, // 11: hyperliquid_messages.Trade.Fees:type_name -> hyperliquid_messages.Fees
-	10, // 12: hyperliquid_messages.Trade.Position:type_name -> hyperliquid_messages.PerpPosition
-	8,  // 13: hyperliquid_messages.PerpLiquidation.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 14: hyperliquid_messages.PerpLiquidation.Market:type_name -> hyperliquid_messages.Market
-	12, // 15: hyperliquid_messages.PerpLiquidation.Execution:type_name -> hyperliquid_messages.Execution
-	11, // 16: hyperliquid_messages.PerpLiquidation.Fees:type_name -> hyperliquid_messages.Fees
-	10, // 17: hyperliquid_messages.PerpLiquidation.Position:type_name -> hyperliquid_messages.PerpPosition
-	8,  // 18: hyperliquid_messages.OrderUpdate.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 19: hyperliquid_messages.OrderUpdate.Market:type_name -> hyperliquid_messages.Market
-	10, // 20: hyperliquid_messages.OrderUpdate.Position:type_name -> hyperliquid_messages.PerpPosition
-	8,  // 21: hyperliquid_messages.Twap.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 22: hyperliquid_messages.Twap.Market:type_name -> hyperliquid_messages.Market
-	8,  // 23: hyperliquid_messages.BookUpdate.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 24: hyperliquid_messages.BookUpdate.Market:type_name -> hyperliquid_messages.Market
-	10, // 25: hyperliquid_messages.BookUpdate.Position:type_name -> hyperliquid_messages.PerpPosition
-	8,  // 26: hyperliquid_messages.PerpFunding.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 27: hyperliquid_messages.PerpFunding.Market:type_name -> hyperliquid_messages.Market
-	8,  // 28: hyperliquid_messages.TraderLeverageUpdate.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 29: hyperliquid_messages.TraderLeverageUpdate.Market:type_name -> hyperliquid_messages.Market
-	9,  // 30: hyperliquid_messages.PriceUpdate.Market:type_name -> hyperliquid_messages.Market
+	6,  // 0: hyperliquid_messages.HyperliquidCoreBlockMessage.Trades:type_name -> hyperliquid_messages.Trade
+	8,  // 1: hyperliquid_messages.HyperliquidCoreBlockMessage.Orders:type_name -> hyperliquid_messages.OrderUpdate
+	11, // 2: hyperliquid_messages.HyperliquidCoreBlockMessage.Funding:type_name -> hyperliquid_messages.PerpFunding
+	7,  // 3: hyperliquid_messages.HyperliquidCoreBlockMessage.Liquidations:type_name -> hyperliquid_messages.PerpLiquidation
+	9,  // 4: hyperliquid_messages.HyperliquidCoreBlockMessage.Twaps:type_name -> hyperliquid_messages.Twap
+	10, // 5: hyperliquid_messages.HyperliquidCoreBlockMessage.BookUpdates:type_name -> hyperliquid_messages.BookUpdate
+	13, // 6: hyperliquid_messages.HyperliquidCoreBlockMessage.Prices:type_name -> hyperliquid_messages.PriceUpdate
+	12, // 7: hyperliquid_messages.HyperliquidCoreBlockMessage.LeverageChanges:type_name -> hyperliquid_messages.TraderLeverageUpdate
+	1,  // 8: hyperliquid_messages.Trade.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 9: hyperliquid_messages.Trade.Market:type_name -> hyperliquid_messages.Market
+	5,  // 10: hyperliquid_messages.Trade.Execution:type_name -> hyperliquid_messages.Execution
+	4,  // 11: hyperliquid_messages.Trade.Fees:type_name -> hyperliquid_messages.Fees
+	3,  // 12: hyperliquid_messages.Trade.Position:type_name -> hyperliquid_messages.PerpPosition
+	1,  // 13: hyperliquid_messages.PerpLiquidation.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 14: hyperliquid_messages.PerpLiquidation.Market:type_name -> hyperliquid_messages.Market
+	5,  // 15: hyperliquid_messages.PerpLiquidation.Execution:type_name -> hyperliquid_messages.Execution
+	4,  // 16: hyperliquid_messages.PerpLiquidation.Fees:type_name -> hyperliquid_messages.Fees
+	3,  // 17: hyperliquid_messages.PerpLiquidation.Position:type_name -> hyperliquid_messages.PerpPosition
+	1,  // 18: hyperliquid_messages.OrderUpdate.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 19: hyperliquid_messages.OrderUpdate.Market:type_name -> hyperliquid_messages.Market
+	3,  // 20: hyperliquid_messages.OrderUpdate.Position:type_name -> hyperliquid_messages.PerpPosition
+	1,  // 21: hyperliquid_messages.Twap.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 22: hyperliquid_messages.Twap.Market:type_name -> hyperliquid_messages.Market
+	1,  // 23: hyperliquid_messages.BookUpdate.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 24: hyperliquid_messages.BookUpdate.Market:type_name -> hyperliquid_messages.Market
+	3,  // 25: hyperliquid_messages.BookUpdate.Position:type_name -> hyperliquid_messages.PerpPosition
+	1,  // 26: hyperliquid_messages.PerpFunding.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 27: hyperliquid_messages.PerpFunding.Market:type_name -> hyperliquid_messages.Market
+	1,  // 28: hyperliquid_messages.TraderLeverageUpdate.Trader:type_name -> hyperliquid_messages.Trader
+	2,  // 29: hyperliquid_messages.TraderLeverageUpdate.Market:type_name -> hyperliquid_messages.Market
+	2,  // 30: hyperliquid_messages.PriceUpdate.Market:type_name -> hyperliquid_messages.Market
 	31, // [31:31] is the sub-list for method output_type
 	31, // [31:31] is the sub-list for method input_type
 	31, // [31:31] is the sub-list for extension type_name
@@ -2204,7 +1821,7 @@ func file_hyperliquid_hyperliquid_block_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hyperliquid_hyperliquid_block_message_proto_rawDesc), len(file_hyperliquid_hyperliquid_block_message_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

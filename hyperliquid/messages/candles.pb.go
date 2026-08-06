@@ -4,15 +4,6 @@
 // 	protoc        v7.35.1
 // source: hyperliquid/candles.proto
 
-// OHLC candlesticks (TradingView) for HyperCore markets, aggregated from trades.
-// Two producers write the same Candle shape: the ClickHouse materialized view that
-// backs historical (closed-bar) queries, and the realtime aggregator that emits the
-// current (still-open) bar per (Market, Interval.Duration) on every trades block.
-//
-// Ohlc/TimeInterval mirror market/price_index.proto but are duplicated here so this
-// package carries no cross-product dependency. Market is the SAME object used across
-// every hyperliquid canon message (see hyperliquid_block_message.proto).
-
 package hyperliquid_messages
 
 import (
