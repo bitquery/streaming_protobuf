@@ -157,7 +157,11 @@ message ParsedAbiTransaction {
   repeated NativeBalanceUpdate NativeBalanceUpdates = 8;
   repeated StorageChange StorageChanges = 9;
 
-  float TransactionFeeInUSD = 10;
+  float TransactionHeader_CostInUSD = 10;
+  float TransactionHeader_ValueInUSD = 11;
+  float TransactionHeader_GasFeeCapInUSD = 12;
+  float TransactionHeader_GasPriceInUSD = 13;
+  float TransactionHeader_GasTipCapInUSD = 14;
 }
 
 message MinerReward {
