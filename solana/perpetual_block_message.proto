@@ -1,0 +1,421 @@
+syntax = "proto3";
+package solana_messages;
+
+import "solana/block_message.proto";
+
+// Solana perpetual-futures stream. First implementation: Phoenix Eternal —
+// see streaming_processor_solana/_docs/phoenix.trade/Readme.md.
+//
+//   Eternal  EtrnLzgbS7nMMy5fbD42kXiUzGg8XQzJ972Xtk1cjWih  matching engine + risk engine + collateral
+//   Hawkeye  RiSeVw3ZjNfsaXPRb4mgaqYaEEt41pNNJoDvVh7pgQj   oracle / price publisher (Asset.Oracle)
+//
+// Eternal's deposit/withdrawal bridge (Ember, EMBERpYNE6ehWmXymZZS2skiFmCa9V5dp14e1iduM5qy) is
+// deliberately absent from this schema: collateral flows are out of scope, so nothing here would
+// ever name it, and no other venue has such a component to fill it with.
+//
+// PROTOCOL-NEUTRAL BY DESIGN. Every number here is already scaled to human units — asset
+// units for sizes, quote currency for prices and amounts. Lots and ticks are Phoenix's
+// internal model; Drift, Jupiter Perps and Adrena each use a different one, so raw on-chain
+// units are deliberately not published. For Phoenix the conversion is
+//   size  = BaseLots  / 10^BaseLotDecimals
+//   quote = QuoteLots / 10^QuoteLotDecimals
+//   price = Ticks * TickSize * 10^(BaseLotDecimals - QuoteLotDecimals)
+// with the scaling constants taken from each event batch's MarketEventHeader.
+//
+// WHERE THE DATA COMES FROM (Phoenix Eternal): the outer instruction carries only the
+// request; every resulting state transition is emitted by a self-CPI into
+//   Log(eventBatch: OffChainMarketEvent { batchIndex: u32, events: Vec<MarketEvent> })
+// a Borsh enum of 67 variants. One instruction may emit several such batches.
+
+message PerpetualBlockMessage {
+  BlockHeader Header = 1;
+  repeated ParsedPerpetualTransaction Transactions = 2;
+}
+
+// One transaction's perpetual activity, split into four lists. Three of them are the kinds of
+// thing that happen to a trader, and they barely overlap in what they carry: an order never has a
+// position, a PnL never has an order, a counterparty exists only on a fill. Measured over a live
+// sample, every order event filled Order/Amount/Price and nothing else; every PnL filled Position
+// and nothing else. As one flat type a third of each row was necessarily empty.
+//
+// The fourth, Prices, is split for a different reason — volume. Market state is republished on
+// every price move and dwarfs user activity.
+//
+// Expect lists to be empty on venues built differently: a pool-based perpetual (no order book)
+// produces Fills and Positions but never an Order. That is the intended shape, not a gap.
+//
+// Ordering across all four is EventIndex, a single counter over the whole transaction, so a fill
+// can be placed against the order that caused it and against the mark of the same moment.
+message ParsedPerpetualTransaction {
+  uint32 Index = 1; // transaction index in the block
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated PerpetualOrderEvent Orders = 7;       // requested / placed / cancelled / rejected, incl. conditional
+  repeated PerpetualFillEvent Fills = 8;         // executions
+  repeated PerpetualPositionEvent Positions = 9; // PnL and liquidations
+  repeated PerpetualPriceEvent Prices = 6;       // top of book and mark
+  repeated PerpetualMarketSummaryEvent MarketSummaries = 10; // open interest, spot, fee totals
+}
+
+message PerpetualExchange {
+  bytes Program = 1;  // EtrnLzgbS7nMMy5fbD42kXiUzGg8XQzJ972Xtk1cjWih
+  string Name = 2;    // "phoenix_eternal"
+  string Family = 3;  // "Phoenix"
+  string Version = 4; // IDL metadata version, e.g. "0.2.0"
+}
+
+// One perpetual market. TickSize/LotSize are the minimum steps in human units, which is what
+// the protocol-specific lot arithmetic collapses to.
+message PerpetualAsset {
+  // Protocol asset id. SOL's id is literally 0, so proto3 drops Id from the wire for every SOL
+  // event: an absent (or 0) Id means SOL, not "unknown". SOL is also the busiest market, so this
+  // is the common case, not an edge one. Join on Symbol, which is always present, and never treat
+  // Id == 0 as a missing-value sentinel.
+  //
+  // There is no mint for the asset itself and there cannot be for most of them: a perpetual is
+  // synthetic and never delivers, so GOLD, NVDA or WTIOIL have no token on Solana. Even SOL and
+  // BTC are not linked to their wrapped mints here. Id and Symbol are the whole identity; the only
+  // real mint in this message is the quote currency's.
+  uint64 Id = 1;
+  string Symbol = 2;   // "SOL", "BTC", "GOLD"
+
+  // Price feed this market is marked against — the one identifier that carries across venues,
+  // since the same Pyth feed backs SOL on several of them. Phoenix Eternal runs a single oracle
+  // for the whole exchange (Hawkeye), so every asset here reports the same address; Drift and
+  // Mango name an oracle per market, which is why this sits on the asset rather than on the
+  // exchange.
+  bytes Oracle = 6;
+  double TickSize = 3; // minimum price step, in quote currency (SOL: 0.01, BTC: 1, GOLD: 0.1)
+  double LotSize = 4;  // minimum size step, in asset units (SOL: 0.01, BTC: 0.0001, GOLD: 0.001)
+
+  // The mint every price and amount on this market is denominated in. On Phoenix Eternal that is
+  // PhUsd, the token the exchange itself names as canonical — not the USDC it is backed 1:1 by
+  // and which funds enter and leave as.
+  PerpetualCurrency QuoteCurrency = 5;
+}
+
+// The quote token, in the four fields that identify it. Deliberately not the shared Currency
+// message: that one carries 27 fields of Metaplex metadata, supply and USD prices, of which a
+// perpetual venue fills four — and fills them identically on every row, since the quote currency
+// is a protocol constant. Flattened into ClickHouse the difference is 4 columns against 27, twice
+// (events and prices), for values that never vary.
+message PerpetualCurrency {
+  bytes MintAddress = 1;
+  string Symbol = 2;      // may be the protocol's documented name: an SPL mint need not carry metadata
+  uint32 Decimals = 3;
+  bytes ProgramAddress = 4; // SPL Token or Token-2022
+}
+
+// COLLATERAL FLOWS ARE OUT OF SCOPE for all three event types below. Deposits, withdrawals,
+// internal transfers and funding settlement move exchange-wide collateral rather than a position
+// in a market, and this stream reports positions, orders and trades. Funding is not lost — the
+// protocol repeats each funding payment on the PnL event of the same batch (PerpetualPositionEvent.Funding), and
+// the collateral backing a position on each fill (PerpetualFillEvent.Collateral).
+//
+// Every account field is empty when the chain named no account — never the all-zero address, which
+// would read as the System program. An expiry crank, for one, cancels orders it does not own:
+// those events carry no Signer and no Trader, and are joined to their placement by Order.Id.
+//
+// Price.Mark is denormalized onto every type from the market-state events of the same transaction,
+// so it is present whenever that transaction also republished a price for this asset — measured at
+// 62% of PnL events and 100% of fills. The protocol's PnL event carries no mark of its own, so for
+// the rest the mark comes from the price stream, which is dense enough for an asof join on
+// (asset, slot).
+
+// An order's life: requested, placed, cancelled or rejected — including conditional orders, which
+// are orders that are not in the book yet. Never carries a position: what an order does to one is
+// reported as a fill and a PnL.
+message PerpetualOrderEvent {
+  bytes Signer = 1;  // wallet that signed the transaction
+  bytes Trader = 2;  // position-owning account (a PDA on Phoenix, not the wallet)
+
+  // "OrderRequested"  the order as accepted, before it hits the book
+  // "OrderPlaced"     resting order added to the book
+  // "OrderCancelled"  removed or reduced; see Order.CancelReason
+  // "OrderRejected"   see Order.RejectReason
+  // "TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted"      conditional orders
+  // "StopLossPlaced" / "TakeProfitPlaced"    a protective order, and which kind it is: the chain
+  //     states the side and the price condition on the placement, and those two together say
+  //     whether it protects a loss or a gain.
+  // "ConditionalCancelled" / "ConditionalExecuted"   the same mechanism ending. Deliberately NOT
+  //     named after a kind: the raw cancellation and execution do not restate the side, so which
+  //     of the two ended cannot be known from the event, and a StopLoss* name there would be the
+  //     wrong name for every take-profit. Order.ConditionalId identifies the order that ended —
+  //     join it back to its placement on (Trader, Asset.Id, ConditionalId) to learn the kind. An
+  //     execution also carries Order.Id, the book order the trigger created.
+  string Type = 3;
+  string Side = 4;   // "bid" / "ask"
+
+  // Position in the transaction, shared across all four lists, so an order can be ordered against
+  // the fill it caused and the mark of that moment. There is no per-event time or slot: Phoenix
+  // states them once per batch and they are the block's own — measured identical to the block on
+  // 2434 of 2434 events — so they live on BlockHeader alone.
+  uint32 EventIndex = 5;
+  uint32 InstructionIndex = 6; // top-level instruction that produced it
+
+  PerpetualExchange Exchange = 7;
+  PerpetualAsset Asset = 8;
+
+  PerpetualOrder Order = 9;
+  PerpetualAmount Amount = 10;
+  PerpetualPrice Price = 11;  // .Limit, and .Trigger for conditional orders
+
+  // No TraderIsAmm here, unlike the fill and position events. Protocol liquidity is a counterparty
+  // on the maker side of a fill, not an order placer: a Phoenix spline is only ever learned from a
+  // SplineFilled naming it as the maker, so a spline address never reaches this list as Trader.
+  // Zero on all 834463 order rows of a staging sample.
+
+  // Orders are placed during a forced liquidation too: the venue submits one on the liquidated
+  // trader's account to close the position, and it reaches this list like any other. Marked the
+  // same way as the fills and PnL it belongs with — see PerpetualPositionEvent.
+  bool Liquidation = 13;
+  bytes Liquidator = 14;
+}
+
+// One maker fill, written from the taker's perspective. Type would be constant here, so there is
+// none: being in this list is what it would have said.
+message PerpetualFillEvent {
+  bytes Signer = 1;
+  bytes Trader = 2;            // the taker, filled in from the transaction's TradeSummary
+  bytes Counterparty = 3;      // the maker
+  bool CounterpartyIsAmm = 4;  // maker is protocol liquidity (a Phoenix spline), not a book order
+  bool TraderIsAmm = 5;
+
+  string Side = 6;             // taker side: "bid" / "ask"
+
+  uint32 EventIndex = 7;
+  uint32 InstructionIndex = 8;
+
+  PerpetualExchange Exchange = 9;
+  PerpetualAsset Asset = 10;
+
+  PerpetualAmount Amount = 11;    // .Size, .Quote, .Fee, and .Remaining of the maker's order
+  PerpetualPosition Position = 13; // the taker's position after the fill
+
+  // Plain doubles rather than a PerpetualPrice: a fill has no limit and no trigger, so the shared
+  // message would carry two permanently empty columns into the table.
+  double ExecutionPrice = 16;
+  double MarkPrice = 17; // mark of this transaction, denormalized so a PnL query needs no join
+
+  // Collateral of the whole *account*, as the protocol reports it on TradeSummary — NOT this
+  // position's margin. Phoenix Eternal is cross-margin: one TraderState.quoteLotCollateral covers
+  // every market the trader is in, and live accounts hold up to 51 at once.
+  //
+  // So do not divide one position's notional by this and call it leverage. Measured on staging:
+  // traders holding a single market land at a median of 2.78x, matching what the venue's own UI
+  // shows, while the three accounts holding 51 markets come out at 0.0003x. Real leverage is
+  // sum(|Size * MarkPrice|) over all of that trader's markets at that slot divided by this — a
+  // query over this table, which is why no Leverage field is published.
+  double Collateral = 18;
+
+  // This fill is part of a forced liquidation of Trader's position — see PerpetualPositionEvent.
+  bool Liquidation = 14;
+  bytes Liquidator = 15;
+
+  // Which resting side this fill matched, as the chain names it — the join key a fill otherwise
+  // lacks. `OrderFilled` names the maker's book order, and MakerOrderId is encoded exactly like
+  // PerpetualOrder.Id, so it joins a fill straight back to that order's placement and
+  // cancellation. `SplineFilled` matched protocol liquidity instead (CounterpartyIsAmm), which is
+  // not a book order and is named by SplineId. Exactly one of the two is ever set.
+  //
+  // Without these a fill can only be tied to an order by (transaction, instruction) ordering,
+  // which stops being unique the moment one instruction fills several orders — measured on
+  // staging, that already happens (one instruction produced three fill/position pairings that no
+  // join could separate).
+  //
+  // Both are opaque bytes, and for the same reason: another venue names an order or a liquidity
+  // source by a hash, a pool address or a string, not by a counter. Emptiness is absence, which a
+  // number could not express here — spline 0 is a real spline and order 0 is a real ask, and
+  // ClickHouse drops the `optional` that used to carry presence.
+  bytes MakerOrderId = 19;
+  bytes SplineId = 21;
+}
+
+// What happened to a position: realized PnL, funding, and liquidations.
+message PerpetualPositionEvent {
+  bytes Signer = 1;
+  bytes Trader = 2;
+
+  string Type = 3; // "PnL" or "Liquidation"
+
+  uint32 EventIndex = 4;
+  uint32 InstructionIndex = 5;
+
+  PerpetualExchange Exchange = 6;
+  PerpetualAsset Asset = 7;
+
+  PerpetualPosition Position = 8;
+
+  // What a forced close took, on "Liquidation" only -- plain doubles rather than a PerpetualAmount
+  // because the other five fields of that message (Size, Remaining, MinToFill, MinQuoteToFill, Fee)
+  // describe an order, which this event is not: measured empty on all 26659 sampled rows.
+  double LiquidatedSize = 18;
+  double LiquidatedQuote = 19;
+
+  // A plain double rather than a PerpetualPrice: this event has no limit, execution or trigger
+  // price, so the shared message would carry three permanently empty columns into the table.
+  // The venue's PnL event publishes no mark of its own — this is denormalized from the market-state
+  // events of the same transaction, so it is present on the ~62% of PnL events whose transaction
+  // also republished a price for the asset. For the rest, asof-join perpetual_prices on
+  // (asset, slot).
+  double MarkPrice = 14;
+
+  // Realized on this event, in quote currency. Only the PnL/Liquidation events carry these: a fill
+  // reports the position it produced, not what that position released, which is why these live
+  // here and not on PerpetualPosition.
+  double RealizedPnl = 15;
+  double Funding = 16;   // funding paid (negative) or received (positive)
+  bool Closed = 17;      // the position went flat on this event
+
+  // Trader is protocol liquidity, not a user. A spline's position moves like anyone else's and
+  // emits its own PnL events, so without this flag an aggregate over traders ranks the protocol's
+  // own liquidity as its biggest trader. Filter it out of trader-facing queries.
+  bool TraderIsAmm = 11;
+
+  // This event is part of a forced liquidation of Trader's position, and Liquidator is who forced
+  // it. Set on every event of the liquidated trader in that transaction — not only on the one
+  // typed "Liquidation" — because a liquidation is executed *through* ordinary events: the sample
+  // transaction emits PnL, OrderRequested, PnL, Fill, PnL, Liquidation, and the PnL that actually
+  // realizes the loss is the fourth of those. Without the flag it is indistinguishable from a
+  // voluntary close, so "how much was lost to liquidations" cannot be asked.
+  //
+  // Empty on events that merely accompany one (the counterparty's own PnL, a spline's fill), since
+  // those are not that trader's position being closed.
+  bool Liquidation = 12;
+  bytes Liquidator = 13;
+}
+
+message PerpetualOrder {
+  // Order id in the venue's own order book — globally unique, and the key an order, its fills and
+  // its cancellation are joined by. A conditional order (stop-loss / trigger) is NOT in the book
+  // and has no id of its own until it fires; see ConditionalId. Where one appears on a conditional
+  // order it is a book order *related* to it, and which one depends on the event: the order the
+  // stop-loss created when it fired, or, for a trigger order, the resting order it is attached to.
+  // Empty when the chain named none — never eight zero bytes.
+  bytes Id = 1;
+  bytes ClientId = 2;        // caller's own id; empty when none was sent
+  // "limit", "market", "post-only" for book orders; "stop-loss" or "take-profit" for conditional
+  // ones. EMPTY on a conditional order's cancellation and execution: those events do not restate
+  // the side, so which of the two it was cannot be known from the event, and a fallback would be a
+  // definite-looking label that is wrong for every cancelled take-profit. Empty means unknown
+  // here, not absent — the row still identifies the order through ConditionalId. Use the event
+  // Type, not this field, to tell a conditional order from a book order.
+  string Type = 3;
+  uint64 ValidUntilSlot = 4; // 0 = good-till-cancel
+  string CancelReason = 5;   // "UserRequested", "Expired", "SelfTradeCancelProvide", ...
+  string RejectReason = 6;
+  bool ReduceOnly = 7;
+
+  // Identifies a conditional order (stop-loss, trigger) *within one trader and one market* — it is
+  // NOT unique on its own, and it is not an order-book id. Join on (Trader, Asset.Id,
+  // ConditionalId), which is how the venue itself addresses these orders: on Phoenix Eternal a
+  // stop-loss lives in a fixed-size slot array keyed by (trader, asset), so its cancellation
+  // identifies it by slot rather than by id and restates none of its parameters — side, size and
+  // prices are recovered by joining back to the placement.
+  //
+  // Present on conditional orders only, and opaque bytes like every other identifier here: the
+  // next venue may address a conditional order by a hash or a string rather than by a slot index.
+  // Emptiness is absence, and it is absence that is meant — slot 0 is a real slot and the most
+  // common one, which a plain uint64 could not express once ClickHouse flattened its `optional`
+  // away. Id stays empty on placement and cancellation for these, and carries the real book id
+  // once the order fires and enters the book.
+  bytes ConditionalId = 9;
+}
+
+message PerpetualAmount {
+  double Size = 1;      // signed, in asset units: 0.11 = long/bid, -0.11 = short/ask
+  double Filled = 2;
+  double Remaining = 3;
+  double MinToFill = 4;
+  double MinQuoteToFill = 5;
+
+  double Quote = 6;     // quote currency spent (buy) or received (sell) on a fill
+  double Fee = 7;       // taker fee; negative = maker rebate
+}
+
+message PerpetualPrice {
+  double Limit = 1;     // requested / resting price
+  double Execution = 2; // realized fill price
+  double Trigger = 3;   // stop-loss / take-profit trigger price
+  double Mark = 4;      // mark price of this transaction — denormalized so a PnL query needs no join
+}
+
+message PerpetualPosition {
+  double Size = 1;       // position after the event, signed (negative = short)
+  double SizeBefore = 2;
+  double EntryPrice = 3; // average entry, folded from the protocol's virtual-quote balance
+}
+
+// Market / oracle state, republished on every price move. Type is one of:
+//   "Prices"            best bid/ask, last trade, mark, spot and perp references
+//   "MarketSummary"     open interest and accumulated fees
+//   "FundingParameters" funding interval / cap changed
+//   "MarketStatus"      market opened, paused, closed
+//
+// PUBLISHED AS A SIDE EFFECT OF TRADING ONLY. The oracle (Hawkeye) republishes every market's
+// price on a timer — 97.5% of the program's instructions, and 12939 of 13434 price rows in a live
+// sample, every one of them in a transaction with no user activity. That feed is not published:
+// a trade already carries a fresh mark, and the oracle only adds a *continuous* mark for an idle
+// position. So a market that does not trade produces no rows here at all, and SequenceNumber is
+// per-asset but sparse.
+//
+// A market whose lot scaling is not known yet is likewise skipped rather than published with
+// zeros. A gap is recoverable; a fabricated Mark of 0 is not.
+message PerpetualPriceEvent {
+  string Type = 1;
+  // Same counter as PerpetualEvent.EventIndex, and no per-row time or slot for the same reason —
+  // see the note there.
+  uint32 EventIndex = 2;
+  uint32 InstructionIndex = 3;
+  uint64 SequenceNumber = 6; // per-asset sequence number — ordering and dedup key
+
+  PerpetualExchange Exchange = 7;
+  PerpetualAsset Asset = 8;
+
+  double BestBid = 10;
+  double BestAsk = 11;
+  double LastTrade = 12;
+  double Mark = 13;
+
+  // The market-summary half of this message — SpotIndex, OpenInterest, the fee schedule — moved
+  // to PerpetualMarketSummaryEvent, which the venue emits as its own event and which shares only
+  // Mark with this one. PerpIndex, FundingRate, FundingInterval, MaxFundingRate and Status went
+  // with it and were dropped: Eternal sends the first two as null on every row, and the last three
+  // came from admin events that are no longer published.
+}
+
+// PerpetualMarketSummaryEvent is the venue's periodic statement about a market as a whole, as
+// opposed to PerpetualPriceEvent which is the top of its book. The two are separate events on
+// chain and share only the mark price, so they are separate here too.
+//
+// No SequenceNumber: the summary carries none. Order it by the block and EventIndex like any other
+// event.
+message PerpetualMarketSummaryEvent {
+  string Type = 1;
+  // Same counter as PerpetualEvent.EventIndex, and no per-row time or slot for the same reason —
+  // see the note there.
+  uint32 EventIndex = 2;
+  uint32 InstructionIndex = 3;
+
+  PerpetualExchange Exchange = 4;
+  PerpetualAsset Asset = 5;
+
+  // The venue's own mark, repeated here so a summary reads on its own without joining to a price.
+  double Mark = 6;
+
+  // Spot price of the underlying *outside* this venue, which is what a perpetual is marked
+  // against. Phoenix Eternal calls it spotPrice on the summary and exchangeSpotPrice on the price
+  // update, where it sends null; other venues expose it as the oracle price.
+  //
+  // Not named Index: flattened into ClickHouse that would collide with MarketSummary_Index, the
+  // row's position within its transaction.
+  double SpotIndex = 7;
+
+  double OpenInterest = 8;
+
+  // Fees the market has accumulated, not a rate.
+  double MakerFees = 9;
+  double TakerFees = 10;
+}
