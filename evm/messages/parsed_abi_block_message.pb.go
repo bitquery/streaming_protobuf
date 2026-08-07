@@ -1531,17 +1531,18 @@ func (x *MinerReward) GetUncleInUSD() float32 {
 }
 
 type ParsedAbiBlockMessage struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Chain         *Chain                  `protobuf:"bytes,1,opt,name=Chain,proto3" json:"Chain,omitempty"`
-	Header        *BlockHeader            `protobuf:"bytes,2,opt,name=Header,proto3" json:"Header,omitempty"`
-	Uncles        []*BlockHeader          `protobuf:"bytes,3,rep,name=Uncles,proto3" json:"Uncles,omitempty"`
-	Reward        *MinerReward            `protobuf:"bytes,4,opt,name=Reward,proto3" json:"Reward,omitempty"`
-	UncleRewards  []*MinerReward          `protobuf:"bytes,5,rep,name=UncleRewards,proto3" json:"UncleRewards,omitempty"`
-	Transactions  []*ParsedAbiTransaction `protobuf:"bytes,6,rep,name=Transactions,proto3" json:"Transactions,omitempty"`
-	L1Header      *BlockHeader            `protobuf:"bytes,7,opt,name=L1Header,proto3,oneof" json:"L1Header,omitempty"`
-	ExtraRewards  []*MinerReward          `protobuf:"bytes,8,rep,name=ExtraRewards,proto3" json:"ExtraRewards,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState  `protogen:"open.v1"`
+	Chain               *Chain                  `protobuf:"bytes,1,opt,name=Chain,proto3" json:"Chain,omitempty"`
+	Header              *BlockHeader            `protobuf:"bytes,2,opt,name=Header,proto3" json:"Header,omitempty"`
+	Uncles              []*BlockHeader          `protobuf:"bytes,3,rep,name=Uncles,proto3" json:"Uncles,omitempty"`
+	Reward              *MinerReward            `protobuf:"bytes,4,opt,name=Reward,proto3" json:"Reward,omitempty"`
+	UncleRewards        []*MinerReward          `protobuf:"bytes,5,rep,name=UncleRewards,proto3" json:"UncleRewards,omitempty"`
+	Transactions        []*ParsedAbiTransaction `protobuf:"bytes,6,rep,name=Transactions,proto3" json:"Transactions,omitempty"`
+	L1Header            *BlockHeader            `protobuf:"bytes,7,opt,name=L1Header,proto3,oneof" json:"L1Header,omitempty"`
+	ExtraRewards        []*MinerReward          `protobuf:"bytes,8,rep,name=ExtraRewards,proto3" json:"ExtraRewards,omitempty"`
+	Header_BaseFeeInUSD float32                 `protobuf:"fixed32,9,opt,name=Header_BaseFeeInUSD,json=HeaderBaseFeeInUSD,proto3" json:"Header_BaseFeeInUSD,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ParsedAbiBlockMessage) Reset() {
@@ -1628,6 +1629,13 @@ func (x *ParsedAbiBlockMessage) GetExtraRewards() []*MinerReward {
 		return x.ExtraRewards
 	}
 	return nil
+}
+
+func (x *ParsedAbiBlockMessage) GetHeader_BaseFeeInUSD() float32 {
+	if x != nil {
+		return x.Header_BaseFeeInUSD
+	}
+	return 0
 }
 
 var File_evm_parsed_abi_block_message_proto protoreflect.FileDescriptor
@@ -1787,7 +1795,7 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\n" +
 	"UncleInUSD\x18\r \x01(\x02R\n" +
 	"UncleInUSDB\x0e\n" +
-	"\f_Beneficiary\"\xea\x03\n" +
+	"\f_Beneficiary\"\x9b\x04\n" +
 	"\x15ParsedAbiBlockMessage\x12)\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x13.evm_messages.ChainR\x05Chain\x121\n" +
 	"\x06Header\x18\x02 \x01(\v2\x19.evm_messages.BlockHeaderR\x06Header\x121\n" +
@@ -1796,7 +1804,8 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\fUncleRewards\x18\x05 \x03(\v2\x19.evm_messages.MinerRewardR\fUncleRewards\x12F\n" +
 	"\fTransactions\x18\x06 \x03(\v2\".evm_messages.ParsedAbiTransactionR\fTransactions\x12:\n" +
 	"\bL1Header\x18\a \x01(\v2\x19.evm_messages.BlockHeaderH\x00R\bL1Header\x88\x01\x01\x12=\n" +
-	"\fExtraRewards\x18\b \x03(\v2\x19.evm_messages.MinerRewardR\fExtraRewardsB\v\n" +
+	"\fExtraRewards\x18\b \x03(\v2\x19.evm_messages.MinerRewardR\fExtraRewards\x12/\n" +
+	"\x13Header_BaseFeeInUSD\x18\t \x01(\x02R\x12HeaderBaseFeeInUSDB\v\n" +
 	"\t_L1Headerb\x06proto3"
 
 var (
