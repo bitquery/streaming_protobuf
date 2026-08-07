@@ -1243,19 +1243,23 @@ func (x *ParsedAbiTransactionStatus) GetFaultError() string {
 }
 
 type ParsedAbiTransaction struct {
-	state                protoimpl.MessageState      `protogen:"open.v1"`
-	TransactionHeader    *TransactionHeader          `protobuf:"bytes,1,opt,name=TransactionHeader,proto3" json:"TransactionHeader,omitempty"`
-	ReceiptHeader        *ReceiptHeader              `protobuf:"bytes,2,opt,name=ReceiptHeader,proto3" json:"ReceiptHeader,omitempty"`
-	TransactionFee       *TransactionFee             `protobuf:"bytes,3,opt,name=TransactionFee,proto3" json:"TransactionFee,omitempty"`
-	TransactionStatus    *ParsedAbiTransactionStatus `protobuf:"bytes,4,opt,name=TransactionStatus,proto3" json:"TransactionStatus,omitempty"`
-	Calls                []*ParsedAbiCall            `protobuf:"bytes,5,rep,name=Calls,proto3" json:"Calls,omitempty"`
-	Signature            *Signature                  `protobuf:"bytes,6,opt,name=Signature,proto3" json:"Signature,omitempty"`
-	TokenBalanceUpdates  []*TokenBalanceUpdate       `protobuf:"bytes,7,rep,name=TokenBalanceUpdates,proto3" json:"TokenBalanceUpdates,omitempty"`
-	NativeBalanceUpdates []*NativeBalanceUpdate      `protobuf:"bytes,8,rep,name=NativeBalanceUpdates,proto3" json:"NativeBalanceUpdates,omitempty"`
-	StorageChanges       []*StorageChange            `protobuf:"bytes,9,rep,name=StorageChanges,proto3" json:"StorageChanges,omitempty"`
-	TransactionFeeInUSD  float32                     `protobuf:"fixed32,10,opt,name=TransactionFeeInUSD,proto3" json:"TransactionFeeInUSD,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	state                            protoimpl.MessageState      `protogen:"open.v1"`
+	TransactionHeader                *TransactionHeader          `protobuf:"bytes,1,opt,name=TransactionHeader,proto3" json:"TransactionHeader,omitempty"`
+	ReceiptHeader                    *ReceiptHeader              `protobuf:"bytes,2,opt,name=ReceiptHeader,proto3" json:"ReceiptHeader,omitempty"`
+	TransactionFee                   *TransactionFee             `protobuf:"bytes,3,opt,name=TransactionFee,proto3" json:"TransactionFee,omitempty"`
+	TransactionStatus                *ParsedAbiTransactionStatus `protobuf:"bytes,4,opt,name=TransactionStatus,proto3" json:"TransactionStatus,omitempty"`
+	Calls                            []*ParsedAbiCall            `protobuf:"bytes,5,rep,name=Calls,proto3" json:"Calls,omitempty"`
+	Signature                        *Signature                  `protobuf:"bytes,6,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	TokenBalanceUpdates              []*TokenBalanceUpdate       `protobuf:"bytes,7,rep,name=TokenBalanceUpdates,proto3" json:"TokenBalanceUpdates,omitempty"`
+	NativeBalanceUpdates             []*NativeBalanceUpdate      `protobuf:"bytes,8,rep,name=NativeBalanceUpdates,proto3" json:"NativeBalanceUpdates,omitempty"`
+	StorageChanges                   []*StorageChange            `protobuf:"bytes,9,rep,name=StorageChanges,proto3" json:"StorageChanges,omitempty"`
+	TransactionHeader_CostInUSD      float32                     `protobuf:"fixed32,10,opt,name=TransactionHeader_CostInUSD,json=TransactionHeaderCostInUSD,proto3" json:"TransactionHeader_CostInUSD,omitempty"`
+	TransactionHeader_ValueInUSD     float32                     `protobuf:"fixed32,11,opt,name=TransactionHeader_ValueInUSD,json=TransactionHeaderValueInUSD,proto3" json:"TransactionHeader_ValueInUSD,omitempty"`
+	TransactionHeader_GasFeeCapInUSD float32                     `protobuf:"fixed32,12,opt,name=TransactionHeader_GasFeeCapInUSD,json=TransactionHeaderGasFeeCapInUSD,proto3" json:"TransactionHeader_GasFeeCapInUSD,omitempty"`
+	TransactionHeader_GasPriceInUSD  float32                     `protobuf:"fixed32,13,opt,name=TransactionHeader_GasPriceInUSD,json=TransactionHeaderGasPriceInUSD,proto3" json:"TransactionHeader_GasPriceInUSD,omitempty"`
+	TransactionHeader_GasTipCapInUSD float32                     `protobuf:"fixed32,14,opt,name=TransactionHeader_GasTipCapInUSD,json=TransactionHeaderGasTipCapInUSD,proto3" json:"TransactionHeader_GasTipCapInUSD,omitempty"`
+	unknownFields                    protoimpl.UnknownFields
+	sizeCache                        protoimpl.SizeCache
 }
 
 func (x *ParsedAbiTransaction) Reset() {
@@ -1351,9 +1355,37 @@ func (x *ParsedAbiTransaction) GetStorageChanges() []*StorageChange {
 	return nil
 }
 
-func (x *ParsedAbiTransaction) GetTransactionFeeInUSD() float32 {
+func (x *ParsedAbiTransaction) GetTransactionHeader_CostInUSD() float32 {
 	if x != nil {
-		return x.TransactionFeeInUSD
+		return x.TransactionHeader_CostInUSD
+	}
+	return 0
+}
+
+func (x *ParsedAbiTransaction) GetTransactionHeader_ValueInUSD() float32 {
+	if x != nil {
+		return x.TransactionHeader_ValueInUSD
+	}
+	return 0
+}
+
+func (x *ParsedAbiTransaction) GetTransactionHeader_GasFeeCapInUSD() float32 {
+	if x != nil {
+		return x.TransactionHeader_GasFeeCapInUSD
+	}
+	return 0
+}
+
+func (x *ParsedAbiTransaction) GetTransactionHeader_GasPriceInUSD() float32 {
+	if x != nil {
+		return x.TransactionHeader_GasPriceInUSD
+	}
+	return 0
+}
+
+func (x *ParsedAbiTransaction) GetTransactionHeader_GasTipCapInUSD() float32 {
+	if x != nil {
+		return x.TransactionHeader_GasTipCapInUSD
 	}
 	return 0
 }
@@ -1719,7 +1751,7 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\bEndError\x18\x02 \x01(\tR\bEndError\x12\x1e\n" +
 	"\n" +
 	"FaultError\x18\x03 \x01(\tR\n" +
-	"FaultError\"\xd2\x05\n" +
+	"FaultError\"\x83\b\n" +
 	"\x14ParsedAbiTransaction\x12M\n" +
 	"\x11TransactionHeader\x18\x01 \x01(\v2\x1f.evm_messages.TransactionHeaderR\x11TransactionHeader\x12A\n" +
 	"\rReceiptHeader\x18\x02 \x01(\v2\x1b.evm_messages.ReceiptHeaderR\rReceiptHeader\x12D\n" +
@@ -1729,9 +1761,13 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\tSignature\x18\x06 \x01(\v2\x17.evm_messages.SignatureR\tSignature\x12R\n" +
 	"\x13TokenBalanceUpdates\x18\a \x03(\v2 .evm_messages.TokenBalanceUpdateR\x13TokenBalanceUpdates\x12U\n" +
 	"\x14NativeBalanceUpdates\x18\b \x03(\v2!.evm_messages.NativeBalanceUpdateR\x14NativeBalanceUpdates\x12C\n" +
-	"\x0eStorageChanges\x18\t \x03(\v2\x1b.evm_messages.StorageChangeR\x0eStorageChanges\x120\n" +
-	"\x13TransactionFeeInUSD\x18\n" +
-	" \x01(\x02R\x13TransactionFeeInUSD\"\xa8\x03\n" +
+	"\x0eStorageChanges\x18\t \x03(\v2\x1b.evm_messages.StorageChangeR\x0eStorageChanges\x12?\n" +
+	"\x1bTransactionHeader_CostInUSD\x18\n" +
+	" \x01(\x02R\x1aTransactionHeaderCostInUSD\x12A\n" +
+	"\x1cTransactionHeader_ValueInUSD\x18\v \x01(\x02R\x1bTransactionHeaderValueInUSD\x12I\n" +
+	" TransactionHeader_GasFeeCapInUSD\x18\f \x01(\x02R\x1fTransactionHeaderGasFeeCapInUSD\x12G\n" +
+	"\x1fTransactionHeader_GasPriceInUSD\x18\r \x01(\x02R\x1eTransactionHeaderGasPriceInUSD\x12I\n" +
+	" TransactionHeader_GasTipCapInUSD\x18\x0e \x01(\x02R\x1fTransactionHeaderGasTipCapInUSD\"\xa8\x03\n" +
 	"\vMinerReward\x12\x14\n" +
 	"\x05Total\x18\x01 \x01(\fR\x05Total\x12\x16\n" +
 	"\x06Static\x18\x02 \x01(\fR\x06Static\x12\x18\n" +
