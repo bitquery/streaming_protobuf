@@ -191,5 +191,6 @@ message ParsedAbiBlockMessage {
   repeated ParsedAbiTransaction Transactions = 6;
   optional BlockHeader L1Header = 7;
   repeated MinerReward ExtraRewards = 8;
+  float Header_BaseFeeInUSD = 9;
 }
 
