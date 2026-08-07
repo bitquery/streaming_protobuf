@@ -109,6 +109,8 @@ message ParsedAbiCallHeader {
   bool Reverted = 21;
 
   ParsedAbiSignature Signature = 22;
+
+  float ValueInUSD = 23;
 }
 
 message ParsedAbiCall {

@@ -770,6 +770,7 @@ type ParsedAbiCallHeader struct {
 	Success       bool                   `protobuf:"varint,20,opt,name=Success,proto3" json:"Success,omitempty"`
 	Reverted      bool                   `protobuf:"varint,21,opt,name=Reverted,proto3" json:"Reverted,omitempty"`
 	Signature     *ParsedAbiSignature    `protobuf:"bytes,22,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	ValueInUSD    float32                `protobuf:"fixed32,23,opt,name=ValueInUSD,proto3" json:"ValueInUSD,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -956,6 +957,13 @@ func (x *ParsedAbiCallHeader) GetSignature() *ParsedAbiSignature {
 		return x.Signature
 	}
 	return nil
+}
+
+func (x *ParsedAbiCallHeader) GetValueInUSD() float32 {
+	if x != nil {
+		return x.ValueInUSD
+	}
+	return 0
 }
 
 type ParsedAbiCall struct {
@@ -1653,7 +1661,7 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\x02Pc\x18\x04 \x01(\x04R\x02Pc\x12\x18\n" +
 	"\aAddress\x18\x05 \x01(\fR\aAddress\x12\x1a\n" +
 	"\bLocation\x18\x06 \x01(\fR\bLocation\x12\x14\n" +
-	"\x05Value\x18\a \x01(\fR\x05Value\"\x8b\x05\n" +
+	"\x05Value\x18\a \x01(\fR\x05Value\"\xab\x05\n" +
 	"\x13ParsedAbiCallHeader\x12\x14\n" +
 	"\x05Index\x18\x01 \x01(\rR\x05Index\x12\x14\n" +
 	"\x05Depth\x18\x02 \x01(\rR\x05Depth\x12\x1e\n" +
@@ -1679,7 +1687,10 @@ const file_evm_parsed_abi_block_message_proto_rawDesc = "" +
 	"\tDelegated\x18\x13 \x01(\bR\tDelegated\x12\x18\n" +
 	"\aSuccess\x18\x14 \x01(\bR\aSuccess\x12\x1a\n" +
 	"\bReverted\x18\x15 \x01(\bR\bReverted\x12>\n" +
-	"\tSignature\x18\x16 \x01(\v2 .evm_messages.ParsedAbiSignatureR\tSignature\"\xbd\x02\n" +
+	"\tSignature\x18\x16 \x01(\v2 .evm_messages.ParsedAbiSignatureR\tSignature\x12\x1e\n" +
+	"\n" +
+	"ValueInUSD\x18\x17 \x01(\x02R\n" +
+	"ValueInUSD\"\xbd\x02\n" +
 	"\rParsedAbiCall\x129\n" +
 	"\x06Header\x18\x01 \x01(\v2!.evm_messages.ParsedAbiCallHeaderR\x06Header\x12:\n" +
 	"\tArguments\x18\x02 \x03(\v2\x1c.evm_messages.ParsedArgumentR\tArguments\x12@\n" +

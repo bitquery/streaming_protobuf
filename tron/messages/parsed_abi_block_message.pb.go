@@ -83,17 +83,20 @@ func (x *ContractInfo) GetTypeUrl() string {
 }
 
 type ParsedAbiTransaction struct {
-	state             protoimpl.MessageState               `protogen:"open.v1"`
-	TransactionHeader *TransactionHeader                   `protobuf:"bytes,1,opt,name=TransactionHeader,proto3" json:"TransactionHeader,omitempty"`
-	Receipt           *Receipt                             `protobuf:"bytes,2,opt,name=Receipt,proto3" json:"Receipt,omitempty"`
-	TransactionStatus *messages.ParsedAbiTransactionStatus `protobuf:"bytes,3,opt,name=TransactionStatus,proto3" json:"TransactionStatus,omitempty"`
-	TransactionResult *TransactionResult                   `protobuf:"bytes,4,opt,name=TransactionResult,proto3" json:"TransactionResult,omitempty"`
-	ContractInfo      *ContractInfo                        `protobuf:"bytes,5,opt,name=ContractInfo,proto3" json:"ContractInfo,omitempty"`
-	Calls             []*messages.ParsedAbiCall            `protobuf:"bytes,6,rep,name=Calls,proto3" json:"Calls,omitempty"`
-	RewardWithdraw    *RewardWithdraw                      `protobuf:"bytes,7,opt,name=RewardWithdraw,proto3" json:"RewardWithdraw,omitempty"`
-	FeeInUSD          float32                              `protobuf:"fixed32,8,opt,name=FeeInUSD,proto3" json:"FeeInUSD,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                           protoimpl.MessageState               `protogen:"open.v1"`
+	TransactionHeader               *TransactionHeader                   `protobuf:"bytes,1,opt,name=TransactionHeader,proto3" json:"TransactionHeader,omitempty"`
+	Receipt                         *Receipt                             `protobuf:"bytes,2,opt,name=Receipt,proto3" json:"Receipt,omitempty"`
+	TransactionStatus               *messages.ParsedAbiTransactionStatus `protobuf:"bytes,3,opt,name=TransactionStatus,proto3" json:"TransactionStatus,omitempty"`
+	TransactionResult               *TransactionResult                   `protobuf:"bytes,4,opt,name=TransactionResult,proto3" json:"TransactionResult,omitempty"`
+	ContractInfo                    *ContractInfo                        `protobuf:"bytes,5,opt,name=ContractInfo,proto3" json:"ContractInfo,omitempty"`
+	Calls                           []*messages.ParsedAbiCall            `protobuf:"bytes,6,rep,name=Calls,proto3" json:"Calls,omitempty"`
+	RewardWithdraw                  *RewardWithdraw                      `protobuf:"bytes,7,opt,name=RewardWithdraw,proto3" json:"RewardWithdraw,omitempty"`
+	TransactionHeader_FeeInUSD      float32                              `protobuf:"fixed32,8,opt,name=TransactionHeader_FeeInUSD,json=TransactionHeaderFeeInUSD,proto3" json:"TransactionHeader_FeeInUSD,omitempty"`
+	TransactionHeader_FeeLimitInUSD float32                              `protobuf:"fixed32,9,opt,name=TransactionHeader_FeeLimitInUSD,json=TransactionHeaderFeeLimitInUSD,proto3" json:"TransactionHeader_FeeLimitInUSD,omitempty"`
+	Receipt_NetFeeInUSD             float32                              `protobuf:"fixed32,10,opt,name=Receipt_NetFeeInUSD,json=ReceiptNetFeeInUSD,proto3" json:"Receipt_NetFeeInUSD,omitempty"`
+	RewardWithdraw_AmountInUSD      float32                              `protobuf:"fixed32,11,opt,name=RewardWithdraw_AmountInUSD,json=RewardWithdrawAmountInUSD,proto3" json:"RewardWithdraw_AmountInUSD,omitempty"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *ParsedAbiTransaction) Reset() {
@@ -175,9 +178,30 @@ func (x *ParsedAbiTransaction) GetRewardWithdraw() *RewardWithdraw {
 	return nil
 }
 
-func (x *ParsedAbiTransaction) GetFeeInUSD() float32 {
+func (x *ParsedAbiTransaction) GetTransactionHeader_FeeInUSD() float32 {
 	if x != nil {
-		return x.FeeInUSD
+		return x.TransactionHeader_FeeInUSD
+	}
+	return 0
+}
+
+func (x *ParsedAbiTransaction) GetTransactionHeader_FeeLimitInUSD() float32 {
+	if x != nil {
+		return x.TransactionHeader_FeeLimitInUSD
+	}
+	return 0
+}
+
+func (x *ParsedAbiTransaction) GetReceipt_NetFeeInUSD() float32 {
+	if x != nil {
+		return x.Receipt_NetFeeInUSD
+	}
+	return 0
+}
+
+func (x *ParsedAbiTransaction) GetRewardWithdraw_AmountInUSD() float32 {
+	if x != nil {
+		return x.RewardWithdraw_AmountInUSD
 	}
 	return 0
 }
@@ -258,7 +282,7 @@ const file_tron_parsed_abi_block_message_proto_rawDesc = "" +
 	"\fContractInfo\x12\x18\n" +
 	"\aAddress\x18\x01 \x01(\fR\aAddress\x12\x12\n" +
 	"\x04Type\x18\x02 \x01(\tR\x04Type\x12\x18\n" +
-	"\aTypeUrl\x18\x03 \x01(\tR\aTypeUrl\"\x97\x04\n" +
+	"\aTypeUrl\x18\x03 \x01(\tR\aTypeUrl\"\xf3\x05\n" +
 	"\x14ParsedAbiTransaction\x12N\n" +
 	"\x11TransactionHeader\x18\x01 \x01(\v2 .tron_messages.TransactionHeaderR\x11TransactionHeader\x120\n" +
 	"\aReceipt\x18\x02 \x01(\v2\x16.tron_messages.ReceiptR\aReceipt\x12V\n" +
@@ -266,8 +290,12 @@ const file_tron_parsed_abi_block_message_proto_rawDesc = "" +
 	"\x11TransactionResult\x18\x04 \x01(\v2 .tron_messages.TransactionResultR\x11TransactionResult\x12?\n" +
 	"\fContractInfo\x18\x05 \x01(\v2\x1b.tron_messages.ContractInfoR\fContractInfo\x121\n" +
 	"\x05Calls\x18\x06 \x03(\v2\x1b.evm_messages.ParsedAbiCallR\x05Calls\x12E\n" +
-	"\x0eRewardWithdraw\x18\a \x01(\v2\x1d.tron_messages.RewardWithdrawR\x0eRewardWithdraw\x12\x1a\n" +
-	"\bFeeInUSD\x18\b \x01(\x02R\bFeeInUSD\"\xf2\x01\n" +
+	"\x0eRewardWithdraw\x18\a \x01(\v2\x1d.tron_messages.RewardWithdrawR\x0eRewardWithdraw\x12=\n" +
+	"\x1aTransactionHeader_FeeInUSD\x18\b \x01(\x02R\x19TransactionHeaderFeeInUSD\x12G\n" +
+	"\x1fTransactionHeader_FeeLimitInUSD\x18\t \x01(\x02R\x1eTransactionHeaderFeeLimitInUSD\x12/\n" +
+	"\x13Receipt_NetFeeInUSD\x18\n" +
+	" \x01(\x02R\x12ReceiptNetFeeInUSD\x12=\n" +
+	"\x1aRewardWithdraw_AmountInUSD\x18\v \x01(\x02R\x19RewardWithdrawAmountInUSD\"\xf2\x01\n" +
 	"\x15ParsedAbiBlockMessage\x12*\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x14.tron_messages.ChainR\x05Chain\x122\n" +
 	"\x06Header\x18\x02 \x01(\v2\x1a.tron_messages.BlockHeaderR\x06Header\x120\n" +

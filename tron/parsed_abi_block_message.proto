@@ -19,7 +19,10 @@ message ParsedAbiTransaction {
   repeated evm_messages.ParsedAbiCall Calls = 6;
   tron_messages.RewardWithdraw RewardWithdraw = 7;
 
-  float FeeInUSD = 8;
+  float TransactionHeader_FeeInUSD = 8;
+  float TransactionHeader_FeeLimitInUSD = 9;
+  float Receipt_NetFeeInUSD = 10;
+  float RewardWithdraw_AmountInUSD = 11;
 }
 
 message ParsedAbiBlockMessage {
