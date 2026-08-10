@@ -1,0 +1,205 @@
+syntax = "proto3";
+package solana_messages;
+
+import "solana/block_message.proto";
+import "solana/token_block_message.proto";
+import "solana/parsed_idl_block_message.proto";
+
+// Solana prediction-markets stream, mirroring evm/prediction_market_block_message.proto but
+// adapted to Solana types and to World (world.xyz) on-chain data.
+//
+// World's three-program stack (see streaming_processor_solana/_docs/WORLD_XYZ.md):
+//   DFlow  DF1ow4tspfHX9JwWJsAb9epbkA8hmpSEAtxXy1V27QBH  aggregator/router (has IDL, emits SwapEvent)
+//   Janus  JanusXpm3gsW3c9ErNoUgHppL8dGLvZKB7uekkJEYFP   AMM / user trade entry (NOT Anchor, 1-byte tag)
+//   prediCt prediCtPZCttYMvm2W3PtxmMxLmT1dtN7riU6Cxh6tM   core: split/merge/redeem against CASH collateral
+// Collateral: CASHx9KJUStyftLFWGvEVf59SGeG9sh5FfcnZMVPCASH (Token-2022, 6 decimals).
+//
+// Solana adaptations vs the EVM proto:
+//   * no Chain / L1Header (Solana block messages start at BlockHeader);
+//   * events are grouped per transaction (ParsedPredictionTransaction), following the Solana DEX
+//     stream (DexParsedBlockMessage/ParsedDexTransaction) instead of the EVM flat per-event lists:
+//     transaction context (Signature/Status/Header) is stored once per transaction, and
+//     ParsedPredictionTransaction.Index replaces the EVM per-event TransactionIndex;
+//   * addresses/ids are bytes (base58 off-wire); token amounts are uint64 base units (not uint256 bytes);
+//   * events locate instructions via PredictionEvent.InstructionIndex/InnerInstructionIndex
+//     (EVM CallIndex/LogIndex analogues) + optional ParsedIdlInstruction;
+//   * *InUsd floats added for parity with the Solana DEX stream's USD enrichment;
+//   * fields marked OFF-CHAIN (question title/image, group title/description, rules) exist only in
+//     the market metadata JSON at https://m.world.xyz/<outcome_mint> — they are empty in the raw
+//     on-chain stream and are meant for a later enrichment step (same pattern as TokenParserService
+//     fetching Token-2022 metadata JSON by uri);
+//   * like the EVM proto, settlement kinds carry no enum — they are distinguished by
+//     PredictionEvent.Type ("Split", "Merge", "RedeemOutcome", "RedeemOutcomeForUser",
+//     "BurnWorthlessOutcome").
+
+message PredictionMarketBlockMessage {
+  BlockHeader Header = 1;
+  repeated ParsedPredictionTransaction Transactions = 2;
+}
+
+message ParsedPredictionTransaction {
+  uint32 Index = 1; // transaction index in the block (EVM TransactionIndex analogue)
+  bytes Signature = 2;
+  TransactionStatus Status = 3;
+  TransactionHeader Header = 4;
+
+  repeated PredictionTradeEvent Trades = 5;                // Janus 0x07 / DFlow SwapEvent (amm == Janus)
+  repeated PredictionManagementEvent ManagementEvents = 6; // initialize_market / determine_outcome / close_market / update_metadata
+  repeated PredictionSettlementEvent SettlementEvents = 7; // split / merge / redeem_outcome(_for_user) / burn_worthless_outcome
+}
+
+message PredictionMarketplaceInfo {
+  bytes SmartContract = 1;   // core protocol program: prediCt (prediCtPZCttYMvm2W3PtxmMxLmT1dtN7riU6Cxh6tM)
+
+  string ProtocolName = 2;   // "World"
+  string ProtocolFamily = 3; // "prediCt"
+  string ProtocolVersion = 4;
+
+  // World routes user trades DFlow -> Janus -> prediCt (CPI). These replace the EVM Delegated/DelegatedTo fields.
+  bytes Router = 5;          // Janus AMM (JanusXpm3gsW3c9ErNoUgHppL8dGLvZKB7uekkJEYFP)
+  bytes Aggregator = 6;      // DFlow (DF1ow4tspfHX9JwWJsAb9epbkA8hmpSEAtxXy1V27QBH)
+  bytes SettlementMint = 7;  // CASH collateral mint (Token-2022)
+}
+
+// A World "market" (market-state PDA) owns exactly two outcome mints (e.g. "BTC Up" / "BTC Down") and
+// is settled against CASH. Mapping to the EVM Question/Condition/Outcome hierarchy:
+//   QuestionInfo  ~ the off-chain market question/metadata at https://m.world.xyz/<outcome_mint>
+//   ConditionInfo ~ the on-chain market-state PDA (oracle + the outcome set)
+//   OutcomeInfo   ~ one Token-2022 outcome mint
+
+// initialize_market ("Created") / determine_outcome ("Resolved") / close_market ("Closed") / update_metadata ("MetadataUpdated")
+message PredictionManagementEvent {
+  PredictionEvent Event = 1;
+  PredictionInfo Prediction = 2;
+  string Description = 3; // OFF-CHAIN: market rules/description from m.world.xyz
+
+  GroupInfo Group = 4;
+
+  optional PredictionResolution Resolution = 5; // set when Event.Type == "Resolved" (determine_outcome)
+  optional ParsedIdlInstruction Instruction = 6;
+}
+
+// World has no on-chain market grouping (the EVM analogue is Polymarket's off-chain "event").
+// The Chainlink feed id is the on-chain series key: all markets of one series (e.g. the
+// BTC/USD 15-min windows) share it.
+message GroupInfo {
+  bytes Id = 1;           // Chainlink Data Streams feed id (32 bytes) — on-chain series key
+  string Title = 2;       // OFF-CHAIN: series title from m.world.xyz
+  string Description = 3; // OFF-CHAIN: series description from m.world.xyz
+}
+
+// Resolution payload from determine_outcome (VERIFIED: payout_bps u16, 0 or 10000).
+message PredictionResolution {
+  uint32 PayoutNumerator = 1;             // determine_outcome payout_bps (0 or 10000)
+  uint32 PayoutDenominator = 2;           // 10000
+  optional uint32 WinningOutcomeIndex = 3; // 0 = outcome A, 1 = outcome B (A/B orientation INFERRED — verify vs redemptions)
+  optional bytes WinningOutcomeMint = 4;   // resolved from OutcomeRedeemed.outcome_mint when available
+}
+
+// Settlement kind lives in Event.Type (no enum, matching the EVM proto):
+//   "Split"                 lock CASH -> mint N of BOTH outcomes
+//   "Merge"                 burn N of BOTH outcomes -> release CASH
+//   "RedeemOutcome"         redeem winning outcome 1:1 for CASH
+//   "RedeemOutcomeForUser"  ops-signed redeem on behalf of the user
+//   "BurnWorthlessOutcome"  burn worthless losing outcome
+message PredictionSettlementEvent {
+  PredictionEvent Event = 1;
+  PredictionInfo Prediction = 2;
+
+  repeated int32 IndexSets = 3; // outcome indexes touched: [0,1] split/merge both, [0] or [1] for a single-side redeem/burn
+
+  bytes Holder = 4; // user wallet (authority); for Janus-routed split this is the Janus vault PDA
+  OutcomeSettlement Amounts = 5;
+
+  optional ParsedIdlInstruction Instruction = 6;
+}
+
+message OutcomeSettlement {
+  uint64 Amount = 1;           // outcome-token amount (6 decimals)
+  uint64 CollateralAmount = 2; // CASH amount (6 decimals)
+
+  float AmountInUsd = 3;
+  float CollateralAmountInUsd = 4;
+}
+
+message PredictionTradeEvent {
+  PredictionEvent Event = 1;
+  PredictionInfo Prediction = 2;
+
+  OutcomeTrade OutcomeTrade = 3;
+
+  optional ParsedIdlInstruction Instruction = 4; // decoded DFlow SwapEvent when available
+}
+
+message OutcomeTrade {
+  bytes Seller = 1; // counterparty releasing the outcome token (vault/LP on a buy)
+  bytes Buyer = 2;  // taker; the user wallet on a buy
+
+  uint64 Amount = 3;           // outcome-token amount (6 decimals)
+  uint64 CollateralAmount = 4; // CASH spent (buy) or received (sell), 6 decimals
+
+  bool IsOutcomeBuy = 5; // true = CASH in -> outcome out (Janus is_sell = 0)
+
+  PredictionFee Fee = 6;
+  bytes OrderId = 7; // World is an AMM (no CLOB order id); left empty, kept for structural parity
+
+  float AmountInUsd = 8;
+  float CollateralAmountInUsd = 9;
+
+  optional uint32 OutcomeIndex = 10; // Janus 0x07 outcome_side: 0 = outcome A, 1 = outcome B
+}
+
+message PredictionFee {
+  uint64 Amount = 1;      // fee in the trade mint (CASH), 6 decimals
+  Currency Currency = 2;
+  float AmountInUsd = 3;
+  bytes Recipient = 4;    // owner of the fee CASH account (Janus fee accounts, owner 91Ss2MgDrn3xFHVeQnbV3qfr2sLxuXaBdK73AcJe2sEQ)
+}
+
+message PredictionInfo {
+  PredictionMarketplaceInfo Marketplace = 1;
+  QuestionInfo Question = 2;
+  ConditionInfo Condition = 3;
+  optional OutcomeInfo Outcome = 4;
+
+  optional Currency OutcomeToken = 5;    // traded outcome token (TRADE) or winning outcome token (RESOLVED); Token-2022 mint
+  optional Currency CollateralToken = 6; // CASH
+}
+
+message PredictionEvent {
+  bytes SmartContract = 1;          // emitting program (prediCt for split/merge/redeem/manage; Janus for raw trade)
+  uint32 InstructionIndex = 2;      // top-level instruction index (EVM CallIndex analogue)
+  uint32 InnerInstructionIndex = 3; // inner-instruction index (EVM LogIndex analogue)
+  string Type = 4;                  // "Split","Merge","RedeemOutcome","InitializeMarket","DetermineOutcome","CloseMarket","OutcomeTrade",...
+}
+
+message QuestionInfo {
+  bytes Id = 1;        // market metadata id (e.g. market-state PDA)
+  string MarketId = 2; // https://m.world.xyz/<outcome_mint> path, or market-state PDA (base58)
+
+  string Title = 3;    // OFF-CHAIN: curated question title from m.world.xyz (on-chain has only outcome names, e.g. "BTC Up")
+  uint64 CreatedAt = 4;
+
+  string ResolutionSource = 5; // Chainlink Data Streams feed (BTC/USD id 0x00039d9e45394f473ab1f050a1b963e6b05351e52d71e507509ada0c95ed75b8)
+  string Image = 6;    // OFF-CHAIN: image URL from m.world.xyz
+
+  bytes GroupId = 7;   // Chainlink Data Streams feed id — see GroupInfo.Id
+
+  optional uint64 WindowStartMs = 8; // World: market window start (unix ms) from initialize_market
+  optional uint64 WindowEndMs = 9;   // World: market window end (unix ms); 15-min markets => end - start == 900000
+}
+
+message ConditionInfo {
+  bytes Id = 1;         // market-state PDA
+  bytes QuestionId = 2;
+  repeated OutcomeInfo Outcomes = 3;
+
+  bytes Oracle = 4;             // Chainlink Data Streams feed id (32 bytes)
+  optional uint32 OracleType = 5; // 1 = Chainlink Data Streams
+}
+
+message OutcomeInfo {
+  optional bytes Id = 1; // outcome-token mint (Token-2022)
+  uint32 Index = 2;      // index within the market: 0 = A, 1 = B
+  string Label = 3;      // "BTC Up", "BTC Down", ...
+}

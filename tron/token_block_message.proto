@@ -17,6 +17,8 @@ message BalanceUpdate {
 
   uint32 Index = 7;
   string Type = 8;
+
+  float AmountInUSD = 9;
 }
 
 message TokenBlockMessage {

@@ -13,7 +13,7 @@ message TransactionAttributes {
   solana_messages.TransactionStatus Status = 3;
   solana_messages.TransactionHeader Header = 4;
 
-  float FeeInUsd = 5;
+  float FeeInUSD = 5;
 }
 
 message BlockAttributes {

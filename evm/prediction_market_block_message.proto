@@ -69,6 +69,9 @@ message PredictionSettlementEvent {
 message OutcomeSettlement {
   bytes Amount = 1;
   bytes CollateralAmount = 2;
+
+  float AmountInUSD = 3;
+  float CollateralAmountInUSD = 4;
 }
 
 
@@ -95,6 +98,8 @@ message OutcomeTrade {
 
   TradeFee Fee = 6;
   bytes OrderId = 7;
+
+  float CollateralAmountInUSD = 8;
 }
 
 message PredictionInfo {

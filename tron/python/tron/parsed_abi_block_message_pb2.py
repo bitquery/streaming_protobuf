@@ -26,7 +26,7 @@ from tron import block_message_pb2 as tron_dot_block__message__pb2
 from evm import parsed_abi_block_message_pb2 as evm_dot_parsed__abi__block__message__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n#tron/parsed_abi_block_message.proto\x12\rtron_messages\x1a\x18tron/block_message.proto\x1a\"evm/parsed_abi_block_message.proto\">\n\x0c\x43ontractInfo\x12\x0f\n\x07\x41\x64\x64ress\x18\x01 \x01(\x0c\x12\x0c\n\x04Type\x18\x02 \x01(\t\x12\x0f\n\x07TypeUrl\x18\x03 \x01(\t\"\x94\x03\n\x14ParsedAbiTransaction\x12;\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32 .tron_messages.TransactionHeader\x12\'\n\x07Receipt\x18\x02 \x01(\x0b\x32\x16.tron_messages.Receipt\x12\x43\n\x11TransactionStatus\x18\x03 \x01(\x0b\x32(.evm_messages.ParsedAbiTransactionStatus\x12;\n\x11TransactionResult\x18\x04 \x01(\x0b\x32 .tron_messages.TransactionResult\x12\x31\n\x0c\x43ontractInfo\x18\x05 \x01(\x0b\x32\x1b.tron_messages.ContractInfo\x12*\n\x05\x43\x61lls\x18\x06 \x03(\x0b\x32\x1b.evm_messages.ParsedAbiCall\x12\x35\n\x0eRewardWithdraw\x18\x07 \x01(\x0b\x32\x1d.tron_messages.RewardWithdraw\"\xcc\x01\n\x15ParsedAbiBlockMessage\x12#\n\x05\x43hain\x18\x01 \x01(\x0b\x32\x14.tron_messages.Chain\x12*\n\x06Header\x18\x02 \x01(\x0b\x32\x1a.tron_messages.BlockHeader\x12\'\n\x07Witness\x18\x03 \x01(\x0b\x32\x16.tron_messages.Witness\x12\x39\n\x0cTransactions\x18\x04 \x03(\x0b\x32#.tron_messages.ParsedAbiTransactionb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n#tron/parsed_abi_block_message.proto\x12\rtron_messages\x1a\x18tron/block_message.proto\x1a\"evm/parsed_abi_block_message.proto\">\n\x0c\x43ontractInfo\x12\x0f\n\x07\x41\x64\x64ress\x18\x01 \x01(\x0c\x12\x0c\n\x04Type\x18\x02 \x01(\t\x12\x0f\n\x07TypeUrl\x18\x03 \x01(\t\"\xa2\x04\n\x14ParsedAbiTransaction\x12;\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32 .tron_messages.TransactionHeader\x12\'\n\x07Receipt\x18\x02 \x01(\x0b\x32\x16.tron_messages.Receipt\x12\x43\n\x11TransactionStatus\x18\x03 \x01(\x0b\x32(.evm_messages.ParsedAbiTransactionStatus\x12;\n\x11TransactionResult\x18\x04 \x01(\x0b\x32 .tron_messages.TransactionResult\x12\x31\n\x0c\x43ontractInfo\x18\x05 \x01(\x0b\x32\x1b.tron_messages.ContractInfo\x12*\n\x05\x43\x61lls\x18\x06 \x03(\x0b\x32\x1b.evm_messages.ParsedAbiCall\x12\x35\n\x0eRewardWithdraw\x18\x07 \x01(\x0b\x32\x1d.tron_messages.RewardWithdraw\x12\"\n\x1aTransactionHeader_FeeInUSD\x18\x08 \x01(\x02\x12\'\n\x1fTransactionHeader_FeeLimitInUSD\x18\t \x01(\x02\x12\x1b\n\x13Receipt_NetFeeInUSD\x18\n \x01(\x02\x12\"\n\x1aRewardWithdraw_AmountInUSD\x18\x0b \x01(\x02\"\xcc\x01\n\x15ParsedAbiBlockMessage\x12#\n\x05\x43hain\x18\x01 \x01(\x0b\x32\x14.tron_messages.Chain\x12*\n\x06Header\x18\x02 \x01(\x0b\x32\x1a.tron_messages.BlockHeader\x12\'\n\x07Witness\x18\x03 \x01(\x0b\x32\x16.tron_messages.Witness\x12\x39\n\x0cTransactions\x18\x04 \x03(\x0b\x32#.tron_messages.ParsedAbiTransactionb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,7 +36,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CONTRACTINFO']._serialized_start=116
   _globals['_CONTRACTINFO']._serialized_end=178
   _globals['_PARSEDABITRANSACTION']._serialized_start=181
-  _globals['_PARSEDABITRANSACTION']._serialized_end=585
-  _globals['_PARSEDABIBLOCKMESSAGE']._serialized_start=588
-  _globals['_PARSEDABIBLOCKMESSAGE']._serialized_end=792
+  _globals['_PARSEDABITRANSACTION']._serialized_end=727
+  _globals['_PARSEDABIBLOCKMESSAGE']._serialized_start=730
+  _globals['_PARSEDABIBLOCKMESSAGE']._serialized_end=934
 # @@protoc_insertion_point(module_scope)

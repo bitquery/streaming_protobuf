@@ -26,7 +26,7 @@ from tron import block_message_pb2 as tron_dot_block__message__pb2
 from evm import token_block_message_pb2 as evm_dot_token__block__message__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1etron/token_block_message.proto\x12\rtron_messages\x1a\x18tron/block_message.proto\x1a\x1d\x65vm/token_block_message.proto\"\xda\x01\n\rBalanceUpdate\x12;\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32 .tron_messages.TransactionHeader\x12\x11\n\tCallIndex\x18\x02 \x01(\x04\x12\x10\n\x08LogIndex\x18\x03 \x01(\x04\x12\x0f\n\x07\x41\x64\x64ress\x18\x04 \x01(\x0c\x12\x0e\n\x06\x41mount\x18\x05 \x01(\x0c\x12)\n\x08\x43urrency\x18\x06 \x01(\x0b\x32\x17.evm_messages.TokenInfo\x12\r\n\x05Index\x18\x07 \x01(\r\x12\x0c\n\x04Type\x18\x08 \x01(\t\"\xca\x01\n\x11TokenBlockMessage\x12#\n\x05\x43hain\x18\x01 \x01(\x0b\x32\x14.tron_messages.Chain\x12*\n\x06Header\x18\x02 \x01(\x0b\x32\x1a.tron_messages.BlockHeader\x12.\n\tTransfers\x18\x03 \x03(\x0b\x32\x1b.evm_messages.TokenTransfer\x12\x34\n\x0e\x42\x61lanceUpdates\x18\x04 \x03(\x0b\x32\x1c.tron_messages.BalanceUpdateb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1etron/token_block_message.proto\x12\rtron_messages\x1a\x18tron/block_message.proto\x1a\x1d\x65vm/token_block_message.proto\"\xef\x01\n\rBalanceUpdate\x12;\n\x11TransactionHeader\x18\x01 \x01(\x0b\x32 .tron_messages.TransactionHeader\x12\x11\n\tCallIndex\x18\x02 \x01(\x04\x12\x10\n\x08LogIndex\x18\x03 \x01(\x04\x12\x0f\n\x07\x41\x64\x64ress\x18\x04 \x01(\x0c\x12\x0e\n\x06\x41mount\x18\x05 \x01(\x0c\x12)\n\x08\x43urrency\x18\x06 \x01(\x0b\x32\x17.evm_messages.TokenInfo\x12\r\n\x05Index\x18\x07 \x01(\r\x12\x0c\n\x04Type\x18\x08 \x01(\t\x12\x13\n\x0b\x41mountInUSD\x18\t \x01(\x02\"\xca\x01\n\x11TokenBlockMessage\x12#\n\x05\x43hain\x18\x01 \x01(\x0b\x32\x14.tron_messages.Chain\x12*\n\x06Header\x18\x02 \x01(\x0b\x32\x1a.tron_messages.BlockHeader\x12.\n\tTransfers\x18\x03 \x03(\x0b\x32\x1b.evm_messages.TokenTransfer\x12\x34\n\x0e\x42\x61lanceUpdates\x18\x04 \x03(\x0b\x32\x1c.tron_messages.BalanceUpdateb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,7 +34,7 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'tron.token_block_message_pb
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_BALANCEUPDATE']._serialized_start=107
-  _globals['_BALANCEUPDATE']._serialized_end=325
-  _globals['_TOKENBLOCKMESSAGE']._serialized_start=328
-  _globals['_TOKENBLOCKMESSAGE']._serialized_end=530
+  _globals['_BALANCEUPDATE']._serialized_end=346
+  _globals['_TOKENBLOCKMESSAGE']._serialized_start=349
+  _globals['_TOKENBLOCKMESSAGE']._serialized_end=551
 # @@protoc_insertion_point(module_scope)
