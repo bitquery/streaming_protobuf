@@ -165,20 +165,31 @@ message OrderUpdate {
 message Twap {
   Trader     Trader = 1;
   Market Market = 2;
+  uint64 TwapId = 3;
 
-  uint64 TwapId      = 3;
-  string Status      = 4; // "activated" | "finished" | "terminated" | "stopped" | "error"
-  string StatusError = 5;
-  string Side        = 6; // "Buy" | "Sell"
+  TwapOrder     Order    = 4;
+  TwapInterval  Interval = 5;
+  TwapExecution State    = 6;
+}
 
-  string Size             = 7;
-  string ExecutedSize     = 8;
-  string ExecutedNotional = 9;
-  uint32 DurationMinutes  = 10;
-  bool   ReduceOnly       = 11;
-  bool   Randomize        = 12;
-  int64  StartTime        = 13; // epoch ms
-  int64  EventTime        = 14; // status-event time, epoch ns (TwapStatus.Time) — vs StartTime = TWAP start
+message TwapOrder {
+  string Side       = 1; // "Buy" | "Sell"
+  string Size       = 2; // total requested, vs State.ExecutedSize
+  bool   ReduceOnly = 3;
+  bool   Randomize  = 4;
+}
+
+message TwapInterval {
+  int64  StartTime       = 1; // TWAP start, epoch ms
+  uint32 DurationMinutes = 2;
+  int64  EventTime       = 3; // status-event time, epoch ns (TwapStatus.Time)
+}
+
+message TwapExecution {
+  string Status           = 1; // "activated" | "finished" | "terminated" | "stopped" | "error"
+  string StatusError      = 2; // set when Status = "error"
+  string ExecutedSize     = 3; // cumulative filled
+  string ExecutedNotional = 4; // cumulative, USD
 }
 
 // BookUpdate ← BookDiff (raw_book_diffs.proto). Per-order book change (L4) — market
