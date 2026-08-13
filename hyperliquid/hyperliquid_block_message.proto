@@ -47,6 +47,7 @@ message Market {
   string Protocol    = 3; // "hypercore" native, else HIP-3 dex
   string CoinRaw     = 4; // "HYPE", "xyz:NFLX", "@107", "#1890"
   bool   IsPerp      = 5; // true for perp+hip3 (full object set), false for spot/outcome — filter on this
+  uint32 MaxLeverage = 6; // max leverage for the perp market (info-API meta); 0 = unknown / spot/outcome
 }
 
 // The trader's position AS OF this event — realtime fields come straight from the stream; the
