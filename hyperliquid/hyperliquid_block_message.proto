@@ -29,6 +29,7 @@ message HyperliquidCoreBlockMessage {
   repeated BookUpdate           BookUpdates     = 8;  // per-order book changes (L4 microstructure)
   repeated PriceUpdate          Prices          = 9;  // oracle / mark republishes
   repeated TraderLeverageUpdate LeverageChanges = 10; // accepted updateLeverage (from the consensus stream)
+  repeated SignedActionEvent    SignedActions   = 11; // consensus actions: rejects + rare types (from the consensus stream)
 }
 
 
@@ -228,6 +229,50 @@ message TraderLeverageUpdate {
 
   uint32 Leverage = 3;
   bool   IsCross  = 4;
+}
+
+
+// SignedActionEvent ← consensus replica_cmds (transactions.proto), one denormalized row per action:
+// block/bundle context + ecrecover'd Signer + parsed Leverage. Carries what the event streams never do
+// — rejects (Status="err") and the real Signer. Only rejects + rare action types ride this list;
+// successful order/cancel appear in Orders/Trades with more structure.
+message SignedActionEvent {
+  SignedActionConsensus Consensus = 1;
+  SignedActionBundle    Bundle    = 2;
+
+  bytes  User         = 3;  // acting MASTER account (NOT the signer)
+  bytes  Signer       = 4;  // ecrecover'd agent wallet; empty for system/unsigned actions
+  bytes  VaultAddress = 5;  // set when acting for a vault
+  string ActionType   = 6;  // "order" | "cancel" | "spotSend" | … open set. LowCardinality
+  uint64 Nonce        = 7;  // epoch ms by convention
+  int64  ExpiresAfter = 8;  // epoch ms deadline, 0 when absent
+  string Status       = 9;  // "ok" | "err"
+
+  SignedActionLeverage Leverage = 10; // set only for accepted updateLeverage
+
+  bytes  Action   = 11; // raw JSON of the action, verbatim
+  bytes  Response = 12; // raw JSON: statuses/oids for "ok", error text for "err"
+}
+
+message SignedActionConsensus {
+  uint64 Round           = 1;
+  uint64 ParentRound     = 2;
+  bytes  Proposer        = 3; // 0x… validator that proposed the block
+  uint32 HardforkVersion = 4;
+}
+
+message SignedActionBundle {
+  bytes  Hash             = 1; // L1 bundle hash — DISJOINT from Fill.Hash/OrderStatus.Hash
+  bytes  Broadcaster      = 2;
+  uint64 BroadcasterNonce = 3;
+  uint32 Index            = 4; // bundle ordinal within block
+  uint32 ActionIndex      = 5; // action ordinal within bundle
+}
+
+message SignedActionLeverage {
+  uint32 Asset   = 1; // asset id; 0 = BTC (valid)
+  uint32 Value   = 2; // leverage multiplier
+  bool   IsCross = 3; // true = cross, false = isolated
 }
 
 
