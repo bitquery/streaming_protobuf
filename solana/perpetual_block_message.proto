@@ -44,8 +44,8 @@ message PerpetualBlockMessage {
 // Expect lists to be empty on venues built differently: a pool-based perpetual (no order book)
 // produces Fills and Positions but never an Order. That is the intended shape, not a gap.
 //
-// Ordering across all four is EventIndex, a single counter over the whole transaction, so a fill
-// can be placed against the order that caused it and against the mark of the same moment.
+// Ordering across all of them is EventIndex, the event's position in the transaction's log, so a
+// fill can be placed against the order that caused it and against the mark of the same moment.
 message ParsedPerpetualTransaction {
   uint32 Index = 1; // transaction index in the block
   bytes Signature = 2;
@@ -148,10 +148,13 @@ message PerpetualOrderEvent {
   string Type = 3;
   string Side = 4;   // "bid" / "ask"
 
-  // Position in the transaction, shared across all four lists, so an order can be ordered against
-  // the fill it caused and the mark of that moment. There is no per-event time or slot: Phoenix
-  // states them once per batch and they are the block's own — measured identical to the block on
-  // 2434 of 2434 events — so they live on BlockHeader alone.
+  // Position of the event in the transaction's log, counted over every logged event — including
+  // the ones no list publishes — and shared across all five lists, so an order can be ordered
+  // against the fill it caused and the mark of that moment. Derived from the log alone, so it is
+  // reproducible from the raw transaction and stable across parser versions; indexes with no row
+  // are the unpublished events. There is no per-event time or slot: Phoenix states them once per
+  // batch and they are the block's own — measured identical to the block on 2434 of 2434 events —
+  // so they live on BlockHeader alone.
   uint32 EventIndex = 5;
   uint32 InstructionIndex = 6; // top-level instruction that produced it
 
@@ -217,8 +220,15 @@ message PerpetualFillEvent {
   // Which resting side this fill matched, as the chain names it — the join key a fill otherwise
   // lacks. `OrderFilled` names the maker's book order, and MakerOrderId is encoded exactly like
   // PerpetualOrder.Id, so it joins a fill straight back to that order's placement and
-  // cancellation. `SplineFilled` matched protocol liquidity instead (CounterpartyIsAmm), which is
-  // not a book order and is named by SplineId. Exactly one of the two is ever set.
+  // cancellation — on (Asset.Id, MakerOrderId), and against order rows of a book type only. A
+  // conditional order repeats the id of the order it is attached to, so an unfiltered join fans
+  // out; see the note on PerpetualOrder.Id. `SplineFilled` matched protocol liquidity instead
+  // (CounterpartyIsAmm), which is not a book order and is named by SplineId. Exactly one of the
+  // two is ever set.
+  //
+  // This is the maker's order. The taker's own order id is not on a fill: the venue does not state
+  // it there, and the counter it announces on the request is not safely an id (an order that never
+  // rests may not consume it). Tie a taker's fills to their request through the transaction.
   //
   // Without these a fill can only be tied to an order by (transaction, instruction) ordering,
   // which stops being unique the moment one instruction fills several orders — measured on
@@ -288,12 +298,30 @@ message PerpetualPositionEvent {
 }
 
 message PerpetualOrder {
-  // Order id in the venue's own order book — globally unique, and the key an order, its fills and
-  // its cancellation are joined by. A conditional order (stop-loss / trigger) is NOT in the book
-  // and has no id of its own until it fires; see ConditionalId. Where one appears on a conditional
-  // order it is a book order *related* to it, and which one depends on the event: the order the
-  // stop-loss created when it fired, or, for a trigger order, the resting order it is attached to.
-  // Empty when the chain named none — never eight zero bytes.
+  // Order id in the venue's own order book, and the key an order, its fills and its cancellation
+  // are joined by — **join on (Asset.Id, Id), not on Id alone**. The venue counts orders per
+  // market, so two markets reuse the same numbers: a market listed later passes through ids an
+  // older one burned long ago (measured live, one market at 172640 while another was at 61009089).
+  //
+  // On Phoenix Eternal the number is the market's order counter for an ask and its bitwise
+  // complement for a bid, which is why bid ids render around 1.8e19. Orders and fills publish the
+  // same representation, so joins are unaffected; ordering or comparing ids across sides is not
+  // meaningful. Empty when the chain named none — never eight zero bytes.
+  //
+  // A conditional order (stop-loss / trigger) is NOT in the book and has no id of its own until it
+  // fires; see ConditionalId. Where one appears on a conditional order it is a book order *related*
+  // to it, and which one depends on the event:
+  //
+  //   - on an execution, the order the conditional order became when it fired — the same order a
+  //     later fill or cancellation names, which is what makes the join right;
+  //   - on a trigger order's *placement*, the resting order it is attached to — a real id, but of
+  //     a **different** order that has its own row.
+  //
+  // The second case makes the id non-unique across rows: a limit order placed with a take-profit
+  // and a stop-loss produces three rows carrying it (measured: transaction
+  // 2Can1qL7HZ6pchU5S6wgRWMeF2vvM4SHCBNwT9Ej4oYuk9i2A9JYJub1vSE4f2ovULow6tqDJmmELDpQ39Y2Y8D7).
+  // Anything joining fills to orders by this id must restrict to book-order event types — the
+  // event Type, not Order.Type — or it fans out.
   bytes Id = 1;
   bytes ClientId = 2;        // caller's own id; empty when none was sent
   // "limit", "market", "post-only" for book orders; "stop-loss" or "take-profit" for conditional
@@ -310,10 +338,21 @@ message PerpetualOrder {
 
   // Identifies a conditional order (stop-loss, trigger) *within one trader and one market* — it is
   // NOT unique on its own, and it is not an order-book id. Join on (Trader, Asset.Id,
-  // ConditionalId), which is how the venue itself addresses these orders: on Phoenix Eternal a
-  // stop-loss lives in a fixed-size slot array keyed by (trader, asset), so its cancellation
-  // identifies it by slot rather than by id and restates none of its parameters — side, size and
-  // prices are recovered by joining back to the placement.
+  // ConditionalId), which is how the venue itself addresses these orders: a cancellation restates
+  // none of the order's parameters, so side, size and prices are recovered from the placement.
+  //
+  // How well that join identifies one order depends on the mechanism behind the row, and on
+  // Phoenix Eternal there are two:
+  //
+  //   - stop-losses ("StopLossPlaced" / "TakeProfitPlaced" / "ConditionalCancelled" /
+  //     "ConditionalExecuted") carry the venue's counter of this trader's conditional orders in
+  //     this market. A placement takes the next value and its cancellation restates that value, so
+  //     the join names exactly one order. Measured on one trader and market, the counter ran
+  //     19285→19343 over an hour with every cancellation naming the placement it ended.
+  //   - trigger orders ("TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted") carry the index
+  //     of a slot in the trader's conditional-orders account, and a slot holds two legs. A
+  //     take-profit and a stop-loss placed together share one value; only Order.Type separates
+  //     them, and a cancellation states no side, so which leg it ended is not recoverable.
   //
   // Present on conditional orders only, and opaque bytes like every other identifier here: the
   // next venue may address a conditional order by a hash or a string rather than by a slot index.
