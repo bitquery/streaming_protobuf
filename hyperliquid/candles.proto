@@ -26,7 +26,7 @@ message Ohlc {
 
 // Candle is one OHLC bar for one market at one interval width.
 message Candle {
-  Market       Market   = 1; // reused hyperliquid_messages.Market (Symbol/Kind/CoinRaw/IsPerp/…)
+  Market       Market   = 1; // shared hyperliquid_messages.Market
   TimeInterval Interval = 2;
   Ohlc         Ohlc     = 3;
 }

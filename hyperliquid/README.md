@@ -5,23 +5,32 @@ Canonical protobuf schemas for Bitquery's Hyperliquid **HyperCore** streaming pi
 HyperCore is the native execution engine of the Hyperliquid L1 — the on-chain perpetual
 and spot exchange (order books, matching, liquidations, funding, staking, vaults). It is
 distinct from **HyperEVM**, the EVM side of the same chain; the two are linked, and one of
-the streams below (`CoreWriterActions`) records exactly that link.
+the raw streams below (`CoreWriterActions`) records exactly that link.
 
-Every message here mirrors data written by the official Hyperliquid node
-(`hl-visor run-non-validator`) as NDJSON files under `~/hl/data`. The schemas are a
-**lossless, typed re-encoding** of those files: nothing is aggregated, filtered or
-re-interpreted. Where the node's JSON uses tagged unions, the schema flattens them into a
-tag field plus optional variant fields; where a field is unknown or unstable, it is kept
-verbatim in an `Extra` map or as raw JSON bytes, so no information is ever dropped.
+The package has **two layers**:
+
+* **Raw ingestion** (`hypercore.proto`, `transactions.proto`, and the per-stream files).
+  A **lossless, typed re-encoding** of the NDJSON the official Hyperliquid node
+  (`hl-visor run-non-validator`) writes under `~/hl/data`: nothing is aggregated, filtered
+  or re-interpreted. Where the node's JSON uses tagged unions, the schema flattens them
+  into a tag field plus optional variant fields; where a field is unknown or unstable it is
+  kept verbatim in an `Extra` map or as raw JSON bytes, so no information is ever dropped.
+  This layer is **internal** — it is how block data enters the pipeline.
+* **The delivered product** (`hyperliquid_block_message.proto`, `candles.proto`). A
+  **projection** of the raw layer into one consumer-facing message per block:
+  `HyperliquidCoreBlockMessage` (all trading activity) and `CandlesBlockMessage` (OHLC).
+  **This is what subscribers receive.** It is a normalization, not a re-encoding: the raw
+  streams are reassembled, decoded into typed sub-objects, and sorted into per-kind lists.
+
+If you consume the Bitquery stream, start at **§5 (the product)**. §2–§4 (conventions,
+identity, symbology) underlie both layers. §7 documents the raw node streams for reference.
 
 **Schema evolution.** When the node starts emitting a new field, it first appears in
-`Extra` (§2.4) — already usable, as a raw JSON string. The upgrade path is: add a typed
-`optional` field under a **fresh** field number, and from that release on the value
-arrives typed. Historical messages are **not rewritten** — they keep the value in
-`Extra` under the node's original field name. A consumer that needs full history reads
-the typed field and falls back to `Extra["<name>"]` for older blocks; the two encodings
-never overlap for the same block, and nothing is lost in either period. Proto field
-numbers are never reused or renumbered, so old and new binaries stay compatible both ways.
+`Extra` (§2.4) on the raw layer — already usable, as a raw JSON string. The upgrade path
+is: add a typed `optional` field under a **fresh** field number, and from that release on
+the value arrives typed. Historical messages are **not rewritten** — they keep the value
+in `Extra` under the node's original field name. Proto field numbers are never reused or
+renumbered, so old and new binaries stay compatible both ways.
 
 > **Provenance.** Everything in this document is verified against one of:
 > (1) the `.proto` files in this directory, (2) real mainnet node output (samples and
@@ -37,23 +46,30 @@ numbers are never reused or renumbered, so old and new binaries stay compatible 
 
 ```
 Hyperliquid node (hl-visor) writes NDJSON under ~/hl/data
- ├── 7 event streams   <stream>_streaming/hourly/{YYYYMMDD}/{hour}   1 line = 1 block, or a slice of one
- └── replica_cmds/{session}/{date}/{height-base}                     1 line = 1 whole consensus block
+ ├── 7 event streams   (fills, order_statuses, raw_book_diffs, twap_statuses,
+ │                       hip3_oracle_updates, misc_events, core_writer_actions)
+ └── replica_cmds       (consensus transactions — what went INTO each block)
         │
-        ▼  typed protobuf encoding (this package)
- ├── HyperCoreBlock  / HyperCoreBlocks              (hypercore.proto)     — the 7 event streams
- └── HyperCoreTransactionsBlock / …Blocks           (transactions.proto)  — consensus transactions
+        ▼  lossless typed re-encoding   (raw ingestion — internal)
+ ├── HyperCoreBlock / HyperCoreBlocks              (hypercore.proto)       — the 7 event streams
+ └── HyperCoreTransactionsBlock / …Blocks          (transactions.proto)    — consensus transactions
+        │
+        ▼  projection / normalization   (the product)
+ ├── HyperliquidCoreBlockMessage                   (hyperliquid_block_message.proto)  ──▶ subscribers
+ └── CandlesBlockMessage                           (candles.proto)                    ──▶ subscribers
 ```
 
-Two complementary views of the chain:
+| Message | Role | Contents |
+|---|---|---|
+| **`HyperliquidCoreBlockMessage`** | **delivered** — one per block | All trading activity of a block, one list per kind: trades, order updates, funding, liquidations, TWAP lifecycle, book deltas, prices, leverage changes, signed consensus actions |
+| **`CandlesBlockMessage`** | **delivered** — one per trades block | OHLC bars touched by the block (1m / 5m / 15m / 1h) |
+| `HyperCoreBlock` | raw ingestion — internal | The 7 node event streams for one block, re-encoded losslessly |
+| `HyperCoreTransactionsBlock` | raw ingestion — internal | The consensus `replica_cmds` for one block: every signed action bundle with signatures, nonces and the engine's accept/reject verdict |
 
-| View | Container | Contents | Question it answers |
-|---|---|---|---|
-| **Events** | `HyperCoreBlock` | What the execution engine **produced** in a block: fills, order status changes, book deltas, TWAP lifecycle, oracle prices, ledger/funding/staking events, EVM↔Core bridge actions | "What happened?" |
-| **Transactions** | `HyperCoreTransactionsBlock` | What went **into** the block: every signed action bundle consensus ordered, with signatures, nonces and the engine's accept/reject verdict | "Who asked for it, and was it accepted?" |
-
-Rejections that never produce events (bad nonce, malformed action, insufficient margin at
-the API level) are visible **only** in the transactions view.
+The product answers "what happened, and to whom?". The raw transactions layer additionally
+answers "who asked for it, and was it accepted?" — rejections that never produce events
+(bad nonce, malformed action, insufficient margin at the API level) survive only there, and
+the product surfaces them through its `SignedActions` list (§5.9).
 
 ### Blocks
 
@@ -61,16 +77,15 @@ the API level) are visible **only** in the transactions view.
 * `BlockNumber ↔ BlockTime` is a bijection — no two blocks share a timestamp
   (*observed*: 374,720 distinct pairs in 374,720 blocks over 12 h).
 * `BlockTime` is the consensus timestamp in **epoch nanoseconds (UTC)**, identical across
-  all streams of the same block.
+  every stream — and every product list — of the same block.
 * Blocks are fast: roughly 10–15 blocks/s on mainnet (*observed*, July 2026 — block
   numbers were around 1.07–1.08 billion).
-* A block in which a given stream had no events produces **no line** in that stream's file.
-  Blocks empty across all 7 event streams are ~5% of all heights (*observed*).
-* `Round` / `ParentRound` (transactions view only) are consensus counters, **not** block
-  numbers: empty rounds produce no block, so `Round` runs ahead of `BlockNumber`
-  (~28% ahead, *observed*).
+* A block in which a given kind of event did not occur carries an **empty list** for it —
+  that is the shape, not a gap.
+* `Round` / `ParentRound` (consensus counters) are **not** block numbers: empty rounds
+  produce no block, so `Round` runs ahead of `BlockNumber` (~28% ahead, *observed*).
 
-### File / message layout
+### File / message layout (raw archive)
 
 One protobuf message of a container type packs many blocks:
 
@@ -90,39 +105,49 @@ Every monetary value — price, size, fee, PnL, notional, funding — is a **dec
 (`"7541.5"`, `"0.002606"`), exactly as the node prints it. Never floats: floats lose
 precision on financial data. Parse with a decimal type.
 
-The one deliberate exception: `core_writer_actions.proto`, where `Token`, `Wei` and `Ntl`
-are raw integers (a token index, a wei amount, an integer notional), because that is what
-the node itself emits for this stream.
+Two deliberate exceptions:
+
+* `core_writer_actions.proto`, where `Token`, `Wei` and `Ntl` are raw integers (a token
+  index, a wei amount, an integer notional), because that is what the node emits there.
+* `candles.proto`, where OHLC values are `double` (Float64) — a candle is already an
+  aggregate, and Float64 keeps full precision even for high-priced assets (BTC ~100k).
 
 ### 2.2 Timestamps are mixed — per field, not per stream
 
 The node mixes epoch-millisecond integers and ISO nanosecond strings. The schemas keep
-each field's native precision (ISO strings are parsed to integer nanoseconds):
+each field's native precision (ISO strings are parsed to integer nanoseconds). The product
+preserves the source precision of each field it carries.
 
 | Field | Unit | Meaning |
 |---|---|---|
-| `HyperCoreBlock.BlockTime`, `HyperCoreTransactionsBlock.BlockTime` | **ns** | consensus block time |
-| `Fill.Time` | **ms** | fill event time |
-| `OrderStatus.Time` | **ns** | status event time |
-| `Order.Timestamp` | **ms** | order placement time |
-| `TwapStatus.Time` | **ns** | TWAP event time |
-| `TwapState.Timestamp` | **ms** | TWAP order **start** time (not event time) |
+| `*.BlockTime` (every container / product) | **ns** | consensus block time |
+| `Fill.Time`, `Execution.EventTime` | **ms** | fill event time |
+| `OrderStatus.Time`, `OrderUpdate.EventTime` | **ns** | order status event time |
+| `Order.Timestamp`, `OrderUpdate.PlacedTime` | **ms** | order placement time |
+| `TwapStatus.Time`, `TwapInterval.EventTime` | **ns** | TWAP event time |
+| `TwapState.Timestamp`, `TwapInterval.StartTime` | **ms** | TWAP order **start** time (not event time) |
 | `MiscEvent.Time` | **ns** | event time |
-| `OraclePx.LastUpdateTime` | **ns** | last oracle update |
-| `SignedAction.Nonce` | ms *(by wallet convention)* | signer nonce |
-| `SignedAction.ExpiresAfter` | ms | action deadline, `0` = absent |
+| `OraclePx.LastUpdateTime`, `PriceUpdate.UpdateTime` | **ns** | last oracle update |
+| `SignedAction.Nonce`, `SignedActionEvent.Nonce`, `Trader.SignedAt` | ms *(by wallet convention)* | signer nonce / signing time |
+| `SignedAction.ExpiresAfter`, `SignedActionEvent.ExpiresAfter` | ms | action deadline, `0` = absent |
+| `TimeInterval.Duration/Start/End` (candles) | **s** | candle bucket boundaries |
 
-### 2.3 Addresses and hashes are `bytes`
+### 2.3 Addresses and hashes are `bytes` (raw) or `0x…` strings (product)
 
-`0x…` hex strings from the node are decoded to raw bytes: 20 bytes for addresses,
-32 bytes for hashes. Empty/absent → empty bytes or unset `optional`.
+On the **raw** layer, `0x…` hex strings from the node are decoded to raw `bytes`: 20 bytes
+for addresses, 32 bytes for hashes; empty/absent → empty bytes or unset `optional`. On the
+**product** layer the trading messages (`Trader`, `Market`, `Execution`, …) carry addresses
+and hashes as human-readable **`0x…` strings**; the consensus-sourced `SignedActionEvent`
+keeps them as `bytes` (it is a thin denormalization of the raw consensus row).
 
-### 2.4 `Extra` maps — the forward-compatibility net
+### 2.4 `Extra` maps — the forward-compatibility net (raw layer)
 
-Nearly every message carries `map<string,string> Extra`. Any JSON key the node emits that
-the schema does not model lands there — key = the node's field name, value = the raw JSON
-value. In the common case `Extra` is empty; a non-empty `Extra` means the node started
-emitting a new field and nothing was lost.
+Nearly every **raw** message carries `map<string,string> Extra`. Any JSON key the node
+emits that the schema does not model lands there — key = the node's field name, value = the
+raw JSON value. In the common case `Extra` is empty; a non-empty `Extra` means the node
+started emitting a new field and nothing was lost. The product does not carry `Extra`
+(it is a curated projection), except that `SignedActionEvent` keeps the raw action and
+response JSON verbatim in `Action` / `Response`.
 
 ### 2.5 Flattened tagged unions
 
@@ -150,7 +175,8 @@ TRANSACTION (Hash)  →  MATCH (Coin, Tid)  →  SIDE (User)
 * One L1 transaction (`Hash`) can produce **many** matches — a single aggressive order
   sweeping the book was *observed* to generate 482 distinct `Tid`s across 80 coins under
   one `(BlockNumber, Hash)`. `Hash` identifies an *action*, not a trade.
-* One match normally produces **two** fills — one per counterparty.
+* One match normally produces **two** fills — one per counterparty. In the product these
+  are two `Trade` rows (or `PerpLiquidation` rows); pair them on `(BlockNumber, Market, Tid)`.
 
 | Identifier | What it is | Unique? | Safe usage |
 |---|---|---|---|
@@ -159,12 +185,13 @@ TRANSACTION (Hash)  →  MATCH (Coin, Tid)  →  SIDE (User)
 | `Cloid` | optional client-supplied order id (16 bytes) | client-controlled | client-side matching only |
 | `Tid` | **50-bit** hash of `(buyer_oid, seller_oid)` | **no** — collides at scale (~2²⁵ trades) | unique only within one block+coin |
 | `Hash` | L1 transaction hash | **no** — shared by many fills; **all-zero on both sides of TWAP fills** | display / grouping, never dedup |
-| `TwapId` | TWAP order id | unique per TWAP | see caveat in §4.1 |
-| **`(BlockNumber, Coin, Tid)`** | **the trade key** | **yes** (*observed* on millions of fills) | dedup, pairing the two sides of a match |
+| `TwapId` | TWAP order id | unique per TWAP | see caveat in §5.5 |
+| **`(BlockNumber, Coin/Market, Tid)`** | **the trade key** | **yes** (*observed* on millions of fills) | dedup, pairing the two sides of a match |
 
-**Event hashes are synthetic.** `Fill.Hash` / `OrderStatus.Hash` / `MiscEvent.Hash` is
-*not* a hash of the transaction content. Starting at byte 10 it embeds a compact
-length-prefixed big-endian encoding of the event's position:
+**Event hashes are synthetic.** `Fill.Hash` / `OrderStatus.Hash` / `MiscEvent.Hash`
+(and thus `Execution.Hash` in the product) is *not* a hash of the transaction content.
+Starting at byte 10 it embeds a compact length-prefixed big-endian encoding of the event's
+position:
 
 ```
 [10 bytes][0x04][u32 block number][len][action seq no][len][sub-action idx][~13 bytes]
@@ -186,19 +213,19 @@ embeds, the acting user and the full action (*verified live: a fill hash from th
 stream resolved to the taker's IOC order in the same block, and the public
 `userFillsByTime` info endpoint returned the same fill with the same hash*).
 
-**Joining events to transactions:** the bundle `Hash` recorded in `replica_cmds` lives in
-a different universe than event hashes (*verified disjoint*). The precise join is
-three-step (*verified on a full mainnet block*):
+**Joining trades to the signed action.** The consensus bundle `Hash`
+(`SignedActionBundle.Hash`) lives in a different universe than event hashes
+(*verified disjoint*). The precise join is three-step (*verified on a full mainnet block*):
 
-1. `Fill.Hash` equals the `Hash` of the aggressor order's `open`/`filled` `OrderStatus`
-   in the same block — both sides of a match carry the **taker's** transaction hash
-   (34/34 fills in the verified block).
-2. That `OrderStatus` carries the `Oid`.
-3. The `Oid` appears in the engine response (`SignedAction.Response`, from the node's
+1. `Execution.Hash` equals the `Hash` of the aggressor order's `open`/`filled`
+   `OrderUpdate` in the same block — both sides of a match carry the **taker's**
+   transaction hash (34/34 fills in the verified block).
+2. That `OrderUpdate` carries the `Oid`.
+3. The `Oid` appears in the engine response (`SignedActionEvent.Response`, from the node's
    `resps`) of exactly one signed action (1,424/1,437 `open` statuses in the verified
    block) — giving the precise bundle and action.
 
-TWAP fills (all-zero hash) attribute via the trade-key triple instead (§5.1). Where the
+TWAP fills (all-zero hash) attribute via the trade-key triple instead (§5.5). Where the
 oid route is unavailable (e.g. rejected actions that never produced an order id), fall
 back to the coarse join `BlockNumber` + `User`.
 
@@ -206,7 +233,9 @@ back to the coarse join `BlockNumber` + `User`.
 
 ## 4. Market (coin) symbology
 
-The `Coin` field is a raw market identifier with four families:
+On the raw layer the `Coin` field is a raw market identifier; on the product layer it is
+`Market.CoinRaw` (with `Market.Symbol`, `Market.Kind` and `Market.IsPerp` derived from it,
+see §5.2). Four families:
 
 | Pattern | Family | Example | Notes |
 |---|---|---|---|
@@ -214,6 +243,9 @@ The `Coin` field is a raw market identifier with four families:
 | `<dex>:<SYM>` | HIP-3 (builder-deployed) perpetual | `xyz:SP500`, `flx:BTC`, `mkts:AAPL` | prefix = the deployer's dex namespace; equities/FX/commodities live here |
 | `@<n>` | spot pair by index | `@107` | n = spot pair index in exchange metadata |
 | `#<n>` | outcome token (prediction market) | `#1890` | comes in complementary pairs `(n, n^1)` — see below |
+
+These map to `Market.Kind` as `perp` / `hip3` / `spot` / `outcome`; `Market.IsPerp` is true
+for the first two (§5.2).
 
 **Outcome tokens** (`#<n>`): the two complementary outcomes of one market are the pair
 `(n, n XOR 1)` — `#1890`/`#1891`. A *complete-set* operation (mint/burn of both outcomes at
@@ -230,9 +262,321 @@ tokens and some spot tokens, e.g. `+1891`, `+7970`).
 
 ---
 
-## 5. Stream reference
+## 5. The delivered product — `HyperliquidCoreBlockMessage`
 
-Summary of all eight streams:
+`hyperliquid_block_message.proto`. **One message per HyperCore block** — the single-stream
+canon a subscriber receives. Every kind of event a block produced rides in its own list, so
+one message carries the whole block and a downstream recorder projects each list into its
+own table.
+
+**All market kinds flow here** — perp, HIP-3, spot and outcome — told apart by `Market.Kind`
+and `Market.IsPerp`. Perp markets (perp + hip3) carry the full object set
+(Position/Leverage + Funding/Liquidation events); spot and outcome share the same execution
+core but leave the perp-only fields empty. **Filter clean perps on `Market.IsPerp`.**
+
+### 5.1 Envelope
+
+| Field | Type | Description |
+|---|---|---|
+| `BlockNumber` | uint64 | canonical block id |
+| `BlockTime` | int64 | consensus block time, epoch **ns** |
+| `Trades` | repeated Trade | executions, non-liquidation (§5.3) |
+| `Orders` | repeated OrderUpdate | order lifecycle: placements, fills, cancels, rejects, TP/SL legs (§5.4) |
+| `Funding` | repeated PerpFunding | hourly funding, per (trader, market) (§5.7) |
+| `Liquidations` | repeated PerpLiquidation | forced closes — their own product, excluded from `Trades` (§5.3) |
+| `Twaps` | repeated Twap | TWAP lifecycle (§5.5) |
+| `BookUpdates` | repeated BookUpdate | per-order (L4) book changes (§5.6) |
+| `Prices` | repeated PriceUpdate | oracle / mark price republishes (§5.8) |
+| `LeverageChanges` | repeated TraderLeverageUpdate | accepted `updateLeverage` — from the consensus stream (§5.7) |
+| `SignedActions` | repeated SignedActionEvent | consensus actions: rejects + rare types — from the consensus stream (§5.9) |
+
+An **empty list** means the block had nothing of that kind. Seven lists are sourced from
+the core event streams; **`LeverageChanges` and `SignedActions` come from the consensus
+stream** (`transactions.proto`).
+
+### 5.2 Shared sub-messages
+
+Reused across the lists above.
+
+**`Trader`** — the acting parties (all `0x…` strings):
+
+| Field | Type | Description |
+|---|---|---|
+| `Address` | string | master account |
+| `Signer` | string | signing agent (recovered via ecrecover) |
+| `Vault` | string | vault address, when acting for one |
+| `Broadcaster` | string | node/relay that broadcast the action |
+| `SignedAt` | int64 | signing time, epoch **ms** |
+
+**`Market`** — the resolved market (from `CoinRaw`, §4):
+
+| Field | Type | Description |
+|---|---|---|
+| `Symbol` | string | display symbol |
+| `Kind` | string | `"perp"` \| `"hip3"` \| `"spot"` \| `"outcome"` |
+| `Protocol` | string | `"hypercore"` (native), else the HIP-3 dex namespace |
+| `CoinRaw` | string | raw coin id: `"HYPE"`, `"xyz:NFLX"`, `"@107"`, `"#1890"` |
+| `IsPerp` | bool | `true` for perp + hip3 (full object set); `false` for spot / outcome — **filter on this** |
+| `MaxLeverage` | uint32 | max leverage for the perp market (info-API meta); `0` = unknown / spot / outcome |
+
+**`PerpPosition`** — the trader's position **as of** the event. Only realtime fields are
+present; the snapshot fields (collateral, liquidation price, unrealized PnL) are **absent**
+because HL exposes them only via a snapshot/API, not the realtime feed. **Empty = source
+silent, NOT zero.**
+
+| Field | Type | Description |
+|---|---|---|
+| `Side` | string | `"Long"` \| `"Short"` |
+| `Size` | string | signed (negative = short) |
+| `SizeBefore` | string | size before this event |
+| `EntryPrice` | string | empty if the position was opened before the window |
+| `RealizedPnl` | string | realized PnL |
+| `Funding` | string | signed |
+| `Leverage` | uint32 | `0` = not yet in the leverage map (**NOT** 1×) |
+| `IsCross` | bool | cross vs isolated |
+| `Closed` | bool | position closed by this event |
+
+**`Fees`** — money charged/credited on an execution (reused by `Trade` and
+`PerpLiquidation`; only executions carry fees). `BuilderFee` and `DeployerFee` are
+**components** of `Fee` (same unit); `PriorityGas` is **not**.
+
+| Field | Type | Description |
+|---|---|---|
+| `Fee` | string | negative = maker rebate |
+| `FeeToken` | string | not always USDC (§5.3) |
+| `BuilderFee` | string | portion of `Fee` to the builder |
+| `DeployerFee` | string | portion of `Fee` to the HIP-3 asset deployer |
+| `PriorityGas` | string | **NOT** a component of `Fee`; may be in a different unit |
+
+**`Execution`** — the execution itself, the shared core of `Trade` and `PerpLiquidation`
+(both come from one `Fill`). Pair both sides of a match on `(BlockNumber, Market, Tid)`.
+
+| Field | Type | Description |
+|---|---|---|
+| `Side` | string | `"Buy"` \| `"Sell"` |
+| `Direction` | string | `"Open Long"`, `"Close Short"`, … (open set) |
+| `IsAggressor` | bool | `true` = taker |
+| `Price` | string | execution price |
+| `Size` | string | executed size |
+| `Oid` | uint64 | order id |
+| `Cloid` | string | client order id |
+| `Tid` | uint64 | match id — join both sides on `(BlockNumber, Market, Tid)` |
+| `Hash` | string | L1 tx hash; **zero on TWAP** — never a join key (§3) |
+| `EventTime` | int64 | per-fill event time, epoch **ms** (finer than block `BlockTime`) |
+
+### 5.3 Trades & liquidations (`Trade`, `PerpLiquidation`)
+
+Both come from a node `Fill`. A **non-liquidation** fill becomes a `Trade`; a fill with the
+liquidation flag set is routed to `PerpLiquidation` **only** (excluded from `Trades`), so
+that row is the sole record — nothing is lost. A liquidation *is* an execution, so it shares
+the same `Execution` / `Fees` / `PerpPosition` objects plus four liquidation-only fields.
+
+**`Trade`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | acting parties |
+| `Market` | Market | resolved market |
+| `Execution` | Execution | side / price / size / oid / tid / hash / … |
+| `Fees` | Fees | fee breakdown |
+| `Position` | PerpPosition | position as of the fill |
+| `MarkPx` | string | mark price; empty if no oracle republish this block |
+| `Builder` | string | builder address (usually empty) |
+| `IsTwap` | bool | this fill is part of a TWAP |
+| `TwapId` | uint64 | `0` when not a TWAP |
+
+**`PerpLiquidation`** — `Trader` / `Market` / `Execution` / `Fees` / `Position` as above,
+plus the four fields that make it a liquidation:
+
+| Field | Type | Description |
+|---|---|---|
+| `MarkPx` | string | mark price **at liquidation** — NOT the execution price (`Execution.Price`) |
+| `Method` | string | `"market"` \| `"backstop"` (backstop = HLP absorbed it — a market-stress signal) |
+| `Liquidator` | string | backstop liquidator address, when the source names one |
+| `LiquidatedUser` | string | `0x…` address being liquidated |
+
+**Fee-token & fee algebra** (from the underlying `Fill`): `FeeToken` is an open set, not
+always `"USDC"` — spot fills may pay in the spot token (`HYPE`, `PURR`, `UBTC`, …), outcome
+markets in `+<n>` (~3.7% of fills are non-USDC, *observed*). `BuilderFee` and `DeployerFee`
+are already **included** in `Fee`; `PriorityGas` is **separate** — do not add it to `Fee`.
+
+### 5.4 Order updates (`OrderUpdate`)
+
+One order-lifecycle event — the complete L1 order audit trail, including orders that never
+reached the book (rejects). Sourced from the node `OrderStatus` stream.
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | order owner |
+| `Market` | Market | resolved market |
+| `Side` | string | `"Buy"` \| `"Sell"` |
+| `Status` | string | `"filled"` \| `"open"` \| `"canceled"` \| `"badAloPxRejected"` \| … (open set) |
+| `IsReject` | bool | true for the many `*Rejected` statuses |
+| `OrderType` | string | `"Limit"` \| `"Market"` \| `"Stop Market"` \| … |
+| `Tif` | string | `"Alo"` \| `"Ioc"` \| `"Gtc"` \| … |
+| `ReduceOnly` | bool | order may only reduce a position |
+| `LimitPx` | string | limit price |
+| `Size` | string | **remaining** size |
+| `OrigSz` | string | original size |
+| `TriggerPx` | string | trigger price |
+| `TriggerCondition` | string | e.g. `"Price above 917.08"` |
+| `IsTrigger` | bool | stop / take-profit order |
+| `IsPositionTpsl` | bool | TP/SL bound to the whole position |
+| `ParentOid` | uint64 | ties a TP/SL leg to its parent order |
+| `Leg` | uint32 | which leg of a TP/SL bracket (legs share `Oid`+`Status`) |
+| `Position` | PerpPosition | position as of the event |
+| `Oid` | uint64 | order id |
+| `Cloid` | string | client order id |
+| `Hash` | string | L1 tx hash; empty if the order never hit chain |
+| `PlacedTime` | int64 | order placement time, epoch **ms** |
+| `Builder` | string | order builder address (usually empty) |
+| `BuilderFee` | uint32 | builder fee rate in tenths of a basis point |
+| `EventTime` | int64 | status-event time, epoch **ns** (vs `PlacedTime` = placement) |
+
+### 5.5 TWAP (`Twap`)
+
+TWAP (time-weighted average price) parent-order lifecycle: large orders sliced into
+sub-orders over `DurationMinutes`. The individual executions appear in `Trades` (with
+`IsTwap=true` / `TwapId`, and an all-zero `Execution.Hash`); this list carries the parent
+order's state. Attribute both sides of a TWAP fill via the trade-key triple, not via
+`TwapId` (only the owner's side carries it).
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | TWAP owner |
+| `Market` | Market | resolved market (perp / HIP-3 / spot) |
+| `TwapId` | uint64 | TWAP order id |
+| `Order` | TwapOrder | the request |
+| `Interval` | TwapInterval | timing |
+| `State` | TwapExecution | cumulative execution state |
+
+**`TwapOrder`:** `Side` (`"Buy"`/`"Sell"`), `Size` (total requested), `ReduceOnly`,
+`Randomize` (randomized sub-order timing).
+
+**`TwapInterval`:** `StartTime` (TWAP start, epoch **ms**), `DurationMinutes` (uint32),
+`EventTime` (status-event time, epoch **ns**).
+
+**`TwapExecution`:** `Status`
+(`"activated"` \| `"finished"` \| `"terminated"` \| `"stopped"` \| `"error"`),
+`StatusError` (set when `Status="error"`), `ExecutedSize` (cumulative filled),
+`ExecutedNotional` (cumulative, USD).
+
+### 5.6 Book updates (`BookUpdate`)
+
+Per-order (L4) order-book change — market microstructure, distinct from an order's
+lifecycle in `OrderUpdate`. Sourced from the node `BookDiff` stream.
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | owner of the resting order |
+| `Market` | Market | resolved market |
+| `Oid` | uint64 | order id |
+| `Side` | string | `"Buy"` \| `"Sell"` |
+| `Px` | string | price level |
+| `Kind` | string | `"new"` \| `"update"` \| `"remove"` |
+| `Size` | string | new size / size after |
+| `SizeBefore` | string | size before (`update` only) |
+| `Position` | PerpPosition | position as of the event |
+| `Index` | uint32 | ordinal within the block |
+
+### 5.7 Funding & leverage (`PerpFunding`, `TraderLeverageUpdate`)
+
+**`PerpFunding`** — hourly funding, per (trader, market). Sourced from misc-events funding.
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | position owner |
+| `Market` | Market | perp market |
+| `Amount` | string | signed (+ received, − paid) |
+| `Rate` | string | signed hourly rate |
+| `Size` | string | signed position size |
+
+**`TraderLeverageUpdate`** — an accepted `updateLeverage`, from the **consensus** stream.
+The leverage *change* itself; the resulting value is also on every `PerpPosition.Leverage`.
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | trader |
+| `Market` | Market | perp market |
+| `Leverage` | uint32 | new leverage |
+| `IsCross` | bool | `true` = cross, `false` = isolated |
+
+### 5.8 Prices (`PriceUpdate`)
+
+Oracle / mark price republishes, from the HIP-3 oracle stream flattened to one row per
+`(Market, Kind)`.
+
+| Field | Type | Description |
+|---|---|---|
+| `Market` | Market | resolved market |
+| `Price` | string | the price |
+| `Kind` | string | `"mark"` \| `"oracle"` \| `"markInput"` \| `"spotInput"` \| `"extPerpInput"` \| `"extPerp"` |
+| `UpdateClass` | string | `"Normal"` \| `"Deployer"` \| `"Fallback"` |
+| `DailyPx` | string | daily reference price |
+| `UpdateTime` | int64 | epoch **ns** |
+
+### 5.9 Signed consensus actions (`SignedActionEvent`)
+
+One denormalized row per consensus action (from `replica_cmds`): block/bundle context +
+the ecrecover'd `Signer` + parsed leverage. It carries what the event streams never do —
+**rejects** (`Status="err"`) and the real `Signer`. **Only rejects and rare action types
+ride this list**; a successful order/cancel already appears in `Orders`/`Trades` with more
+structure. Addresses/hashes are `bytes` here (thin denormalization of the raw consensus row).
+
+| Field | Type | Description |
+|---|---|---|
+| `Consensus` | SignedActionConsensus | round / proposer context |
+| `Bundle` | SignedActionBundle | bundle context |
+| `User` | bytes | acting **master** account (NOT the signer) |
+| `Signer` | bytes | ecrecover'd agent wallet; empty for system/unsigned actions |
+| `VaultAddress` | bytes | set when acting for a vault |
+| `ActionType` | string | `"order"` \| `"cancel"` \| `"spotSend"` \| … (open set) |
+| `Nonce` | uint64 | epoch **ms** by convention |
+| `ExpiresAfter` | int64 | epoch-ms deadline, `0` when absent |
+| `Status` | string | `"ok"` \| `"err"` |
+| `Leverage` | SignedActionLeverage | set only for accepted `updateLeverage` |
+| `Action` | bytes | raw JSON of the action, verbatim |
+| `Response` | bytes | raw JSON: statuses/oids for `"ok"`, error text for `"err"` |
+
+**`SignedActionConsensus`:** `Round`, `ParentRound`, `Proposer` (`0x…` validator that
+proposed the block), `HardforkVersion`.
+
+**`SignedActionBundle`:** `Hash` (L1 bundle hash — **disjoint** from `Fill.Hash` /
+`OrderStatus.Hash`, §3), `Broadcaster`, `BroadcasterNonce`, `Index` (bundle ordinal within
+block), `ActionIndex` (action ordinal within bundle).
+
+**`SignedActionLeverage`:** `Asset` (asset id; `0` = BTC, valid), `Value` (leverage
+multiplier), `IsCross`.
+
+---
+
+## 6. Candles — `CandlesBlockMessage`
+
+`candles.proto`. Delivered alongside the block message: the OHLC bars touched by one trades
+block, mirroring the envelope (`BlockNumber` + epoch-ns `BlockTime` + repeated payload).
+
+| Message | Field | Type | Description |
+|---|---|---|---|
+| `CandlesBlockMessage` | `BlockNumber` | uint64 | canonical block id |
+| | `BlockTime` | int64 | epoch **ns** |
+| | `Candles` | repeated Candle | bars touched by this block |
+| `Candle` | `Market` | Market | shared `Market` (§5.2) |
+| | `Interval` | TimeInterval | bucket |
+| | `Ohlc` | Ohlc | aggregates |
+| `TimeInterval` | `Duration` | uint32 | bucket width, **seconds** — `60`/`300`/`900`/`3600` = 1m/5m/15m/1h |
+| | `Start` | uint32 | bar open, epoch **seconds** (`toStartOfInterval`) |
+| | `End` | uint32 | bar close boundary, epoch seconds (`Start + Duration`) |
+| `Ohlc` | `Open`/`High`/`Low`/`Close`/`Volume` | double | Float64 — full precision even for high-priced assets |
+
+---
+
+## 7. Raw source streams (node ingestion — internal)
+
+The raw layer that the product (§5–§6) is projected from. A **lossless typed re-encoding**
+of the node NDJSON — documented here for reference; subscribers consume the product, not
+these.
+
+Summary of all eight raw streams:
 
 | # | Proto | Message | Node source (flag → path under `~/hl/data`) |
 |---|---|---|---|
@@ -264,10 +608,11 @@ single mainnet block spread over 3,782 order-status lines). The protobuf
 
 ---
 
-### 5.1 Fills (`fills.proto` — `Fill`)
+### 7.1 Fills (`fills.proto` — `Fill`)
 
 One **execution for one user**. A match normally yields two `Fill`s — taker
 (`Crossed=true`) and maker (`Crossed=false`) — paired by `(BlockNumber, Coin, Tid)`.
+Projected to `Trade` / `PerpLiquidation` (§5.3).
 
 Real node line (mainnet):
 
@@ -319,11 +664,11 @@ already included). `PriorityGas` is *separate* — do not add it to `Fee`.
 
 ---
 
-### 5.2 Order statuses (`order_statuses.proto` — `OrderStatus`)
+### 7.2 Order statuses (`order_statuses.proto` — `OrderStatus`)
 
 One order-lifecycle event: placement, fill, cancel, trigger, or any of the many
 rejections. This stream is the **complete L1 order audit trail** — including orders that
-never reached the book.
+never reached the book. Projected to `OrderUpdate` (§5.4).
 
 | Field | Type | Description |
 |---|---|---|
@@ -372,11 +717,11 @@ keys); nesting never goes deeper than one level. Children are always `ReduceOnly
 
 ---
 
-### 5.3 Raw book diffs (`raw_book_diffs.proto` — `BookDiff`)
+### 7.3 Raw book diffs (`raw_book_diffs.proto` — `BookDiff`)
 
 One **L4 order-book delta** — order-level (not price-level-aggregated) book changes.
 Applied on top of an L4 snapshot, this stream reconstructs the entire book in real time,
-with every resting order attributed to its owner.
+with every resting order attributed to its owner. Projected to `BookUpdate` (§5.6).
 
 L4 snapshots (the anchor state) come from the node itself: offline via
 `hl-node --chain <chain> compute-l4-snapshots <abci-state-path> <out-path>` (state files
@@ -405,12 +750,12 @@ The node's `raw_book_diff` field is a tagged union, flattened into `Kind` + vari
 
 ---
 
-### 5.4 TWAP statuses (`twap_statuses.proto` — `TwapStatus`)
+### 7.4 TWAP statuses (`twap_statuses.proto` — `TwapStatus`)
 
 Lifecycle of TWAP (time-weighted average price) orders: large orders sliced into
 sub-orders over `Minutes`. The individual executions appear in the **fills** stream
 (all-zero `Hash`, `TwapId` on the owner side); this stream carries the parent order's
-state transitions.
+state transitions. Projected to `Twap` (§5.5).
 
 The node's `status` is `string | {"error": msg}`, flattened:
 
@@ -441,12 +786,12 @@ The node's `status` is `string | {"error": msg}`, flattened:
 
 ---
 
-### 5.5 HIP-3 oracle updates (`oracle_updates.proto` — `OracleUpdate`)
+### 7.5 HIP-3 oracle updates (`oracle_updates.proto` — `OracleUpdate`)
 
 Price-oracle updates for [HIP-3](https://hyperliquid.gitbook.io/hyperliquid-docs/hips/hip-3-builder-deployed-perpetuals)
 builder-deployed perp dexes (equities, FX, commodities, indices — `xyz:AAPL`,
 `mkts:GOLD`, `flx:BTC`, …). HIP-3 deployers push their own oracle prices; this stream
-records each push and the resulting oracle state.
+records each push and the resulting oracle state. Projected to `PriceUpdate` (§5.8).
 
 | Field | Type | Description |
 |---|---|---|
@@ -478,11 +823,12 @@ records each push and the resulting oracle state.
 
 ---
 
-### 5.6 Misc events (`misc_events.proto` — `MiscEvent`)
+### 7.6 Misc events (`misc_events.proto` — `MiscEvent`)
 
 Everything financial that is not a trade: ledger movements (transfers, deposits,
 withdrawals, vault operations), hourly funding, staking, delegation, and a few consensus
-events. The most polymorphic stream.
+events. The most polymorphic stream. Funding feeds the product's `PerpFunding` list (§5.7);
+the rest is carried on the raw layer.
 
 Envelope: `{time, hash, inner:{"<Variant>":{…}}}` → `InnerType` = the variant tag;
 exactly one variant field is populated.
@@ -554,7 +900,7 @@ Funding events are block-wide and huge — a single funding line can exceed 20 M
 
 ---
 
-### 5.7 Core-writer & system actions (`core_writer_actions.proto` — `SystemAction`)
+### 7.7 Core-writer & system actions (`core_writer_actions.proto` — `SystemAction`)
 
 The **HyperEVM → HyperCore bridge**: actions on the Core side that originate from EVM
 transactions — system transfers of tokens/USD between the two sides, and Core actions
@@ -591,12 +937,13 @@ same as the event-level `Nonce`.
 
 ---
 
-### 5.8 Consensus transactions (`transactions.proto` — replica_cmds)
+### 7.8 Consensus transactions (`transactions.proto` — replica_cmds)
 
 The input side of the chain: every signed action bundle that consensus ordered into a
 block, with the execution engine's verdict. Source: the node's `replica_cmds` files
 (one line = one whole block; a node restart starts a new `{session}` directory which may
-replay heights).
+replay heights). The product surfaces the useful subset (rejects, real signer, leverage)
+through `SignedActionEvent` (§5.9); this raw container carries the full block.
 
 Design choice: the **skeleton is typed** (block header, signatures, nonces, verdict) while
 the action payload — an open, hardfork-evolving set of dozens of action types — is carried
@@ -640,7 +987,7 @@ unknown fields; parse at read time instead.
 
 ---
 
-## 6. Delivery semantics (Bitquery pipeline)
+## 8. Delivery semantics (Bitquery pipeline)
 
 For consumers of the Kafka / archive representation of these messages:
 
@@ -657,13 +1004,13 @@ For consumers of the Kafka / archive representation of these messages:
 
 ---
 
-## 7. Generated code
+## 9. Generated code
 
 * Go: `messages/*.pb.go` (package `hyperliquid_messages`)
 * Python: `python/`
 * Regenerate: `make generate_hyperliquid` from the repository root.
 
-## 8. Official references
+## 10. Official references
 
 * [Node repository & data flags](https://github.com/hyperliquid-dex/node)
 * [L1 data schemas](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/nodes/l1-data-schemas)

@@ -16,7 +16,7 @@ package hyperliquid_messages;
 // gap. The node delivers a block as several per-stream fragments (fills / order_statuses / book_diffs /
 // oracle / misc / twap) on hyperliquidcore.blocks plus a separate consensus stream
 // (hyperliquidcore.transactions); the processor reassembles them into this one message. LeverageChanges
-// is sourced from the consensus stream, the other seven lists from the core block.
+// and SignedActions come from the consensus stream, the other seven lists from the core block.
 message HyperliquidCoreBlockMessage {
   uint64 BlockNumber = 1;
   int64  BlockTime   = 2; // epoch ns
@@ -97,8 +97,8 @@ message Execution {
 message Trade {
   Trader       Trader    = 1;
   Market   Market    = 2;
-  Execution    Execution = 3; // Side/Direction/Price/Size/Oid/Cloid/Tid/Hash/IsAggressor
-  Fees         Fees      = 4; // Fee/FeeToken/BuilderFee/DeployerFee/PriorityGas
+  Execution    Execution = 3;
+  Fees         Fees      = 4;
   PerpPosition Position  = 5;
 
   string MarkPx  = 6; // empty if no oracle republish this block
@@ -114,7 +114,7 @@ message Trade {
 message PerpLiquidation {
   Trader       Trader    = 1;
   Market   Market    = 2;
-  Execution    Execution = 3; // the forced-close fill (Side/Price/Size/Oid/Tid/Hash/…)
+  Execution    Execution = 3; // the forced-close fill
   Fees         Fees      = 4;
   PerpPosition Position  = 5;
 
