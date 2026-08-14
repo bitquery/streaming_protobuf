@@ -34,7 +34,7 @@ const (
 // gap. The node delivers a block as several per-stream fragments (fills / order_statuses / book_diffs /
 // oracle / misc / twap) on hyperliquidcore.blocks plus a separate consensus stream
 // (hyperliquidcore.transactions); the processor reassembles them into this one message. LeverageChanges
-// is sourced from the consensus stream, the other seven lists from the core block.
+// and SignedActions come from the consensus stream, the other seven lists from the core block.
 type HyperliquidCoreBlockMessage struct {
 	state           protoimpl.MessageState  `protogen:"open.v1"`
 	BlockNumber     uint64                  `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`
@@ -634,8 +634,8 @@ type Trade struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Trader        *Trader                `protobuf:"bytes,1,opt,name=Trader,proto3" json:"Trader,omitempty"`
 	Market        *Market                `protobuf:"bytes,2,opt,name=Market,proto3" json:"Market,omitempty"`
-	Execution     *Execution             `protobuf:"bytes,3,opt,name=Execution,proto3" json:"Execution,omitempty"` // Side/Direction/Price/Size/Oid/Cloid/Tid/Hash/IsAggressor
-	Fees          *Fees                  `protobuf:"bytes,4,opt,name=Fees,proto3" json:"Fees,omitempty"`           // Fee/FeeToken/BuilderFee/DeployerFee/PriorityGas
+	Execution     *Execution             `protobuf:"bytes,3,opt,name=Execution,proto3" json:"Execution,omitempty"`
+	Fees          *Fees                  `protobuf:"bytes,4,opt,name=Fees,proto3" json:"Fees,omitempty"`
 	Position      *PerpPosition          `protobuf:"bytes,5,opt,name=Position,proto3" json:"Position,omitempty"`
 	MarkPx        string                 `protobuf:"bytes,6,opt,name=MarkPx,proto3" json:"MarkPx,omitempty"`   // empty if no oracle republish this block
 	Builder       string                 `protobuf:"bytes,7,opt,name=Builder,proto3" json:"Builder,omitempty"` // builder address (usually empty)
@@ -745,7 +745,7 @@ type PerpLiquidation struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Trader    *Trader                `protobuf:"bytes,1,opt,name=Trader,proto3" json:"Trader,omitempty"`
 	Market    *Market                `protobuf:"bytes,2,opt,name=Market,proto3" json:"Market,omitempty"`
-	Execution *Execution             `protobuf:"bytes,3,opt,name=Execution,proto3" json:"Execution,omitempty"` // the forced-close fill (Side/Price/Size/Oid/Tid/Hash/…)
+	Execution *Execution             `protobuf:"bytes,3,opt,name=Execution,proto3" json:"Execution,omitempty"` // the forced-close fill
 	Fees      *Fees                  `protobuf:"bytes,4,opt,name=Fees,proto3" json:"Fees,omitempty"`
 	Position  *PerpPosition          `protobuf:"bytes,5,opt,name=Position,proto3" json:"Position,omitempty"`
 	// The 4 fields that make this a liquidation, not a plain trade — the product's exclusive value.

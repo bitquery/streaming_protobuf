@@ -165,7 +165,7 @@ func (x *Ohlc) GetVolume() float64 {
 // Candle is one OHLC bar for one market at one interval width.
 type Candle struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Market        *Market                `protobuf:"bytes,1,opt,name=Market,proto3" json:"Market,omitempty"` // reused hyperliquid_messages.Market (Symbol/Kind/CoinRaw/IsPerp/…)
+	Market        *Market                `protobuf:"bytes,1,opt,name=Market,proto3" json:"Market,omitempty"` // shared hyperliquid_messages.Market
 	Interval      *TimeInterval          `protobuf:"bytes,2,opt,name=Interval,proto3" json:"Interval,omitempty"`
 	Ohlc          *Ohlc                  `protobuf:"bytes,3,opt,name=Ohlc,proto3" json:"Ohlc,omitempty"`
 	unknownFields protoimpl.UnknownFields
