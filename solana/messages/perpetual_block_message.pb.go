@@ -632,8 +632,14 @@ type PerpetualFillEvent struct {
 	InstructionIndex  uint32                 `protobuf:"varint,8,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"`
 	Exchange          *PerpetualExchange     `protobuf:"bytes,9,opt,name=Exchange,proto3" json:"Exchange,omitempty"`
 	Asset             *PerpetualAsset        `protobuf:"bytes,10,opt,name=Asset,proto3" json:"Asset,omitempty"`
-	Amount            *PerpetualAmount       `protobuf:"bytes,11,opt,name=Amount,proto3" json:"Amount,omitempty"`     // .Size, .Quote, .Fee, and .Remaining of the maker's order
-	Position          *PerpetualPosition     `protobuf:"bytes,13,opt,name=Position,proto3" json:"Position,omitempty"` // the taker's position after the fill
+	Amount            *PerpetualAmount       `protobuf:"bytes,11,opt,name=Amount,proto3" json:"Amount,omitempty"` // .Size, .Quote, .Fee, and .Remaining of the maker's order
+	// The taker's position after THIS fill — not after the order that produced it. One taker order
+	// is filled by as many makers as it takes and each of those is a row here, so Size walks fill by
+	// fill: consecutive fills of one order chain (a fill's Size is the next fill's SizeBefore), each
+	// moves the position by exactly its own Amount.Size, and the last lands on the position the
+	// venue's TradeSummary states for the order. Position.EntryPrice is on that last fill alone —
+	// see PerpetualPosition.
+	Position *PerpetualPosition `protobuf:"bytes,13,opt,name=Position,proto3" json:"Position,omitempty"`
 	// Plain doubles rather than a PerpetualPrice: a fill has no limit and no trigger, so the shared
 	// message would carry two permanently empty columns into the table.
 	ExecutionPrice float64 `protobuf:"fixed64,16,opt,name=ExecutionPrice,proto3" json:"ExecutionPrice,omitempty"`
@@ -1494,10 +1500,17 @@ func (x *PerpetualPrice) GetMark() float64 {
 }
 
 type PerpetualPosition struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Size          float64                `protobuf:"fixed64,1,opt,name=Size,proto3" json:"Size,omitempty"` // position after the event, signed (negative = short)
-	SizeBefore    float64                `protobuf:"fixed64,2,opt,name=SizeBefore,proto3" json:"SizeBefore,omitempty"`
-	EntryPrice    float64                `protobuf:"fixed64,3,opt,name=EntryPrice,proto3" json:"EntryPrice,omitempty"` // average entry, folded from the protocol's virtual-quote balance
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Size       float64                `protobuf:"fixed64,1,opt,name=Size,proto3" json:"Size,omitempty"`             // position after the event, signed (negative = short)
+	SizeBefore float64                `protobuf:"fixed64,2,opt,name=SizeBefore,proto3" json:"SizeBefore,omitempty"` // position before it — Size less what this event itself moved
+	// Average entry of the whole position, folded out of the protocol's virtual-quote balance.
+	//
+	// On a fill it is published on the LAST fill of a taker order and absent (0) on the others. The
+	// venue states the virtual-quote balance once per order, after it, so a per-fill average entry
+	// is not derivable at all, and repeating the order-final one next to a per-fill Size would be a
+	// number belonging to no row. A single-fill order is its own last fill, which is the common
+	// shape; the value is also on the taker's PnL event in the same transaction.
+	EntryPrice    float64 `protobuf:"fixed64,3,opt,name=EntryPrice,proto3" json:"EntryPrice,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

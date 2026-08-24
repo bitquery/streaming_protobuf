@@ -200,7 +200,14 @@ message PerpetualFillEvent {
   PerpetualAsset Asset = 10;
 
   PerpetualAmount Amount = 11;    // .Size, .Quote, .Fee, and .Remaining of the maker's order
-  PerpetualPosition Position = 13; // the taker's position after the fill
+
+  // The taker's position after THIS fill — not after the order that produced it. One taker order
+  // is filled by as many makers as it takes and each of those is a row here, so Size walks fill by
+  // fill: consecutive fills of one order chain (a fill's Size is the next fill's SizeBefore), each
+  // moves the position by exactly its own Amount.Size, and the last lands on the position the
+  // venue's TradeSummary states for the order. Position.EntryPrice is on that last fill alone —
+  // see PerpetualPosition.
+  PerpetualPosition Position = 13;
 
   // Plain doubles rather than a PerpetualPrice: a fill has no limit and no trigger, so the shared
   // message would carry two permanently empty columns into the table.
@@ -441,8 +448,16 @@ message PerpetualPrice {
 
 message PerpetualPosition {
   double Size = 1;       // position after the event, signed (negative = short)
-  double SizeBefore = 2;
-  double EntryPrice = 3; // average entry, folded from the protocol's virtual-quote balance
+  double SizeBefore = 2; // position before it — Size less what this event itself moved
+
+  // Average entry of the whole position, folded out of the protocol's virtual-quote balance.
+  //
+  // On a fill it is published on the LAST fill of a taker order and absent (0) on the others. The
+  // venue states the virtual-quote balance once per order, after it, so a per-fill average entry
+  // is not derivable at all, and repeating the order-final one next to a per-fill Size would be a
+  // number belonging to no row. A single-fill order is its own last fill, which is the common
+  // shape; the value is also on the taker's PnL event in the same transaction.
+  double EntryPrice = 3;
 }
 
 // Market / oracle state, republished on every price move. Type is one of:
