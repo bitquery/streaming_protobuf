@@ -1060,9 +1060,14 @@ func (x *PerpetualPositionEvent) GetLiquidator() []byte {
 // — so publishing them fills indexes that had no row before and moves no index that already had
 // one.
 type PerpetualCollateralEvent struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Signer []byte                 `protobuf:"bytes,1,opt,name=Signer,proto3" json:"Signer,omitempty"` // wallet that signed the transaction
-	Trader []byte                 `protobuf:"bytes,2,opt,name=Trader,proto3" json:"Trader,omitempty"` // position-owning account (a PDA on Phoenix, not the wallet)
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The wallet that authorised this movement, as the event itself names it — NOT the
+	// transaction's signer, which is a different account whenever a relayer submits the deposit. Such
+	// a transaction carries two signatures, the relayer's first, and the transaction reports that
+	// first one; only the event says which signer moved the money. Expect this to disagree with a
+	// transaction-level signer field, and join on this one.
+	Signer []byte `protobuf:"bytes,1,opt,name=Signer,proto3" json:"Signer,omitempty"`
+	Trader []byte `protobuf:"bytes,2,opt,name=Trader,proto3" json:"Trader,omitempty"` // position-owning account (a PDA on Phoenix, not the wallet)
 	// "Deposit"   funds entered the exchange
 	// "Withdraw"  funds left it
 	//

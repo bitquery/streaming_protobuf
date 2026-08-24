@@ -324,8 +324,13 @@ message PerpetualPositionEvent {
 // — so publishing them fills indexes that had no row before and moves no index that already had
 // one.
 message PerpetualCollateralEvent {
-  bytes Signer = 1;  // wallet that signed the transaction
-  bytes Trader = 2;  // position-owning account (a PDA on Phoenix, not the wallet)
+  // The wallet that authorised this movement, as the event itself names it — NOT the
+  // transaction's signer, which is a different account whenever a relayer submits the deposit. Such
+  // a transaction carries two signatures, the relayer's first, and the transaction reports that
+  // first one; only the event says which signer moved the money. Expect this to disagree with a
+  // transaction-level signer field, and join on this one.
+  bytes Signer = 1;
+  bytes Trader = 2; // position-owning account (a PDA on Phoenix, not the wallet)
 
   // "Deposit"   funds entered the exchange
   // "Withdraw"  funds left it
