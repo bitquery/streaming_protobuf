@@ -59,7 +59,7 @@ message ParsedPerpetualTransaction {
   repeated PerpetualPositionEvent Positions = 9; // PnL and liquidations
   repeated PerpetualPriceEvent Prices = 6;       // top of book and mark
   repeated PerpetualMarketSummaryEvent MarketSummaries = 10; // open interest, spot, fee totals
-  repeated PerpetualCollateralEvent Collateral = 11;         // deposits and withdrawals
+  repeated PerpetualCollateralEvent CollateralMovements = 11; // deposits and withdrawals
 
   reserved 5; // `repeated PerpetualEvent Events`, the flat type the lists above replaced
 }

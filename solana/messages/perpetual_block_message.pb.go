@@ -89,19 +89,19 @@ func (x *PerpetualBlockMessage) GetTransactions() []*ParsedPerpetualTransaction 
 // Ordering across all of them is EventIndex, the event's position in the transaction's log, so a
 // fill can be placed against the order that caused it and against the mark of the same moment.
 type ParsedPerpetualTransaction struct {
-	state           protoimpl.MessageState         `protogen:"open.v1"`
-	Index           uint32                         `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"` // transaction index in the block
-	Signature       []byte                         `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
-	Status          *TransactionStatus             `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
-	Header          *TransactionHeader             `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
-	Orders          []*PerpetualOrderEvent         `protobuf:"bytes,7,rep,name=Orders,proto3" json:"Orders,omitempty"`                    // requested / placed / cancelled / rejected, incl. conditional
-	Fills           []*PerpetualFillEvent          `protobuf:"bytes,8,rep,name=Fills,proto3" json:"Fills,omitempty"`                      // executions
-	Positions       []*PerpetualPositionEvent      `protobuf:"bytes,9,rep,name=Positions,proto3" json:"Positions,omitempty"`              // PnL and liquidations
-	Prices          []*PerpetualPriceEvent         `protobuf:"bytes,6,rep,name=Prices,proto3" json:"Prices,omitempty"`                    // top of book and mark
-	MarketSummaries []*PerpetualMarketSummaryEvent `protobuf:"bytes,10,rep,name=MarketSummaries,proto3" json:"MarketSummaries,omitempty"` // open interest, spot, fee totals
-	Collateral      []*PerpetualCollateralEvent    `protobuf:"bytes,11,rep,name=Collateral,proto3" json:"Collateral,omitempty"`           // deposits and withdrawals
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state               protoimpl.MessageState         `protogen:"open.v1"`
+	Index               uint32                         `protobuf:"varint,1,opt,name=Index,proto3" json:"Index,omitempty"` // transaction index in the block
+	Signature           []byte                         `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	Status              *TransactionStatus             `protobuf:"bytes,3,opt,name=Status,proto3" json:"Status,omitempty"`
+	Header              *TransactionHeader             `protobuf:"bytes,4,opt,name=Header,proto3" json:"Header,omitempty"`
+	Orders              []*PerpetualOrderEvent         `protobuf:"bytes,7,rep,name=Orders,proto3" json:"Orders,omitempty"`                            // requested / placed / cancelled / rejected, incl. conditional
+	Fills               []*PerpetualFillEvent          `protobuf:"bytes,8,rep,name=Fills,proto3" json:"Fills,omitempty"`                              // executions
+	Positions           []*PerpetualPositionEvent      `protobuf:"bytes,9,rep,name=Positions,proto3" json:"Positions,omitempty"`                      // PnL and liquidations
+	Prices              []*PerpetualPriceEvent         `protobuf:"bytes,6,rep,name=Prices,proto3" json:"Prices,omitempty"`                            // top of book and mark
+	MarketSummaries     []*PerpetualMarketSummaryEvent `protobuf:"bytes,10,rep,name=MarketSummaries,proto3" json:"MarketSummaries,omitempty"`         // open interest, spot, fee totals
+	CollateralMovements []*PerpetualCollateralEvent    `protobuf:"bytes,11,rep,name=CollateralMovements,proto3" json:"CollateralMovements,omitempty"` // deposits and withdrawals
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ParsedPerpetualTransaction) Reset() {
@@ -197,9 +197,9 @@ func (x *ParsedPerpetualTransaction) GetMarketSummaries() []*PerpetualMarketSumm
 	return nil
 }
 
-func (x *ParsedPerpetualTransaction) GetCollateral() []*PerpetualCollateralEvent {
+func (x *ParsedPerpetualTransaction) GetCollateralMovements() []*PerpetualCollateralEvent {
 	if x != nil {
-		return x.Collateral
+		return x.CollateralMovements
 	}
 	return nil
 }
@@ -1844,7 +1844,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"$solana/perpetual_block_message.proto\x12\x0fsolana_messages\x1a\x1asolana/block_message.proto\"\x9e\x01\n" +
 	"\x15PerpetualBlockMessage\x124\n" +
 	"\x06Header\x18\x01 \x01(\v2\x1c.solana_messages.BlockHeaderR\x06Header\x12O\n" +
-	"\fTransactions\x18\x02 \x03(\v2+.solana_messages.ParsedPerpetualTransactionR\fTransactions\"\xef\x04\n" +
+	"\fTransactions\x18\x02 \x03(\v2+.solana_messages.ParsedPerpetualTransactionR\fTransactions\"\x81\x05\n" +
 	"\x1aParsedPerpetualTransaction\x12\x14\n" +
 	"\x05Index\x18\x01 \x01(\rR\x05Index\x12\x1c\n" +
 	"\tSignature\x18\x02 \x01(\fR\tSignature\x12:\n" +
@@ -1855,10 +1855,8 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\tPositions\x18\t \x03(\v2'.solana_messages.PerpetualPositionEventR\tPositions\x12<\n" +
 	"\x06Prices\x18\x06 \x03(\v2$.solana_messages.PerpetualPriceEventR\x06Prices\x12V\n" +
 	"\x0fMarketSummaries\x18\n" +
-	" \x03(\v2,.solana_messages.PerpetualMarketSummaryEventR\x0fMarketSummaries\x12I\n" +
-	"\n" +
-	"Collateral\x18\v \x03(\v2).solana_messages.PerpetualCollateralEventR\n" +
-	"CollateralJ\x04\b\x05\x10\x06\"s\n" +
+	" \x03(\v2,.solana_messages.PerpetualMarketSummaryEventR\x0fMarketSummaries\x12[\n" +
+	"\x13CollateralMovements\x18\v \x03(\v2).solana_messages.PerpetualCollateralEventR\x13CollateralMovementsJ\x04\b\x05\x10\x06\"s\n" +
 	"\x11PerpetualExchange\x12\x18\n" +
 	"\aProgram\x18\x01 \x01(\fR\aProgram\x12\x12\n" +
 	"\x04Name\x18\x02 \x01(\tR\x04Name\x12\x16\n" +
@@ -2060,7 +2058,7 @@ var file_solana_perpetual_block_message_proto_depIdxs = []int32{
 	7,  // 6: solana_messages.ParsedPerpetualTransaction.Positions:type_name -> solana_messages.PerpetualPositionEvent
 	13, // 7: solana_messages.ParsedPerpetualTransaction.Prices:type_name -> solana_messages.PerpetualPriceEvent
 	14, // 8: solana_messages.ParsedPerpetualTransaction.MarketSummaries:type_name -> solana_messages.PerpetualMarketSummaryEvent
-	8,  // 9: solana_messages.ParsedPerpetualTransaction.Collateral:type_name -> solana_messages.PerpetualCollateralEvent
+	8,  // 9: solana_messages.ParsedPerpetualTransaction.CollateralMovements:type_name -> solana_messages.PerpetualCollateralEvent
 	4,  // 10: solana_messages.PerpetualAsset.QuoteCurrency:type_name -> solana_messages.PerpetualCurrency
 	2,  // 11: solana_messages.PerpetualOrderEvent.Exchange:type_name -> solana_messages.PerpetualExchange
 	3,  // 12: solana_messages.PerpetualOrderEvent.Asset:type_name -> solana_messages.PerpetualAsset
