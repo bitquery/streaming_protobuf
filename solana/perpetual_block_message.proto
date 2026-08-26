@@ -12,7 +12,7 @@ import "solana/block_message.proto";
 // Eternal's deposit/withdrawal bridge (Ember, EMBERpYNE6ehWmXymZZS2skiFmCa9V5dp14e1iduM5qy) is
 // deliberately absent from this schema. It is the *token* leg of a deposit — a USDC transfer in
 // another program — and no other venue has such a component to fill the field with. What the
-// exchange itself records, the trader's collateral moving, is PerpetualCollateralEvent.
+// exchange itself records, the trader's collateral moving, is PerpetualCollateralMovementEvent.
 //
 // PROTOCOL-NEUTRAL BY DESIGN. Every number here is already scaled to human units — asset
 // units for sizes, quote currency for prices and amounts. Lots and ticks are Phoenix's
@@ -59,7 +59,7 @@ message ParsedPerpetualTransaction {
   repeated PerpetualPositionEvent Positions = 9; // PnL and liquidations
   repeated PerpetualPriceEvent Prices = 6;       // top of book and mark
   repeated PerpetualMarketSummaryEvent MarketSummaries = 10; // open interest, spot, fee totals
-  repeated PerpetualCollateralEvent CollateralMovements = 11; // deposits and withdrawals
+  repeated PerpetualCollateralMovementEvent CollateralMovements = 11; // deposits and withdrawals
 
   reserved 5; // `repeated PerpetualEvent Events`, the flat type the lists above replaced
 }
@@ -114,8 +114,8 @@ message PerpetualCurrency {
 }
 
 // NO COLLATERAL MOVEMENT ON the three event types below. They report what happened to a position
-// in a market; the trader's exchange-wide balance moving is PerpetualCollateralEvent, a list of its
-// own. Two flows stay off that list as well, because the protocol already repeats them here:
+// in a market; the trader's exchange-wide balance moving is PerpetualCollateralMovementEvent, a
+// list of its own. Two flows stay off that list as well, because the protocol already repeats them here:
 // funding settlement, on the PnL event of the same batch (PerpetualPositionEvent.Funding), and the
 // collateral backing a position, on each fill (PerpetualFillEvent.Collateral).
 //
@@ -323,7 +323,7 @@ message PerpetualPositionEvent {
 // always counted in the log position — the counter runs over every logged event, published or not
 // — so publishing them fills indexes that had no row before and moves no index that already had
 // one.
-message PerpetualCollateralEvent {
+message PerpetualCollateralMovementEvent {
   // The wallet that authorised this movement, as the event itself names it — NOT the
   // transaction's signer, which is a different account whenever a relayer submits the deposit. Such
   // a transaction carries two signatures, the relayer's first, and the transaction reports that
