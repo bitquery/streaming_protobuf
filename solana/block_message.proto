@@ -36,6 +36,20 @@ message Instruction {
     repeated BalanceUpdate TokenSupplyUpdates = 9;
 }
 
+// Transaction-level execution parameters.
+//
+// For legacy and V0 transactions these values are carried as ComputeBudget
+// program instructions (and are therefore also present in the instruction
+// list). V1 transactions move them into a dedicated message field, so this
+// message is the only place they are surfaced for V1. It is left unset for
+// legacy/V0, where the instructions remain the source of truth.
+message TransactionConfig {
+    optional uint64 PriorityFee = 1;
+    optional uint32 ComputeUnitLimit = 2;
+    optional uint32 LoadedAccountsDataSizeLimit = 3;
+    optional uint32 HeapSize = 4;
+}
+
 message TransactionHeader {
     uint64 Fee = 1;
     bytes FeePayer = 2;
@@ -43,6 +57,7 @@ message TransactionHeader {
     bytes Signer = 4;
     repeated bytes Signatures = 5;
     repeated Account Accounts = 6;
+    optional TransactionConfig TransactionConfig = 7;
 }
 
 enum RewardType {

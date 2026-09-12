@@ -388,21 +388,97 @@ func (x *Instruction) GetTokenSupplyUpdates() []*BalanceUpdate {
 	return nil
 }
 
+// Transaction-level execution parameters.
+//
+// For legacy and V0 transactions these values are carried as ComputeBudget
+// program instructions (and are therefore also present in the instruction
+// list). V1 transactions move them into a dedicated message field, so this
+// message is the only place they are surfaced for V1. It is left unset for
+// legacy/V0, where the instructions remain the source of truth.
+type TransactionConfig struct {
+	state                       protoimpl.MessageState `protogen:"open.v1"`
+	PriorityFee                 *uint64                `protobuf:"varint,1,opt,name=PriorityFee,proto3,oneof" json:"PriorityFee,omitempty"`
+	ComputeUnitLimit            *uint32                `protobuf:"varint,2,opt,name=ComputeUnitLimit,proto3,oneof" json:"ComputeUnitLimit,omitempty"`
+	LoadedAccountsDataSizeLimit *uint32                `protobuf:"varint,3,opt,name=LoadedAccountsDataSizeLimit,proto3,oneof" json:"LoadedAccountsDataSizeLimit,omitempty"`
+	HeapSize                    *uint32                `protobuf:"varint,4,opt,name=HeapSize,proto3,oneof" json:"HeapSize,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *TransactionConfig) Reset() {
+	*x = TransactionConfig{}
+	mi := &file_solana_block_message_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransactionConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransactionConfig) ProtoMessage() {}
+
+func (x *TransactionConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_solana_block_message_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransactionConfig.ProtoReflect.Descriptor instead.
+func (*TransactionConfig) Descriptor() ([]byte, []int) {
+	return file_solana_block_message_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *TransactionConfig) GetPriorityFee() uint64 {
+	if x != nil && x.PriorityFee != nil {
+		return *x.PriorityFee
+	}
+	return 0
+}
+
+func (x *TransactionConfig) GetComputeUnitLimit() uint32 {
+	if x != nil && x.ComputeUnitLimit != nil {
+		return *x.ComputeUnitLimit
+	}
+	return 0
+}
+
+func (x *TransactionConfig) GetLoadedAccountsDataSizeLimit() uint32 {
+	if x != nil && x.LoadedAccountsDataSizeLimit != nil {
+		return *x.LoadedAccountsDataSizeLimit
+	}
+	return 0
+}
+
+func (x *TransactionConfig) GetHeapSize() uint32 {
+	if x != nil && x.HeapSize != nil {
+		return *x.HeapSize
+	}
+	return 0
+}
+
 type TransactionHeader struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Fee             uint64                 `protobuf:"varint,1,opt,name=Fee,proto3" json:"Fee,omitempty"`
-	FeePayer        []byte                 `protobuf:"bytes,2,opt,name=FeePayer,proto3" json:"FeePayer,omitempty"`
-	RecentBlockhash []byte                 `protobuf:"bytes,3,opt,name=RecentBlockhash,proto3" json:"RecentBlockhash,omitempty"`
-	Signer          []byte                 `protobuf:"bytes,4,opt,name=Signer,proto3" json:"Signer,omitempty"`
-	Signatures      [][]byte               `protobuf:"bytes,5,rep,name=Signatures,proto3" json:"Signatures,omitempty"`
-	Accounts        []*Account             `protobuf:"bytes,6,rep,name=Accounts,proto3" json:"Accounts,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Fee               uint64                 `protobuf:"varint,1,opt,name=Fee,proto3" json:"Fee,omitempty"`
+	FeePayer          []byte                 `protobuf:"bytes,2,opt,name=FeePayer,proto3" json:"FeePayer,omitempty"`
+	RecentBlockhash   []byte                 `protobuf:"bytes,3,opt,name=RecentBlockhash,proto3" json:"RecentBlockhash,omitempty"`
+	Signer            []byte                 `protobuf:"bytes,4,opt,name=Signer,proto3" json:"Signer,omitempty"`
+	Signatures        [][]byte               `protobuf:"bytes,5,rep,name=Signatures,proto3" json:"Signatures,omitempty"`
+	Accounts          []*Account             `protobuf:"bytes,6,rep,name=Accounts,proto3" json:"Accounts,omitempty"`
+	TransactionConfig *TransactionConfig     `protobuf:"bytes,7,opt,name=TransactionConfig,proto3,oneof" json:"TransactionConfig,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *TransactionHeader) Reset() {
 	*x = TransactionHeader{}
-	mi := &file_solana_block_message_proto_msgTypes[4]
+	mi := &file_solana_block_message_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -414,7 +490,7 @@ func (x *TransactionHeader) String() string {
 func (*TransactionHeader) ProtoMessage() {}
 
 func (x *TransactionHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_block_message_proto_msgTypes[4]
+	mi := &file_solana_block_message_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -427,7 +503,7 @@ func (x *TransactionHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransactionHeader.ProtoReflect.Descriptor instead.
 func (*TransactionHeader) Descriptor() ([]byte, []int) {
-	return file_solana_block_message_proto_rawDescGZIP(), []int{4}
+	return file_solana_block_message_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *TransactionHeader) GetFee() uint64 {
@@ -472,6 +548,13 @@ func (x *TransactionHeader) GetAccounts() []*Account {
 	return nil
 }
 
+func (x *TransactionHeader) GetTransactionConfig() *TransactionConfig {
+	if x != nil {
+		return x.TransactionConfig
+	}
+	return nil
+}
+
 type Reward struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Address       []byte                 `protobuf:"bytes,1,opt,name=Address,proto3" json:"Address,omitempty"`
@@ -485,7 +568,7 @@ type Reward struct {
 
 func (x *Reward) Reset() {
 	*x = Reward{}
-	mi := &file_solana_block_message_proto_msgTypes[5]
+	mi := &file_solana_block_message_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -497,7 +580,7 @@ func (x *Reward) String() string {
 func (*Reward) ProtoMessage() {}
 
 func (x *Reward) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_block_message_proto_msgTypes[5]
+	mi := &file_solana_block_message_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -510,7 +593,7 @@ func (x *Reward) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Reward.ProtoReflect.Descriptor instead.
 func (*Reward) Descriptor() ([]byte, []int) {
-	return file_solana_block_message_proto_rawDescGZIP(), []int{5}
+	return file_solana_block_message_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Reward) GetAddress() []byte {
@@ -558,7 +641,7 @@ type TransactionStatus struct {
 
 func (x *TransactionStatus) Reset() {
 	*x = TransactionStatus{}
-	mi := &file_solana_block_message_proto_msgTypes[6]
+	mi := &file_solana_block_message_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -570,7 +653,7 @@ func (x *TransactionStatus) String() string {
 func (*TransactionStatus) ProtoMessage() {}
 
 func (x *TransactionStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_block_message_proto_msgTypes[6]
+	mi := &file_solana_block_message_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -583,7 +666,7 @@ func (x *TransactionStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransactionStatus.ProtoReflect.Descriptor instead.
 func (*TransactionStatus) Descriptor() ([]byte, []int) {
-	return file_solana_block_message_proto_rawDescGZIP(), []int{6}
+	return file_solana_block_message_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *TransactionStatus) GetSuccess() bool {
@@ -616,7 +699,7 @@ type Transaction struct {
 
 func (x *Transaction) Reset() {
 	*x = Transaction{}
-	mi := &file_solana_block_message_proto_msgTypes[7]
+	mi := &file_solana_block_message_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +711,7 @@ func (x *Transaction) String() string {
 func (*Transaction) ProtoMessage() {}
 
 func (x *Transaction) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_block_message_proto_msgTypes[7]
+	mi := &file_solana_block_message_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +724,7 @@ func (x *Transaction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
 func (*Transaction) Descriptor() ([]byte, []int) {
-	return file_solana_block_message_proto_rawDescGZIP(), []int{7}
+	return file_solana_block_message_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Transaction) GetSignature() []byte {
@@ -714,7 +797,7 @@ type BlockHeader struct {
 
 func (x *BlockHeader) Reset() {
 	*x = BlockHeader{}
-	mi := &file_solana_block_message_proto_msgTypes[8]
+	mi := &file_solana_block_message_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -726,7 +809,7 @@ func (x *BlockHeader) String() string {
 func (*BlockHeader) ProtoMessage() {}
 
 func (x *BlockHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_block_message_proto_msgTypes[8]
+	mi := &file_solana_block_message_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -739,7 +822,7 @@ func (x *BlockHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlockHeader.ProtoReflect.Descriptor instead.
 func (*BlockHeader) Descriptor() ([]byte, []int) {
-	return file_solana_block_message_proto_rawDescGZIP(), []int{8}
+	return file_solana_block_message_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BlockHeader) GetSlot() uint64 {
@@ -795,7 +878,7 @@ type BlockMessage struct {
 
 func (x *BlockMessage) Reset() {
 	*x = BlockMessage{}
-	mi := &file_solana_block_message_proto_msgTypes[9]
+	mi := &file_solana_block_message_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +890,7 @@ func (x *BlockMessage) String() string {
 func (*BlockMessage) ProtoMessage() {}
 
 func (x *BlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_block_message_proto_msgTypes[9]
+	mi := &file_solana_block_message_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +903,7 @@ func (x *BlockMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlockMessage.ProtoReflect.Descriptor instead.
 func (*BlockMessage) Descriptor() ([]byte, []int) {
-	return file_solana_block_message_proto_rawDescGZIP(), []int{9}
+	return file_solana_block_message_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *BlockMessage) GetHeader() *BlockHeader {
@@ -880,7 +963,16 @@ const file_solana_block_message_proto_rawDesc = "" +
 	"\x0eAccountIndexes\x18\x06 \x03(\rR\x0eAccountIndexes\x12F\n" +
 	"\x0eBalanceUpdates\x18\a \x03(\v2\x1e.solana_messages.BalanceUpdateR\x0eBalanceUpdates\x12P\n" +
 	"\x13TokenBalanceUpdates\x18\b \x03(\v2\x1e.solana_messages.BalanceUpdateR\x13TokenBalanceUpdates\x12N\n" +
-	"\x12TokenSupplyUpdates\x18\t \x03(\v2\x1e.solana_messages.BalanceUpdateR\x12TokenSupplyUpdates\"\xd9\x01\n" +
+	"\x12TokenSupplyUpdates\x18\t \x03(\v2\x1e.solana_messages.BalanceUpdateR\x12TokenSupplyUpdates\"\xa5\x02\n" +
+	"\x11TransactionConfig\x12%\n" +
+	"\vPriorityFee\x18\x01 \x01(\x04H\x00R\vPriorityFee\x88\x01\x01\x12/\n" +
+	"\x10ComputeUnitLimit\x18\x02 \x01(\rH\x01R\x10ComputeUnitLimit\x88\x01\x01\x12E\n" +
+	"\x1bLoadedAccountsDataSizeLimit\x18\x03 \x01(\rH\x02R\x1bLoadedAccountsDataSizeLimit\x88\x01\x01\x12\x1f\n" +
+	"\bHeapSize\x18\x04 \x01(\rH\x03R\bHeapSize\x88\x01\x01B\x0e\n" +
+	"\f_PriorityFeeB\x13\n" +
+	"\x11_ComputeUnitLimitB\x1e\n" +
+	"\x1c_LoadedAccountsDataSizeLimitB\v\n" +
+	"\t_HeapSize\"\xc6\x02\n" +
 	"\x11TransactionHeader\x12\x10\n" +
 	"\x03Fee\x18\x01 \x01(\x04R\x03Fee\x12\x1a\n" +
 	"\bFeePayer\x18\x02 \x01(\fR\bFeePayer\x12(\n" +
@@ -889,7 +981,9 @@ const file_solana_block_message_proto_rawDesc = "" +
 	"\n" +
 	"Signatures\x18\x05 \x03(\fR\n" +
 	"Signatures\x124\n" +
-	"\bAccounts\x18\x06 \x03(\v2\x18.solana_messages.AccountR\bAccounts\"\xb9\x01\n" +
+	"\bAccounts\x18\x06 \x03(\v2\x18.solana_messages.AccountR\bAccounts\x12U\n" +
+	"\x11TransactionConfig\x18\a \x01(\v2\".solana_messages.TransactionConfigH\x00R\x11TransactionConfig\x88\x01\x01B\x14\n" +
+	"\x12_TransactionConfig\"\xb9\x01\n" +
 	"\x06Reward\x12\x18\n" +
 	"\aAddress\x18\x01 \x01(\fR\aAddress\x12\x16\n" +
 	"\x06Amount\x18\x02 \x01(\x03R\x06Amount\x12 \n" +
@@ -949,19 +1043,20 @@ func file_solana_block_message_proto_rawDescGZIP() []byte {
 }
 
 var file_solana_block_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_solana_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_solana_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_solana_block_message_proto_goTypes = []any{
 	(RewardType)(0),           // 0: solana_messages.RewardType
 	(*Account)(nil),           // 1: solana_messages.Account
 	(*TokenInfo)(nil),         // 2: solana_messages.TokenInfo
 	(*BalanceUpdate)(nil),     // 3: solana_messages.BalanceUpdate
 	(*Instruction)(nil),       // 4: solana_messages.Instruction
-	(*TransactionHeader)(nil), // 5: solana_messages.TransactionHeader
-	(*Reward)(nil),            // 6: solana_messages.Reward
-	(*TransactionStatus)(nil), // 7: solana_messages.TransactionStatus
-	(*Transaction)(nil),       // 8: solana_messages.Transaction
-	(*BlockHeader)(nil),       // 9: solana_messages.BlockHeader
-	(*BlockMessage)(nil),      // 10: solana_messages.BlockMessage
+	(*TransactionConfig)(nil), // 5: solana_messages.TransactionConfig
+	(*TransactionHeader)(nil), // 6: solana_messages.TransactionHeader
+	(*Reward)(nil),            // 7: solana_messages.Reward
+	(*TransactionStatus)(nil), // 8: solana_messages.TransactionStatus
+	(*Transaction)(nil),       // 9: solana_messages.Transaction
+	(*BlockHeader)(nil),       // 10: solana_messages.BlockHeader
+	(*BlockMessage)(nil),      // 11: solana_messages.BlockMessage
 }
 var file_solana_block_message_proto_depIdxs = []int32{
 	2,  // 0: solana_messages.Account.Token:type_name -> solana_messages.TokenInfo
@@ -969,20 +1064,21 @@ var file_solana_block_message_proto_depIdxs = []int32{
 	3,  // 2: solana_messages.Instruction.TokenBalanceUpdates:type_name -> solana_messages.BalanceUpdate
 	3,  // 3: solana_messages.Instruction.TokenSupplyUpdates:type_name -> solana_messages.BalanceUpdate
 	1,  // 4: solana_messages.TransactionHeader.Accounts:type_name -> solana_messages.Account
-	0,  // 5: solana_messages.Reward.RewardType:type_name -> solana_messages.RewardType
-	7,  // 6: solana_messages.Transaction.Status:type_name -> solana_messages.TransactionStatus
-	5,  // 7: solana_messages.Transaction.Header:type_name -> solana_messages.TransactionHeader
-	3,  // 8: solana_messages.Transaction.TotalBalanceUpdates:type_name -> solana_messages.BalanceUpdate
-	3,  // 9: solana_messages.Transaction.TotalTokenBalanceUpdates:type_name -> solana_messages.BalanceUpdate
-	4,  // 10: solana_messages.Transaction.Instructions:type_name -> solana_messages.Instruction
-	9,  // 11: solana_messages.BlockMessage.Header:type_name -> solana_messages.BlockHeader
-	6,  // 12: solana_messages.BlockMessage.Rewards:type_name -> solana_messages.Reward
-	8,  // 13: solana_messages.BlockMessage.Transactions:type_name -> solana_messages.Transaction
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	5,  // 5: solana_messages.TransactionHeader.TransactionConfig:type_name -> solana_messages.TransactionConfig
+	0,  // 6: solana_messages.Reward.RewardType:type_name -> solana_messages.RewardType
+	8,  // 7: solana_messages.Transaction.Status:type_name -> solana_messages.TransactionStatus
+	6,  // 8: solana_messages.Transaction.Header:type_name -> solana_messages.TransactionHeader
+	3,  // 9: solana_messages.Transaction.TotalBalanceUpdates:type_name -> solana_messages.BalanceUpdate
+	3,  // 10: solana_messages.Transaction.TotalTokenBalanceUpdates:type_name -> solana_messages.BalanceUpdate
+	4,  // 11: solana_messages.Transaction.Instructions:type_name -> solana_messages.Instruction
+	10, // 12: solana_messages.BlockMessage.Header:type_name -> solana_messages.BlockHeader
+	7,  // 13: solana_messages.BlockMessage.Rewards:type_name -> solana_messages.Reward
+	9,  // 14: solana_messages.BlockMessage.Transactions:type_name -> solana_messages.Transaction
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_solana_block_message_proto_init() }
@@ -991,13 +1087,15 @@ func file_solana_block_message_proto_init() {
 		return
 	}
 	file_solana_block_message_proto_msgTypes[0].OneofWrappers = []any{}
+	file_solana_block_message_proto_msgTypes[4].OneofWrappers = []any{}
+	file_solana_block_message_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solana_block_message_proto_rawDesc), len(file_solana_block_message_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
