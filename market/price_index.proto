@@ -93,10 +93,28 @@ message MarketCapUpdate {
   optional double MaxSupply = 5;
 }
 
+// Liquidity is a pool's reserves and the USD depth derived from them, carried on the price
+// index updates for the liquidity-weighted price index. At the pair level it is one pool's
+// reserves; at the token/currency level Usd is the sum over the asset's pools.
+message Liquidity {
+  // Usd is the pool's USD liquidity - the quote-leg reserve valued in USD, the depth that
+  // backs the price. Summed over pools at token/currency level.
+  float Usd = 1;
+  // BaseReserve and QuoteReserve are the post-event reserves as UI amounts; set at the pair
+  // level only.
+  float BaseReserve = 2;
+  float QuoteReserve = 3;
+  // QuoteReserveUsd is QuoteReserve valued in USD (equals Usd for a single pool).
+  float QuoteReserveUsd = 4;
+  // UpdatedAt is the unix second of the reserve snapshot, for freshness.
+  uint32 UpdatedAt = 5;
+}
+
 message CurrencyUpdate {
   Currency Currency = 1;
   PriceUpdate PriceUpdate = 2;
   optional MarketCapUpdate MarketCapUpdate = 3;
+  Liquidity Liquidity = 4;
 }
 
 message TokenUpdate {
@@ -105,6 +123,7 @@ message TokenUpdate {
   PriceUpdate PriceUpdate = 3;
   optional MarketCapUpdate MarketCapUpdate = 4;
   Ranking Ranking = 5;
+  Liquidity Liquidity = 6;
 }
 
 message Ranking {
@@ -123,6 +142,7 @@ message PairUpdate {
   optional MarketCapUpdate MarketCapUpdate = 8;
   Ranking Ranking = 9;
   Pool Pool = 10;
+  Liquidity Liquidity = 11;
 }
 
 message PriceIndexMessage {
