@@ -800,7 +800,18 @@ type Liquidity struct {
 	// QuoteReserveUsd is QuoteReserve valued in USD (equals Usd for a single pool).
 	QuoteReserveUsd float32 `protobuf:"fixed32,4,opt,name=QuoteReserveUsd,proto3" json:"QuoteReserveUsd,omitempty"`
 	// UpdatedAt is the unix second of the reserve snapshot, for freshness.
-	UpdatedAt     uint32 `protobuf:"varint,5,opt,name=UpdatedAt,proto3" json:"UpdatedAt,omitempty"`
+	UpdatedAt uint32 `protobuf:"varint,5,opt,name=UpdatedAt,proto3" json:"UpdatedAt,omitempty"`
+	// Source names where Usd came from, so a real reserve can be told from an estimate:
+	// "real" (a reserve snapshot), "real_stale" (a snapshot past the freshness window,
+	// still the best known), "retired" (a launch curve its token has left: 0),
+	// "migration" (a curve's cumulative net quote, or the amount that migrated to its
+	// venue), "impact" (depth from net flow against the price move), "volume"
+	// (turnover-scaled trade volume), "none". At the token/currency level it is the
+	// source of the leading (Position 1) part.
+	Source string `protobuf:"bytes,6,opt,name=Source,proto3" json:"Source,omitempty"`
+	// RealShare is the fraction of Usd backed by a reserve snapshot: 1 or 0 for one pool,
+	// in between for a token or currency summed over pools.
+	RealShare     float32 `protobuf:"fixed32,7,opt,name=RealShare,proto3" json:"RealShare,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -866,6 +877,20 @@ func (x *Liquidity) GetQuoteReserveUsd() float32 {
 func (x *Liquidity) GetUpdatedAt() uint32 {
 	if x != nil {
 		return x.UpdatedAt
+	}
+	return 0
+}
+
+func (x *Liquidity) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *Liquidity) GetRealShare() float32 {
+	if x != nil {
+		return x.RealShare
 	}
 	return 0
 }
@@ -1332,13 +1357,15 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\tMaxSupply\x18\x05 \x01(\x01H\x01R\tMaxSupply\x88\x01\x01B\x14\n" +
 	"\x12_CirculatingSupplyB\f\n" +
 	"\n" +
-	"_MaxSupply\"\xab\x01\n" +
+	"_MaxSupply\"\xe1\x01\n" +
 	"\tLiquidity\x12\x10\n" +
 	"\x03Usd\x18\x01 \x01(\x02R\x03Usd\x12 \n" +
 	"\vBaseReserve\x18\x02 \x01(\x02R\vBaseReserve\x12\"\n" +
 	"\fQuoteReserve\x18\x03 \x01(\x02R\fQuoteReserve\x12(\n" +
 	"\x0fQuoteReserveUsd\x18\x04 \x01(\x02R\x0fQuoteReserveUsd\x12\x1c\n" +
-	"\tUpdatedAt\x18\x05 \x01(\rR\tUpdatedAt\"\xb6\x02\n" +
+	"\tUpdatedAt\x18\x05 \x01(\rR\tUpdatedAt\x12\x16\n" +
+	"\x06Source\x18\x06 \x01(\tR\x06Source\x12\x1c\n" +
+	"\tRealShare\x18\a \x01(\x02R\tRealShare\"\xb6\x02\n" +
 	"\x0eCurrencyUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x12B\n" +
 	"\vPriceUpdate\x18\x02 \x01(\v2 .marketdata_messages.PriceUpdateR\vPriceUpdate\x12S\n" +

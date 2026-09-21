@@ -108,6 +108,17 @@ message Liquidity {
   float QuoteReserveUsd = 4;
   // UpdatedAt is the unix second of the reserve snapshot, for freshness.
   uint32 UpdatedAt = 5;
+  // Source names where Usd came from, so a real reserve can be told from an estimate:
+  // "real" (a reserve snapshot), "real_stale" (a snapshot past the freshness window,
+  // still the best known), "retired" (a launch curve its token has left: 0),
+  // "migration" (a curve's cumulative net quote, or the amount that migrated to its
+  // venue), "impact" (depth from net flow against the price move), "volume"
+  // (turnover-scaled trade volume), "none". At the token/currency level it is the
+  // source of the leading (Position 1) part.
+  string Source = 6;
+  // RealShare is the fraction of Usd backed by a reserve snapshot: 1 or 0 for one pool,
+  // in between for a token or currency summed over pools.
+  float RealShare = 7;
 }
 
 message CurrencyUpdate {
