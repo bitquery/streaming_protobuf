@@ -55,7 +55,7 @@ message Market {
 // HL only exposes them in a snapshot/API, not the realtime feed. Empty = source silent, NOT zero.
 message PerpPosition {
   string Side        = 1; // "Long" | "Short"
-  string Size        = 2; // signed (negative = short)
+  string Size        = 2; // signed, AFTER this execution (Trade, PerpLiquidation); spot: base-token balance net of a fee charged in that token; empty on order and book events
   string SizeBefore  = 3;
   string EntryPrice  = 4; // empty if opened pre-window
   string RealizedPnl = 5;
@@ -78,7 +78,7 @@ message Fees {
 
 // The execution itself — the shared core of Trade and PerpLiquidation (both come from one Fill).
 // A liquidation IS an Execution plus liquidation-specific details. Pair both sides of a match on
-// (BlockNumber, Market, Tid).
+// (BlockNumber, Market, Tid); order the fills of a block by Index, never by Tid.
 message Execution {
   string Side        = 1; // "Buy" | "Sell"
   string Direction   = 2; // "Open Long", "Close Short", …
@@ -87,9 +87,10 @@ message Execution {
   string Size        = 5;
   uint64 Oid         = 6;
   string Cloid       = 7;
-  uint64 Tid         = 8; // join both sides on (BlockNumber, Market, Tid)
+  uint64 Tid         = 8; // join both sides on (BlockNumber, Market, Tid); a hash of the two oids, so it carries no order
   string Hash        = 9; // zero on TWAP — never a join key
   int64  EventTime   = 10; // per-fill event time, epoch ms (Fill.Time) — finer than block BlockTime
+  uint32 Index       = 11; // place in the block's fill list, from 1 = execution order (shared by trades and liquidations); 0 = written before this field existed
 }
 
 // Trade ← Fill (fills.proto), non-liquidation. One execution for one side; pair both sides on
@@ -161,6 +162,10 @@ message OrderUpdate {
   string Builder    = 23; // order builder address (usually empty)
   uint32 BuilderFee = 24;
   int64  EventTime  = 25; // status-event time, epoch ns (OrderStatus.Time) — vs PlacedTime = placement
+  // Place of the status in the block's order-status list, from 1 = event order. Statuses of one order
+  // in a block share EventTime, so only Index orders them; the legs of a bracket share it too (Leg
+  // tells them apart). 0 = written before this field existed.
+  uint32 Index      = 26;
 }
 
 

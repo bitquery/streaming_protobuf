@@ -325,7 +325,7 @@ func (x *Market) GetMaxLeverage() uint32 {
 type PerpPosition struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Side          string                 `protobuf:"bytes,1,opt,name=Side,proto3" json:"Side,omitempty"` // "Long" | "Short"
-	Size          string                 `protobuf:"bytes,2,opt,name=Size,proto3" json:"Size,omitempty"` // signed (negative = short)
+	Size          string                 `protobuf:"bytes,2,opt,name=Size,proto3" json:"Size,omitempty"` // signed, AFTER this execution (Trade, PerpLiquidation); spot: base-token balance net of a fee charged in that token; empty on order and book events
 	SizeBefore    string                 `protobuf:"bytes,3,opt,name=SizeBefore,proto3" json:"SizeBefore,omitempty"`
 	EntryPrice    string                 `protobuf:"bytes,4,opt,name=EntryPrice,proto3" json:"EntryPrice,omitempty"` // empty if opened pre-window
 	RealizedPnl   string                 `protobuf:"bytes,5,opt,name=RealizedPnl,proto3" json:"RealizedPnl,omitempty"`
@@ -511,7 +511,7 @@ func (x *Fees) GetPriorityGas() string {
 
 // The execution itself — the shared core of Trade and PerpLiquidation (both come from one Fill).
 // A liquidation IS an Execution plus liquidation-specific details. Pair both sides of a match on
-// (BlockNumber, Market, Tid).
+// (BlockNumber, Market, Tid); order the fills of a block by Index, never by Tid.
 type Execution struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Side          string                 `protobuf:"bytes,1,opt,name=Side,proto3" json:"Side,omitempty"`                // "Buy" | "Sell"
@@ -521,9 +521,10 @@ type Execution struct {
 	Size          string                 `protobuf:"bytes,5,opt,name=Size,proto3" json:"Size,omitempty"`
 	Oid           uint64                 `protobuf:"varint,6,opt,name=Oid,proto3" json:"Oid,omitempty"`
 	Cloid         string                 `protobuf:"bytes,7,opt,name=Cloid,proto3" json:"Cloid,omitempty"`
-	Tid           uint64                 `protobuf:"varint,8,opt,name=Tid,proto3" json:"Tid,omitempty"`              // join both sides on (BlockNumber, Market, Tid)
+	Tid           uint64                 `protobuf:"varint,8,opt,name=Tid,proto3" json:"Tid,omitempty"`              // join both sides on (BlockNumber, Market, Tid); a hash of the two oids, so it carries no order
 	Hash          string                 `protobuf:"bytes,9,opt,name=Hash,proto3" json:"Hash,omitempty"`             // zero on TWAP — never a join key
 	EventTime     int64                  `protobuf:"varint,10,opt,name=EventTime,proto3" json:"EventTime,omitempty"` // per-fill event time, epoch ms (Fill.Time) — finer than block BlockTime
+	Index         uint32                 `protobuf:"varint,11,opt,name=Index,proto3" json:"Index,omitempty"`         // place in the block's fill list, from 1 = execution order (shared by trades and liquidations); 0 = written before this field existed
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -624,6 +625,13 @@ func (x *Execution) GetHash() string {
 func (x *Execution) GetEventTime() int64 {
 	if x != nil {
 		return x.EventTime
+	}
+	return 0
+}
+
+func (x *Execution) GetIndex() uint32 {
+	if x != nil {
+		return x.Index
 	}
 	return 0
 }
@@ -868,16 +876,20 @@ type OrderUpdate struct {
 	IsTrigger        bool                   `protobuf:"varint,14,opt,name=IsTrigger,proto3" json:"IsTrigger,omitempty"`
 	IsPositionTpsl   bool                   `protobuf:"varint,15,opt,name=IsPositionTpsl,proto3" json:"IsPositionTpsl,omitempty"`
 	// TP/SL bracket: legs share Oid+Status; Leg tells them apart, ParentOid ties a leg to its parent.
-	ParentOid     uint64        `protobuf:"varint,16,opt,name=ParentOid,proto3" json:"ParentOid,omitempty"`
-	Leg           uint32        `protobuf:"varint,17,opt,name=Leg,proto3" json:"Leg,omitempty"`
-	Position      *PerpPosition `protobuf:"bytes,18,opt,name=Position,proto3" json:"Position,omitempty"`
-	Oid           uint64        `protobuf:"varint,19,opt,name=Oid,proto3" json:"Oid,omitempty"`
-	Cloid         string        `protobuf:"bytes,20,opt,name=Cloid,proto3" json:"Cloid,omitempty"`
-	Hash          string        `protobuf:"bytes,21,opt,name=Hash,proto3" json:"Hash,omitempty"`              // empty if never on chain
-	PlacedTime    int64         `protobuf:"varint,22,opt,name=PlacedTime,proto3" json:"PlacedTime,omitempty"` // epoch ms
-	Builder       string        `protobuf:"bytes,23,opt,name=Builder,proto3" json:"Builder,omitempty"`        // order builder address (usually empty)
-	BuilderFee    uint32        `protobuf:"varint,24,opt,name=BuilderFee,proto3" json:"BuilderFee,omitempty"`
-	EventTime     int64         `protobuf:"varint,25,opt,name=EventTime,proto3" json:"EventTime,omitempty"` // status-event time, epoch ns (OrderStatus.Time) — vs PlacedTime = placement
+	ParentOid  uint64        `protobuf:"varint,16,opt,name=ParentOid,proto3" json:"ParentOid,omitempty"`
+	Leg        uint32        `protobuf:"varint,17,opt,name=Leg,proto3" json:"Leg,omitempty"`
+	Position   *PerpPosition `protobuf:"bytes,18,opt,name=Position,proto3" json:"Position,omitempty"`
+	Oid        uint64        `protobuf:"varint,19,opt,name=Oid,proto3" json:"Oid,omitempty"`
+	Cloid      string        `protobuf:"bytes,20,opt,name=Cloid,proto3" json:"Cloid,omitempty"`
+	Hash       string        `protobuf:"bytes,21,opt,name=Hash,proto3" json:"Hash,omitempty"`              // empty if never on chain
+	PlacedTime int64         `protobuf:"varint,22,opt,name=PlacedTime,proto3" json:"PlacedTime,omitempty"` // epoch ms
+	Builder    string        `protobuf:"bytes,23,opt,name=Builder,proto3" json:"Builder,omitempty"`        // order builder address (usually empty)
+	BuilderFee uint32        `protobuf:"varint,24,opt,name=BuilderFee,proto3" json:"BuilderFee,omitempty"`
+	EventTime  int64         `protobuf:"varint,25,opt,name=EventTime,proto3" json:"EventTime,omitempty"` // status-event time, epoch ns (OrderStatus.Time) — vs PlacedTime = placement
+	// Place of the status in the block's order-status list, from 1 = event order. Statuses of one order
+	// in a block share EventTime, so only Index orders them; the legs of a bracket share it too (Leg
+	// tells them apart). 0 = written before this field existed.
+	Index         uint32 `protobuf:"varint,26,opt,name=Index,proto3" json:"Index,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1083,6 +1095,13 @@ func (x *OrderUpdate) GetBuilderFee() uint32 {
 func (x *OrderUpdate) GetEventTime() int64 {
 	if x != nil {
 		return x.EventTime
+	}
+	return 0
+}
+
+func (x *OrderUpdate) GetIndex() uint32 {
+	if x != nil {
+		return x.Index
 	}
 	return 0
 }
@@ -2110,7 +2129,7 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"BuilderFee\x18\x03 \x01(\tR\n" +
 	"BuilderFee\x12 \n" +
 	"\vDeployerFee\x18\x04 \x01(\tR\vDeployerFee\x12 \n" +
-	"\vPriorityGas\x18\x05 \x01(\tR\vPriorityGas\"\xf5\x01\n" +
+	"\vPriorityGas\x18\x05 \x01(\tR\vPriorityGas\"\x8b\x02\n" +
 	"\tExecution\x12\x12\n" +
 	"\x04Side\x18\x01 \x01(\tR\x04Side\x12\x1c\n" +
 	"\tDirection\x18\x02 \x01(\tR\tDirection\x12 \n" +
@@ -2122,7 +2141,8 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\x03Tid\x18\b \x01(\x04R\x03Tid\x12\x12\n" +
 	"\x04Hash\x18\t \x01(\tR\x04Hash\x12\x1c\n" +
 	"\tEventTime\x18\n" +
-	" \x01(\x03R\tEventTime\"\x84\x03\n" +
+	" \x01(\x03R\tEventTime\x12\x14\n" +
+	"\x05Index\x18\v \x01(\rR\x05Index\"\x84\x03\n" +
 	"\x05Trade\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x124\n" +
 	"\x06Market\x18\x02 \x01(\v2\x1c.hyperliquid_messages.MarketR\x06Market\x12=\n" +
@@ -2144,7 +2164,7 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\n" +
 	"Liquidator\x18\b \x01(\tR\n" +
 	"Liquidator\x12&\n" +
-	"\x0eLiquidatedUser\x18\t \x01(\tR\x0eLiquidatedUser\"\x8b\x06\n" +
+	"\x0eLiquidatedUser\x18\t \x01(\tR\x0eLiquidatedUser\"\xa1\x06\n" +
 	"\vOrderUpdate\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x124\n" +
 	"\x06Market\x18\x02 \x01(\v2\x1c.hyperliquid_messages.MarketR\x06Market\x12\x12\n" +
@@ -2177,7 +2197,8 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\n" +
 	"BuilderFee\x18\x18 \x01(\rR\n" +
 	"BuilderFee\x12\x1c\n" +
-	"\tEventTime\x18\x19 \x01(\x03R\tEventTime\"\xbc\x02\n" +
+	"\tEventTime\x18\x19 \x01(\x03R\tEventTime\x12\x14\n" +
+	"\x05Index\x18\x1a \x01(\rR\x05Index\"\xbc\x02\n" +
 	"\x04Twap\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x124\n" +
 	"\x06Market\x18\x02 \x01(\v2\x1c.hyperliquid_messages.MarketR\x06Market\x12\x16\n" +
