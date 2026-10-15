@@ -187,6 +187,14 @@ TRANSACTION (Hash)  →  MATCH (Coin, Tid)  →  SIDE (User)
 | `Hash` | L1 transaction hash | **no** — shared by many fills; **all-zero on both sides of TWAP fills** | display / grouping, never dedup |
 | `TwapId` | TWAP order id | unique per TWAP | see caveat in §5.5 |
 | **`(BlockNumber, Coin/Market, Tid)`** | **the trade key** | **yes** (*observed* on millions of fills) | dedup, pairing the two sides of a match |
+| `Execution.Index` | place of the fill in the block's fill list, from 1 | unique within a block | **the only order of fills inside a block** |
+
+**`Tid` is not an order.** Being a hash, it says nothing about which fill came first: inside
+one block, ordering fills by `Tid` picks an arbitrary one as "the last". A position size, a
+candle's open/close or an average entry price taken that way is wrong whenever an account or a
+market has several fills in the block. Order by `(BlockNumber, Execution.Index)`; the node
+lists fills in execution order, so `Index` is that order, and `SizeBefore` of each fill equals
+`Size` of the previous fill of the same account and coin.
 
 **Event hashes are synthetic.** `Fill.Hash` / `OrderStatus.Hash` / `MiscEvent.Hash`
 (and thus `Execution.Hash` in the product) is *not* a hash of the transaction content.
@@ -327,7 +335,7 @@ silent, NOT zero.**
 | Field | Type | Description |
 |---|---|---|
 | `Side` | string | `"Long"` \| `"Short"` |
-| `Size` | string | signed (negative = short) |
+| `Size` | string | signed size **after** this execution (`Trade`, `PerpLiquidation`); for spot, the base-token balance net of a fee charged in that token; empty on order and book events |
 | `SizeBefore` | string | size before this event |
 | `EntryPrice` | string | empty if the position was opened before the window |
 | `RealizedPnl` | string | realized PnL |
@@ -349,7 +357,8 @@ silent, NOT zero.**
 | `PriorityGas` | string | **NOT** a component of `Fee`; may be in a different unit |
 
 **`Execution`** — the execution itself, the shared core of `Trade` and `PerpLiquidation`
-(both come from one `Fill`). Pair both sides of a match on `(BlockNumber, Market, Tid)`.
+(both come from one `Fill`). Pair both sides of a match on `(BlockNumber, Market, Tid)`;
+order the fills of a block by `Index`, never by `Tid` (§3).
 
 | Field | Type | Description |
 |---|---|---|
@@ -360,9 +369,10 @@ silent, NOT zero.**
 | `Size` | string | executed size |
 | `Oid` | uint64 | order id |
 | `Cloid` | string | client order id |
-| `Tid` | uint64 | match id — join both sides on `(BlockNumber, Market, Tid)` |
+| `Tid` | uint64 | match id — join both sides on `(BlockNumber, Market, Tid)`; a hash, **not an order** (§3) |
 | `Hash` | string | L1 tx hash; **zero on TWAP** — never a join key (§3) |
 | `EventTime` | int64 | per-fill event time, epoch **ms** (finer than block `BlockTime`) |
+| `Index` | uint32 | place of the fill in the block's fill list, from 1 — the execution order; one sequence for trades and liquidations; `0` on data written before the field existed |
 
 ### 5.3 Trades & liquidations (`Trade`, `PerpLiquidation`)
 
@@ -432,6 +442,11 @@ reached the book (rejects). Sourced from the node `OrderStatus` stream.
 | `Builder` | string | order builder address (usually empty) |
 | `BuilderFee` | uint32 | builder fee rate in tenths of a basis point |
 | `EventTime` | int64 | status-event time, epoch **ns** (vs `PlacedTime` = placement) |
+| `Index` | uint32 | place of the status in the block's order-status list, from 1 — the event order; the legs of a bracket share it (`Leg` tells them apart); `0` on data written before the field existed |
+
+An order can report two statuses in one block (`open`, then `filled` or `canceled`), and both
+carry the **same** `EventTime`: only `Index` says which came first. The node lists them in event
+order, so a later `Index` is the later status.
 
 ### 5.5 TWAP (`Twap`)
 
