@@ -28,4 +28,14 @@ message TradeTransaction {
   Chain Chain = 1;
   Block Block = 2;
   TransactionHeader TransactionHeader = 3;
+
+  // Sequence number of the trade inside its transaction, 0-based, in the
+  // order the chain executed them: the first DEX trade of the transaction
+  // is 0, the next is 1, and so on. Derived by the trade parser from the
+  // source ordering (EVM: CallIndex, LogIndex, Index; Solana:
+  // InstructionIndex) and counted over every trade of the transaction, so
+  // a trade the parser later drops leaves a gap rather than renumbering
+  // the rest. TransactionHeader.Index is the transaction's position in the
+  // block and is the same for every trade of the transaction.
+  uint32 TradeIndex = 4;
 }

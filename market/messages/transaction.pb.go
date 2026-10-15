@@ -238,8 +238,17 @@ type TradeTransaction struct {
 	Chain             *Chain                 `protobuf:"bytes,1,opt,name=Chain,proto3" json:"Chain,omitempty"`
 	Block             *Block                 `protobuf:"bytes,2,opt,name=Block,proto3" json:"Block,omitempty"`
 	TransactionHeader *TransactionHeader     `protobuf:"bytes,3,opt,name=TransactionHeader,proto3" json:"TransactionHeader,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// Sequence number of the trade inside its transaction, 0-based, in the
+	// order the chain executed them: the first DEX trade of the transaction
+	// is 0, the next is 1, and so on. Derived by the trade parser from the
+	// source ordering (EVM: CallIndex, LogIndex, Index; Solana:
+	// InstructionIndex) and counted over every trade of the transaction, so
+	// a trade the parser later drops leaves a gap rather than renumbering
+	// the rest. TransactionHeader.Index is the transaction's position in the
+	// block and is the same for every trade of the transaction.
+	TradeIndex    uint32 `protobuf:"varint,4,opt,name=TradeIndex,proto3" json:"TradeIndex,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TradeTransaction) Reset() {
@@ -293,6 +302,13 @@ func (x *TradeTransaction) GetTransactionHeader() *TransactionHeader {
 	return nil
 }
 
+func (x *TradeTransaction) GetTradeIndex() uint32 {
+	if x != nil {
+		return x.TradeIndex
+	}
+	return 0
+}
+
 var File_market_transaction_proto protoreflect.FileDescriptor
 
 const file_market_transaction_proto_rawDesc = "" +
@@ -313,11 +329,14 @@ const file_market_transaction_proto_rawDesc = "" +
 	"\x06Sender\x18\x03 \x01(\tR\x06Sender\x12\x0e\n" +
 	"\x02To\x18\x04 \x01(\tR\x02To\x12\x1a\n" +
 	"\bFeePayer\x18\x05 \x01(\tR\bFeePayer\x12\x10\n" +
-	"\x03Fee\x18\x06 \x01(\x01R\x03Fee\"\xcc\x01\n" +
+	"\x03Fee\x18\x06 \x01(\x01R\x03Fee\"\xec\x01\n" +
 	"\x10TradeTransaction\x120\n" +
 	"\x05Chain\x18\x01 \x01(\v2\x1a.marketdata_messages.ChainR\x05Chain\x120\n" +
 	"\x05Block\x18\x02 \x01(\v2\x1a.marketdata_messages.BlockR\x05Block\x12T\n" +
-	"\x11TransactionHeader\x18\x03 \x01(\v2&.marketdata_messages.TransactionHeaderR\x11TransactionHeaderb\x06proto3"
+	"\x11TransactionHeader\x18\x03 \x01(\v2&.marketdata_messages.TransactionHeaderR\x11TransactionHeader\x12\x1e\n" +
+	"\n" +
+	"TradeIndex\x18\x04 \x01(\rR\n" +
+	"TradeIndexb\x06proto3"
 
 var (
 	file_market_transaction_proto_rawDescOnce sync.Once
