@@ -811,7 +811,17 @@ type Liquidity struct {
 	Source string `protobuf:"bytes,6,opt,name=Source,proto3" json:"Source,omitempty"`
 	// RealShare is the fraction of Usd backed by a reserve snapshot: 1 or 0 for one pool,
 	// in between for a token or currency summed over pools.
-	RealShare     float32 `protobuf:"fixed32,7,opt,name=RealShare,proto3" json:"RealShare,omitempty"`
+	RealShare float32 `protobuf:"fixed32,7,opt,name=RealShare,proto3" json:"RealShare,omitempty"`
+	// DepthUsd is the quote-side amount, in USD, that can be sold into the pool inside the
+	// reserve event's slippage tier (1 %): what of the reserve is actually tradable at the
+	// spot. The index caps Usd at DepthUsd x liquidity_depth_scale. 0 when the snapshot
+	// carried no slippage table. Pair level only.
+	DepthUsd float32 `protobuf:"fixed32,8,opt,name=DepthUsd,proto3" json:"DepthUsd,omitempty"`
+	// NetQuoteUsd is a launch curve's lifetime net quote in USD - quote paid in minus quote
+	// paid out - which for a bonding curve is its reserve and its progress to graduation.
+	// On a retired curve it is the amount that migrated to the venue. 0 for a pool that is
+	// not a configured launcher. Pair level only.
+	NetQuoteUsd   float32 `protobuf:"fixed32,9,opt,name=NetQuoteUsd,proto3" json:"NetQuoteUsd,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -895,6 +905,20 @@ func (x *Liquidity) GetRealShare() float32 {
 	return 0
 }
 
+func (x *Liquidity) GetDepthUsd() float32 {
+	if x != nil {
+		return x.DepthUsd
+	}
+	return 0
+}
+
+func (x *Liquidity) GetNetQuoteUsd() float32 {
+	if x != nil {
+		return x.NetQuoteUsd
+	}
+	return 0
+}
+
 type CurrencyUpdate struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Currency        *Currency              `protobuf:"bytes,1,opt,name=Currency,proto3" json:"Currency,omitempty"`
@@ -971,6 +995,8 @@ type TokenUpdate struct {
 	MarketCapUpdate *MarketCapUpdate       `protobuf:"bytes,4,opt,name=MarketCapUpdate,proto3,oneof" json:"MarketCapUpdate,omitempty"`
 	Ranking         *Ranking               `protobuf:"bytes,5,opt,name=Ranking,proto3" json:"Ranking,omitempty"`
 	Liquidity       *Liquidity             `protobuf:"bytes,6,opt,name=Liquidity,proto3" json:"Liquidity,omitempty"`
+	RankingDetail   *RankingDetail         `protobuf:"bytes,7,opt,name=RankingDetail,proto3" json:"RankingDetail,omitempty"`
+	LeadingPool     *LeadingPool           `protobuf:"bytes,8,opt,name=LeadingPool,proto3" json:"LeadingPool,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1047,6 +1073,20 @@ func (x *TokenUpdate) GetLiquidity() *Liquidity {
 	return nil
 }
 
+func (x *TokenUpdate) GetRankingDetail() *RankingDetail {
+	if x != nil {
+		return x.RankingDetail
+	}
+	return nil
+}
+
+func (x *TokenUpdate) GetLeadingPool() *LeadingPool {
+	if x != nil {
+		return x.LeadingPool
+	}
+	return nil
+}
+
 type Ranking struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Position      uint32                 `protobuf:"varint,1,opt,name=Position,proto3" json:"Position,omitempty"`
@@ -1099,6 +1139,135 @@ func (x *Ranking) GetWeight() float32 {
 	return 0
 }
 
+// RankingDetail explains a part's Ranking: what the blend did with its price and how much
+// of its weight the staleness rule left it. Carried on PairUpdate (a pool among its token's
+// pools) and TokenUpdate (a token among its currency's tokens); deliberately not on trades.
+type RankingDetail struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Verdict is what happened to the part's price in this batch's blend:
+	// "priced" (accepted into the blend), "clamped" (accepted, bounded to the blend cap),
+	// "outlier" (rejected by the outlier band), "ineligible" (refused by the eligibility
+	// gate: too little money or history), "no_price" (no price in the window; ranked by
+	// weight 0), "retired" (a launch curve its token has left).
+	Verdict string `protobuf:"bytes,1,opt,name=Verdict,proto3" json:"Verdict,omitempty"`
+	// StaleMultiplier is the staleness discount applied to the weight, in (0, 1]: 1 for a
+	// part trading at its own rhythm, halving every stale half-life past its threshold.
+	// Ranking.Weight is the part's share of the discounted weights.
+	StaleMultiplier float32 `protobuf:"fixed32,2,opt,name=StaleMultiplier,proto3" json:"StaleMultiplier,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *RankingDetail) Reset() {
+	*x = RankingDetail{}
+	mi := &file_market_price_index_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RankingDetail) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RankingDetail) ProtoMessage() {}
+
+func (x *RankingDetail) ProtoReflect() protoreflect.Message {
+	mi := &file_market_price_index_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RankingDetail.ProtoReflect.Descriptor instead.
+func (*RankingDetail) Descriptor() ([]byte, []int) {
+	return file_market_price_index_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *RankingDetail) GetVerdict() string {
+	if x != nil {
+		return x.Verdict
+	}
+	return ""
+}
+
+func (x *RankingDetail) GetStaleMultiplier() float32 {
+	if x != nil {
+		return x.StaleMultiplier
+	}
+	return 0
+}
+
+// LeadingPool names the pool at Ranking Position 1 among a token's pools - the one whose
+// Liquidity.Source the TokenUpdate reports - so a consumer of token updates can tell which
+// pool is pricing the token without joining to the pair updates of the same batch.
+type LeadingPool struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// MarketId is Market.Id of the leading pool's PairUpdate.
+	MarketId string `protobuf:"bytes,1,opt,name=MarketId,proto3" json:"MarketId,omitempty"`
+	// QuoteTokenId is QuoteToken.Id of that PairUpdate.
+	QuoteTokenId string `protobuf:"bytes,2,opt,name=QuoteTokenId,proto3" json:"QuoteTokenId,omitempty"`
+	// PoolAddress is Pool.Address of that PairUpdate; empty where the market has no pool address.
+	PoolAddress   string `protobuf:"bytes,3,opt,name=PoolAddress,proto3" json:"PoolAddress,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeadingPool) Reset() {
+	*x = LeadingPool{}
+	mi := &file_market_price_index_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeadingPool) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeadingPool) ProtoMessage() {}
+
+func (x *LeadingPool) ProtoReflect() protoreflect.Message {
+	mi := &file_market_price_index_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeadingPool.ProtoReflect.Descriptor instead.
+func (*LeadingPool) Descriptor() ([]byte, []int) {
+	return file_market_price_index_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *LeadingPool) GetMarketId() string {
+	if x != nil {
+		return x.MarketId
+	}
+	return ""
+}
+
+func (x *LeadingPool) GetQuoteTokenId() string {
+	if x != nil {
+		return x.QuoteTokenId
+	}
+	return ""
+}
+
+func (x *LeadingPool) GetPoolAddress() string {
+	if x != nil {
+		return x.PoolAddress
+	}
+	return ""
+}
+
 type PairUpdate struct {
 	state                    protoimpl.MessageState `protogen:"open.v1"`
 	Currency                 *Currency              `protobuf:"bytes,1,opt,name=Currency,proto3" json:"Currency,omitempty"`
@@ -1112,13 +1281,14 @@ type PairUpdate struct {
 	Ranking                  *Ranking               `protobuf:"bytes,9,opt,name=Ranking,proto3" json:"Ranking,omitempty"`
 	Pool                     *Pool                  `protobuf:"bytes,10,opt,name=Pool,proto3" json:"Pool,omitempty"`
 	Liquidity                *Liquidity             `protobuf:"bytes,11,opt,name=Liquidity,proto3" json:"Liquidity,omitempty"`
+	RankingDetail            *RankingDetail         `protobuf:"bytes,12,opt,name=RankingDetail,proto3" json:"RankingDetail,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
 
 func (x *PairUpdate) Reset() {
 	*x = PairUpdate{}
-	mi := &file_market_price_index_proto_msgTypes[15]
+	mi := &file_market_price_index_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1130,7 +1300,7 @@ func (x *PairUpdate) String() string {
 func (*PairUpdate) ProtoMessage() {}
 
 func (x *PairUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[15]
+	mi := &file_market_price_index_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1143,7 +1313,7 @@ func (x *PairUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PairUpdate.ProtoReflect.Descriptor instead.
 func (*PairUpdate) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{15}
+	return file_market_price_index_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PairUpdate) GetCurrency() *Currency {
@@ -1223,6 +1393,13 @@ func (x *PairUpdate) GetLiquidity() *Liquidity {
 	return nil
 }
 
+func (x *PairUpdate) GetRankingDetail() *RankingDetail {
+	if x != nil {
+		return x.RankingDetail
+	}
+	return nil
+}
+
 type PriceIndexMessage struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Time            uint64                 `protobuf:"varint,1,opt,name=Time,proto3" json:"Time,omitempty"`
@@ -1235,7 +1412,7 @@ type PriceIndexMessage struct {
 
 func (x *PriceIndexMessage) Reset() {
 	*x = PriceIndexMessage{}
-	mi := &file_market_price_index_proto_msgTypes[16]
+	mi := &file_market_price_index_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1247,7 +1424,7 @@ func (x *PriceIndexMessage) String() string {
 func (*PriceIndexMessage) ProtoMessage() {}
 
 func (x *PriceIndexMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[16]
+	mi := &file_market_price_index_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1260,7 +1437,7 @@ func (x *PriceIndexMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PriceIndexMessage.ProtoReflect.Descriptor instead.
 func (*PriceIndexMessage) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{16}
+	return file_market_price_index_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PriceIndexMessage) GetTime() uint64 {
@@ -1357,7 +1534,7 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\tMaxSupply\x18\x05 \x01(\x01H\x01R\tMaxSupply\x88\x01\x01B\x14\n" +
 	"\x12_CirculatingSupplyB\f\n" +
 	"\n" +
-	"_MaxSupply\"\xe1\x01\n" +
+	"_MaxSupply\"\x9f\x02\n" +
 	"\tLiquidity\x12\x10\n" +
 	"\x03Usd\x18\x01 \x01(\x02R\x03Usd\x12 \n" +
 	"\vBaseReserve\x18\x02 \x01(\x02R\vBaseReserve\x12\"\n" +
@@ -1365,24 +1542,35 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\x0fQuoteReserveUsd\x18\x04 \x01(\x02R\x0fQuoteReserveUsd\x12\x1c\n" +
 	"\tUpdatedAt\x18\x05 \x01(\rR\tUpdatedAt\x12\x16\n" +
 	"\x06Source\x18\x06 \x01(\tR\x06Source\x12\x1c\n" +
-	"\tRealShare\x18\a \x01(\x02R\tRealShare\"\xb6\x02\n" +
+	"\tRealShare\x18\a \x01(\x02R\tRealShare\x12\x1a\n" +
+	"\bDepthUsd\x18\b \x01(\x02R\bDepthUsd\x12 \n" +
+	"\vNetQuoteUsd\x18\t \x01(\x02R\vNetQuoteUsd\"\xb6\x02\n" +
 	"\x0eCurrencyUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x12B\n" +
 	"\vPriceUpdate\x18\x02 \x01(\v2 .marketdata_messages.PriceUpdateR\vPriceUpdate\x12S\n" +
 	"\x0fMarketCapUpdate\x18\x03 \x01(\v2$.marketdata_messages.MarketCapUpdateH\x00R\x0fMarketCapUpdate\x88\x01\x01\x12<\n" +
 	"\tLiquidity\x18\x04 \x01(\v2\x1e.marketdata_messages.LiquidityR\tLiquidityB\x12\n" +
-	"\x10_MarketCapUpdate\"\x9d\x03\n" +
+	"\x10_MarketCapUpdate\"\xab\x04\n" +
 	"\vTokenUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x120\n" +
 	"\x05Token\x18\x02 \x01(\v2\x1a.marketdata_messages.TokenR\x05Token\x12B\n" +
 	"\vPriceUpdate\x18\x03 \x01(\v2 .marketdata_messages.PriceUpdateR\vPriceUpdate\x12S\n" +
 	"\x0fMarketCapUpdate\x18\x04 \x01(\v2$.marketdata_messages.MarketCapUpdateH\x00R\x0fMarketCapUpdate\x88\x01\x01\x126\n" +
 	"\aRanking\x18\x05 \x01(\v2\x1c.marketdata_messages.RankingR\aRanking\x12<\n" +
-	"\tLiquidity\x18\x06 \x01(\v2\x1e.marketdata_messages.LiquidityR\tLiquidityB\x12\n" +
+	"\tLiquidity\x18\x06 \x01(\v2\x1e.marketdata_messages.LiquidityR\tLiquidity\x12H\n" +
+	"\rRankingDetail\x18\a \x01(\v2\".marketdata_messages.RankingDetailR\rRankingDetail\x12B\n" +
+	"\vLeadingPool\x18\b \x01(\v2 .marketdata_messages.LeadingPoolR\vLeadingPoolB\x12\n" +
 	"\x10_MarketCapUpdate\"=\n" +
 	"\aRanking\x12\x1a\n" +
 	"\bPosition\x18\x01 \x01(\rR\bPosition\x12\x16\n" +
-	"\x06Weight\x18\x02 \x01(\x02R\x06Weight\"\xdf\x05\n" +
+	"\x06Weight\x18\x02 \x01(\x02R\x06Weight\"S\n" +
+	"\rRankingDetail\x12\x18\n" +
+	"\aVerdict\x18\x01 \x01(\tR\aVerdict\x12(\n" +
+	"\x0fStaleMultiplier\x18\x02 \x01(\x02R\x0fStaleMultiplier\"o\n" +
+	"\vLeadingPool\x12\x1a\n" +
+	"\bMarketId\x18\x01 \x01(\tR\bMarketId\x12\"\n" +
+	"\fQuoteTokenId\x18\x02 \x01(\tR\fQuoteTokenId\x12 \n" +
+	"\vPoolAddress\x18\x03 \x01(\tR\vPoolAddress\"\xa9\x06\n" +
 	"\n" +
 	"PairUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x12C\n" +
@@ -1398,7 +1586,8 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\aRanking\x18\t \x01(\v2\x1c.marketdata_messages.RankingR\aRanking\x12-\n" +
 	"\x04Pool\x18\n" +
 	" \x01(\v2\x19.marketdata_messages.PoolR\x04Pool\x12<\n" +
-	"\tLiquidity\x18\v \x01(\v2\x1e.marketdata_messages.LiquidityR\tLiquidityB\x12\n" +
+	"\tLiquidity\x18\v \x01(\v2\x1e.marketdata_messages.LiquidityR\tLiquidity\x12H\n" +
+	"\rRankingDetail\x18\f \x01(\v2\".marketdata_messages.RankingDetailR\rRankingDetailB\x12\n" +
 	"\x10_MarketCapUpdate\"\xff\x01\n" +
 	"\x11PriceIndexMessage\x12\x12\n" +
 	"\x04Time\x18\x01 \x01(\x04R\x04Time\x12M\n" +
@@ -1418,7 +1607,7 @@ func file_market_price_index_proto_rawDescGZIP() []byte {
 	return file_market_price_index_proto_rawDescData
 }
 
-var file_market_price_index_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_market_price_index_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_market_price_index_proto_goTypes = []any{
 	(*Currency)(nil),            // 0: marketdata_messages.Currency
 	(*Market)(nil),              // 1: marketdata_messages.Market
@@ -1435,10 +1624,12 @@ var file_market_price_index_proto_goTypes = []any{
 	(*CurrencyUpdate)(nil),      // 12: marketdata_messages.CurrencyUpdate
 	(*TokenUpdate)(nil),         // 13: marketdata_messages.TokenUpdate
 	(*Ranking)(nil),             // 14: marketdata_messages.Ranking
-	(*PairUpdate)(nil),          // 15: marketdata_messages.PairUpdate
-	(*PriceIndexMessage)(nil),   // 16: marketdata_messages.PriceIndexMessage
-	(*Token)(nil),               // 17: marketdata_messages.Token
-	(*Pool)(nil),                // 18: marketdata_messages.Pool
+	(*RankingDetail)(nil),       // 15: marketdata_messages.RankingDetail
+	(*LeadingPool)(nil),         // 16: marketdata_messages.LeadingPool
+	(*PairUpdate)(nil),          // 17: marketdata_messages.PairUpdate
+	(*PriceIndexMessage)(nil),   // 18: marketdata_messages.PriceIndexMessage
+	(*Token)(nil),               // 19: marketdata_messages.Token
+	(*Pool)(nil),                // 20: marketdata_messages.Pool
 }
 var file_market_price_index_proto_depIdxs = []int32{
 	0,  // 0: marketdata_messages.Quote.QuoteCurrency:type_name -> marketdata_messages.Currency
@@ -1457,30 +1648,33 @@ var file_market_price_index_proto_depIdxs = []int32{
 	10, // 13: marketdata_messages.CurrencyUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
 	11, // 14: marketdata_messages.CurrencyUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
 	0,  // 15: marketdata_messages.TokenUpdate.Currency:type_name -> marketdata_messages.Currency
-	17, // 16: marketdata_messages.TokenUpdate.Token:type_name -> marketdata_messages.Token
+	19, // 16: marketdata_messages.TokenUpdate.Token:type_name -> marketdata_messages.Token
 	9,  // 17: marketdata_messages.TokenUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
 	10, // 18: marketdata_messages.TokenUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
 	14, // 19: marketdata_messages.TokenUpdate.Ranking:type_name -> marketdata_messages.Ranking
 	11, // 20: marketdata_messages.TokenUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
-	0,  // 21: marketdata_messages.PairUpdate.Currency:type_name -> marketdata_messages.Currency
-	0,  // 22: marketdata_messages.PairUpdate.QuoteCurrency:type_name -> marketdata_messages.Currency
-	17, // 23: marketdata_messages.PairUpdate.Token:type_name -> marketdata_messages.Token
-	17, // 24: marketdata_messages.PairUpdate.QuoteToken:type_name -> marketdata_messages.Token
-	1,  // 25: marketdata_messages.PairUpdate.Market:type_name -> marketdata_messages.Market
-	9,  // 26: marketdata_messages.PairUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
-	9,  // 27: marketdata_messages.PairUpdate.PriceUpdateInQuoteTokens:type_name -> marketdata_messages.PriceUpdate
-	10, // 28: marketdata_messages.PairUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
-	14, // 29: marketdata_messages.PairUpdate.Ranking:type_name -> marketdata_messages.Ranking
-	18, // 30: marketdata_messages.PairUpdate.Pool:type_name -> marketdata_messages.Pool
-	11, // 31: marketdata_messages.PairUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
-	12, // 32: marketdata_messages.PriceIndexMessage.CurrencyUpdates:type_name -> marketdata_messages.CurrencyUpdate
-	13, // 33: marketdata_messages.PriceIndexMessage.TokenUpdates:type_name -> marketdata_messages.TokenUpdate
-	15, // 34: marketdata_messages.PriceIndexMessage.PairUpdates:type_name -> marketdata_messages.PairUpdate
-	35, // [35:35] is the sub-list for method output_type
-	35, // [35:35] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	15, // 21: marketdata_messages.TokenUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
+	16, // 22: marketdata_messages.TokenUpdate.LeadingPool:type_name -> marketdata_messages.LeadingPool
+	0,  // 23: marketdata_messages.PairUpdate.Currency:type_name -> marketdata_messages.Currency
+	0,  // 24: marketdata_messages.PairUpdate.QuoteCurrency:type_name -> marketdata_messages.Currency
+	19, // 25: marketdata_messages.PairUpdate.Token:type_name -> marketdata_messages.Token
+	19, // 26: marketdata_messages.PairUpdate.QuoteToken:type_name -> marketdata_messages.Token
+	1,  // 27: marketdata_messages.PairUpdate.Market:type_name -> marketdata_messages.Market
+	9,  // 28: marketdata_messages.PairUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
+	9,  // 29: marketdata_messages.PairUpdate.PriceUpdateInQuoteTokens:type_name -> marketdata_messages.PriceUpdate
+	10, // 30: marketdata_messages.PairUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
+	14, // 31: marketdata_messages.PairUpdate.Ranking:type_name -> marketdata_messages.Ranking
+	20, // 32: marketdata_messages.PairUpdate.Pool:type_name -> marketdata_messages.Pool
+	11, // 33: marketdata_messages.PairUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
+	15, // 34: marketdata_messages.PairUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
+	12, // 35: marketdata_messages.PriceIndexMessage.CurrencyUpdates:type_name -> marketdata_messages.CurrencyUpdate
+	13, // 36: marketdata_messages.PriceIndexMessage.TokenUpdates:type_name -> marketdata_messages.TokenUpdate
+	17, // 37: marketdata_messages.PriceIndexMessage.PairUpdates:type_name -> marketdata_messages.PairUpdate
+	38, // [38:38] is the sub-list for method output_type
+	38, // [38:38] is the sub-list for method input_type
+	38, // [38:38] is the sub-list for extension type_name
+	38, // [38:38] is the sub-list for extension extendee
+	0,  // [0:38] is the sub-list for field type_name
 }
 
 func init() { file_market_price_index_proto_init() }
@@ -1493,14 +1687,14 @@ func file_market_price_index_proto_init() {
 	file_market_price_index_proto_msgTypes[10].OneofWrappers = []any{}
 	file_market_price_index_proto_msgTypes[12].OneofWrappers = []any{}
 	file_market_price_index_proto_msgTypes[13].OneofWrappers = []any{}
-	file_market_price_index_proto_msgTypes[15].OneofWrappers = []any{}
+	file_market_price_index_proto_msgTypes[17].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_market_price_index_proto_rawDesc), len(file_market_price_index_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

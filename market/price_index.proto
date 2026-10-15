@@ -119,6 +119,16 @@ message Liquidity {
   // RealShare is the fraction of Usd backed by a reserve snapshot: 1 or 0 for one pool,
   // in between for a token or currency summed over pools.
   float RealShare = 7;
+  // DepthUsd is the quote-side amount, in USD, that can be sold into the pool inside the
+  // reserve event's slippage tier (1 %): what of the reserve is actually tradable at the
+  // spot. The index caps Usd at DepthUsd x liquidity_depth_scale. 0 when the snapshot
+  // carried no slippage table. Pair level only.
+  float DepthUsd = 8;
+  // NetQuoteUsd is a launch curve's lifetime net quote in USD - quote paid in minus quote
+  // paid out - which for a bonding curve is its reserve and its progress to graduation.
+  // On a retired curve it is the amount that migrated to the venue. 0 for a pool that is
+  // not a configured launcher. Pair level only.
+  float NetQuoteUsd = 9;
 }
 
 message CurrencyUpdate {
@@ -135,11 +145,41 @@ message TokenUpdate {
   optional MarketCapUpdate MarketCapUpdate = 4;
   Ranking Ranking = 5;
   Liquidity Liquidity = 6;
+  RankingDetail RankingDetail = 7;
+  LeadingPool LeadingPool = 8;
 }
 
 message Ranking {
   uint32 Position = 1;
   float  Weight = 2;
+}
+
+// RankingDetail explains a part's Ranking: what the blend did with its price and how much
+// of its weight the staleness rule left it. Carried on PairUpdate (a pool among its token's
+// pools) and TokenUpdate (a token among its currency's tokens); deliberately not on trades.
+message RankingDetail {
+  // Verdict is what happened to the part's price in this batch's blend:
+  // "priced" (accepted into the blend), "clamped" (accepted, bounded to the blend cap),
+  // "outlier" (rejected by the outlier band), "ineligible" (refused by the eligibility
+  // gate: too little money or history), "no_price" (no price in the window; ranked by
+  // weight 0), "retired" (a launch curve its token has left).
+  string Verdict = 1;
+  // StaleMultiplier is the staleness discount applied to the weight, in (0, 1]: 1 for a
+  // part trading at its own rhythm, halving every stale half-life past its threshold.
+  // Ranking.Weight is the part's share of the discounted weights.
+  float StaleMultiplier = 2;
+}
+
+// LeadingPool names the pool at Ranking Position 1 among a token's pools - the one whose
+// Liquidity.Source the TokenUpdate reports - so a consumer of token updates can tell which
+// pool is pricing the token without joining to the pair updates of the same batch.
+message LeadingPool {
+  // MarketId is Market.Id of the leading pool's PairUpdate.
+  string MarketId = 1;
+  // QuoteTokenId is QuoteToken.Id of that PairUpdate.
+  string QuoteTokenId = 2;
+  // PoolAddress is Pool.Address of that PairUpdate; empty where the market has no pool address.
+  string PoolAddress = 3;
 }
 
 message PairUpdate {
@@ -154,6 +194,7 @@ message PairUpdate {
   Ranking Ranking = 9;
   Pool Pool = 10;
   Liquidity Liquidity = 11;
+  RankingDetail RankingDetail = 12;
 }
 
 message PriceIndexMessage {
