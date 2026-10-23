@@ -42,6 +42,24 @@ message ParsedPoolLiquidityChange {
   repeated PoolLiquidityChangeEvent Changes = 5;
 }
 
+// PoolPrice is the pool's marginal price right after the event, read from the venue's own
+// swap event: what the curve quotes for the next infinitesimal trade, not the executed
+// amountOut / amountIn of the swap that produced the row. Absent (nil) when the event
+// carries no price state: a deposit or withdrawal on a venue whose liquidity events report
+// none, or a venue not yet covered.
+message PoolPrice {
+  // Price is quote per base in UI units, oriented as Market.BaseCurrency /
+  // Market.QuoteCurrency of the same event, decimals applied.
+  float Price = 1;
+  // PriceInUSD is Price times the quote currency's USD rate from the processor's own
+  // price enricher, the same rate PostAmountInUSD uses; 0 when the quote has no rate.
+  float PriceInUSD = 2;
+  // Source names what the price was read from, so a consumer can weigh it:
+  // "event" (the venue's swap event reports the post-swap state),
+  // "reserves" (quote reserve over base reserve on a constant-product venue).
+  string Source = 3;
+}
+
 message PoolLiquidityChangeEvent {
   uint32 InstructionIndex = 1;
   DexInfo Dex = 2;
@@ -49,6 +67,7 @@ message PoolLiquidityChangeEvent {
   PoolSide BaseCurrency = 4;
   PoolSide QuoteCurrency = 5;
   ParsedIdlInstruction Instruction = 6;
+  PoolPrice Price = 7;
 }
 
 message PoolSide {

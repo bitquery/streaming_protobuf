@@ -382,6 +382,78 @@ func (x *ParsedPoolLiquidityChange) GetChanges() []*PoolLiquidityChangeEvent {
 	return nil
 }
 
+// PoolPrice is the pool's marginal price right after the event, read from the venue's own
+// swap event: what the curve quotes for the next infinitesimal trade, not the executed
+// amountOut / amountIn of the swap that produced the row. Absent (nil) when the event
+// carries no price state: a deposit or withdrawal on a venue whose liquidity events report
+// none, or a venue not yet covered.
+type PoolPrice struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Price is quote per base in UI units, oriented as Market.BaseCurrency /
+	// Market.QuoteCurrency of the same event, decimals applied.
+	Price float32 `protobuf:"fixed32,1,opt,name=Price,proto3" json:"Price,omitempty"`
+	// PriceInUSD is Price times the quote currency's USD rate from the processor's own
+	// price enricher, the same rate PostAmountInUSD uses; 0 when the quote has no rate.
+	PriceInUSD float32 `protobuf:"fixed32,2,opt,name=PriceInUSD,proto3" json:"PriceInUSD,omitempty"`
+	// Source names what the price was read from, so a consumer can weigh it:
+	// "event" (the venue's swap event reports the post-swap state),
+	// "reserves" (quote reserve over base reserve on a constant-product venue).
+	Source        string `protobuf:"bytes,3,opt,name=Source,proto3" json:"Source,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PoolPrice) Reset() {
+	*x = PoolPrice{}
+	mi := &file_solana_dex_block_message_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PoolPrice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PoolPrice) ProtoMessage() {}
+
+func (x *PoolPrice) ProtoReflect() protoreflect.Message {
+	mi := &file_solana_dex_block_message_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PoolPrice.ProtoReflect.Descriptor instead.
+func (*PoolPrice) Descriptor() ([]byte, []int) {
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PoolPrice) GetPrice() float32 {
+	if x != nil {
+		return x.Price
+	}
+	return 0
+}
+
+func (x *PoolPrice) GetPriceInUSD() float32 {
+	if x != nil {
+		return x.PriceInUSD
+	}
+	return 0
+}
+
+func (x *PoolPrice) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
 type PoolLiquidityChangeEvent struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	InstructionIndex uint32                 `protobuf:"varint,1,opt,name=InstructionIndex,proto3" json:"InstructionIndex,omitempty"`
@@ -390,13 +462,14 @@ type PoolLiquidityChangeEvent struct {
 	BaseCurrency     *PoolSide              `protobuf:"bytes,4,opt,name=BaseCurrency,proto3" json:"BaseCurrency,omitempty"`
 	QuoteCurrency    *PoolSide              `protobuf:"bytes,5,opt,name=QuoteCurrency,proto3" json:"QuoteCurrency,omitempty"`
 	Instruction      *ParsedIdlInstruction  `protobuf:"bytes,6,opt,name=Instruction,proto3" json:"Instruction,omitempty"`
+	Price            *PoolPrice             `protobuf:"bytes,7,opt,name=Price,proto3" json:"Price,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *PoolLiquidityChangeEvent) Reset() {
 	*x = PoolLiquidityChangeEvent{}
-	mi := &file_solana_dex_block_message_proto_msgTypes[4]
+	mi := &file_solana_dex_block_message_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -408,7 +481,7 @@ func (x *PoolLiquidityChangeEvent) String() string {
 func (*PoolLiquidityChangeEvent) ProtoMessage() {}
 
 func (x *PoolLiquidityChangeEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_dex_block_message_proto_msgTypes[4]
+	mi := &file_solana_dex_block_message_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,7 +494,7 @@ func (x *PoolLiquidityChangeEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PoolLiquidityChangeEvent.ProtoReflect.Descriptor instead.
 func (*PoolLiquidityChangeEvent) Descriptor() ([]byte, []int) {
-	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{4}
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PoolLiquidityChangeEvent) GetInstructionIndex() uint32 {
@@ -466,6 +539,13 @@ func (x *PoolLiquidityChangeEvent) GetInstruction() *ParsedIdlInstruction {
 	return nil
 }
 
+func (x *PoolLiquidityChangeEvent) GetPrice() *PoolPrice {
+	if x != nil {
+		return x.Price
+	}
+	return nil
+}
+
 type PoolSide struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	ChangeAmount      int64                  `protobuf:"varint,2,opt,name=ChangeAmount,proto3" json:"ChangeAmount,omitempty"`
@@ -478,7 +558,7 @@ type PoolSide struct {
 
 func (x *PoolSide) Reset() {
 	*x = PoolSide{}
-	mi := &file_solana_dex_block_message_proto_msgTypes[5]
+	mi := &file_solana_dex_block_message_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +570,7 @@ func (x *PoolSide) String() string {
 func (*PoolSide) ProtoMessage() {}
 
 func (x *PoolSide) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_dex_block_message_proto_msgTypes[5]
+	mi := &file_solana_dex_block_message_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +583,7 @@ func (x *PoolSide) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PoolSide.ProtoReflect.Descriptor instead.
 func (*PoolSide) Descriptor() ([]byte, []int) {
-	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{5}
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PoolSide) GetChangeAmount() int64 {
@@ -548,7 +628,7 @@ type DexOrderEvent struct {
 
 func (x *DexOrderEvent) Reset() {
 	*x = DexOrderEvent{}
-	mi := &file_solana_dex_block_message_proto_msgTypes[6]
+	mi := &file_solana_dex_block_message_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +640,7 @@ func (x *DexOrderEvent) String() string {
 func (*DexOrderEvent) ProtoMessage() {}
 
 func (x *DexOrderEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_dex_block_message_proto_msgTypes[6]
+	mi := &file_solana_dex_block_message_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +653,7 @@ func (x *DexOrderEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DexOrderEvent.ProtoReflect.Descriptor instead.
 func (*DexOrderEvent) Descriptor() ([]byte, []int) {
-	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{6}
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DexOrderEvent) GetInstructionIndex() uint32 {
@@ -631,7 +711,7 @@ type DexTradeSide struct {
 
 func (x *DexTradeSide) Reset() {
 	*x = DexTradeSide{}
-	mi := &file_solana_dex_block_message_proto_msgTypes[7]
+	mi := &file_solana_dex_block_message_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +723,7 @@ func (x *DexTradeSide) String() string {
 func (*DexTradeSide) ProtoMessage() {}
 
 func (x *DexTradeSide) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_dex_block_message_proto_msgTypes[7]
+	mi := &file_solana_dex_block_message_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +736,7 @@ func (x *DexTradeSide) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DexTradeSide.ProtoReflect.Descriptor instead.
 func (*DexTradeSide) Descriptor() ([]byte, []int) {
-	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{7}
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DexTradeSide) GetAmount() uint64 {
@@ -710,7 +790,7 @@ type DexTradeEvent struct {
 
 func (x *DexTradeEvent) Reset() {
 	*x = DexTradeEvent{}
-	mi := &file_solana_dex_block_message_proto_msgTypes[8]
+	mi := &file_solana_dex_block_message_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -722,7 +802,7 @@ func (x *DexTradeEvent) String() string {
 func (*DexTradeEvent) ProtoMessage() {}
 
 func (x *DexTradeEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_dex_block_message_proto_msgTypes[8]
+	mi := &file_solana_dex_block_message_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -735,7 +815,7 @@ func (x *DexTradeEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DexTradeEvent.ProtoReflect.Descriptor instead.
 func (*DexTradeEvent) Descriptor() ([]byte, []int) {
-	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{8}
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DexTradeEvent) GetInstructionIndex() uint32 {
@@ -812,7 +892,7 @@ type ParsedDexTransaction struct {
 
 func (x *ParsedDexTransaction) Reset() {
 	*x = ParsedDexTransaction{}
-	mi := &file_solana_dex_block_message_proto_msgTypes[9]
+	mi := &file_solana_dex_block_message_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -824,7 +904,7 @@ func (x *ParsedDexTransaction) String() string {
 func (*ParsedDexTransaction) ProtoMessage() {}
 
 func (x *ParsedDexTransaction) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_dex_block_message_proto_msgTypes[9]
+	mi := &file_solana_dex_block_message_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -837,7 +917,7 @@ func (x *ParsedDexTransaction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParsedDexTransaction.ProtoReflect.Descriptor instead.
 func (*ParsedDexTransaction) Descriptor() ([]byte, []int) {
-	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{9}
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ParsedDexTransaction) GetIndex() uint32 {
@@ -920,7 +1000,7 @@ type DexParsedBlockMessage struct {
 
 func (x *DexParsedBlockMessage) Reset() {
 	*x = DexParsedBlockMessage{}
-	mi := &file_solana_dex_block_message_proto_msgTypes[10]
+	mi := &file_solana_dex_block_message_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -932,7 +1012,7 @@ func (x *DexParsedBlockMessage) String() string {
 func (*DexParsedBlockMessage) ProtoMessage() {}
 
 func (x *DexParsedBlockMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_solana_dex_block_message_proto_msgTypes[10]
+	mi := &file_solana_dex_block_message_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -945,7 +1025,7 @@ func (x *DexParsedBlockMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DexParsedBlockMessage.ProtoReflect.Descriptor instead.
 func (*DexParsedBlockMessage) Descriptor() ([]byte, []int) {
-	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{10}
+	return file_solana_dex_block_message_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DexParsedBlockMessage) GetHeader() *BlockHeader {
@@ -994,14 +1074,21 @@ const file_solana_dex_block_message_proto_rawDesc = "" +
 	"\tSignature\x18\x02 \x01(\fR\tSignature\x12:\n" +
 	"\x06Status\x18\x03 \x01(\v2\".solana_messages.TransactionStatusR\x06Status\x12:\n" +
 	"\x06Header\x18\x04 \x01(\v2\".solana_messages.TransactionHeaderR\x06Header\x12C\n" +
-	"\aChanges\x18\x05 \x03(\v2).solana_messages.PoolLiquidityChangeEventR\aChanges\"\xef\x02\n" +
+	"\aChanges\x18\x05 \x03(\v2).solana_messages.PoolLiquidityChangeEventR\aChanges\"Y\n" +
+	"\tPoolPrice\x12\x14\n" +
+	"\x05Price\x18\x01 \x01(\x02R\x05Price\x12\x1e\n" +
+	"\n" +
+	"PriceInUSD\x18\x02 \x01(\x02R\n" +
+	"PriceInUSD\x12\x16\n" +
+	"\x06Source\x18\x03 \x01(\tR\x06Source\"\xa1\x03\n" +
 	"\x18PoolLiquidityChangeEvent\x12*\n" +
 	"\x10InstructionIndex\x18\x01 \x01(\rR\x10InstructionIndex\x12*\n" +
 	"\x03Dex\x18\x02 \x01(\v2\x18.solana_messages.DexInfoR\x03Dex\x122\n" +
 	"\x06Market\x18\x03 \x01(\v2\x1a.solana_messages.DexMarketR\x06Market\x12=\n" +
 	"\fBaseCurrency\x18\x04 \x01(\v2\x19.solana_messages.PoolSideR\fBaseCurrency\x12?\n" +
 	"\rQuoteCurrency\x18\x05 \x01(\v2\x19.solana_messages.PoolSideR\rQuoteCurrency\x12G\n" +
-	"\vInstruction\x18\x06 \x01(\v2%.solana_messages.ParsedIdlInstructionR\vInstruction\"\xa6\x01\n" +
+	"\vInstruction\x18\x06 \x01(\v2%.solana_messages.ParsedIdlInstructionR\vInstruction\x120\n" +
+	"\x05Price\x18\a \x01(\v2\x1a.solana_messages.PoolPriceR\x05Price\"\xa6\x01\n" +
 	"\bPoolSide\x12\"\n" +
 	"\fChangeAmount\x18\x02 \x01(\x03R\fChangeAmount\x12\x1e\n" +
 	"\n" +
@@ -1068,66 +1155,68 @@ func file_solana_dex_block_message_proto_rawDescGZIP() []byte {
 }
 
 var file_solana_dex_block_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_solana_dex_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_solana_dex_block_message_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_solana_dex_block_message_proto_goTypes = []any{
 	(DexOrderEventType)(0),            // 0: solana_messages.DexOrderEventType
 	(*DexInfo)(nil),                   // 1: solana_messages.DexInfo
 	(*DexMarket)(nil),                 // 2: solana_messages.DexMarket
 	(*DexOrder)(nil),                  // 3: solana_messages.DexOrder
 	(*ParsedPoolLiquidityChange)(nil), // 4: solana_messages.ParsedPoolLiquidityChange
-	(*PoolLiquidityChangeEvent)(nil),  // 5: solana_messages.PoolLiquidityChangeEvent
-	(*PoolSide)(nil),                  // 6: solana_messages.PoolSide
-	(*DexOrderEvent)(nil),             // 7: solana_messages.DexOrderEvent
-	(*DexTradeSide)(nil),              // 8: solana_messages.DexTradeSide
-	(*DexTradeEvent)(nil),             // 9: solana_messages.DexTradeEvent
-	(*ParsedDexTransaction)(nil),      // 10: solana_messages.ParsedDexTransaction
-	(*DexParsedBlockMessage)(nil),     // 11: solana_messages.DexParsedBlockMessage
-	(*Currency)(nil),                  // 12: solana_messages.Currency
-	(*TransactionStatus)(nil),         // 13: solana_messages.TransactionStatus
-	(*TransactionHeader)(nil),         // 14: solana_messages.TransactionHeader
-	(*ParsedIdlInstruction)(nil),      // 15: solana_messages.ParsedIdlInstruction
-	(*Account)(nil),                   // 16: solana_messages.Account
-	(*BalanceUpdate)(nil),             // 17: solana_messages.BalanceUpdate
-	(*BlockHeader)(nil),               // 18: solana_messages.BlockHeader
+	(*PoolPrice)(nil),                 // 5: solana_messages.PoolPrice
+	(*PoolLiquidityChangeEvent)(nil),  // 6: solana_messages.PoolLiquidityChangeEvent
+	(*PoolSide)(nil),                  // 7: solana_messages.PoolSide
+	(*DexOrderEvent)(nil),             // 8: solana_messages.DexOrderEvent
+	(*DexTradeSide)(nil),              // 9: solana_messages.DexTradeSide
+	(*DexTradeEvent)(nil),             // 10: solana_messages.DexTradeEvent
+	(*ParsedDexTransaction)(nil),      // 11: solana_messages.ParsedDexTransaction
+	(*DexParsedBlockMessage)(nil),     // 12: solana_messages.DexParsedBlockMessage
+	(*Currency)(nil),                  // 13: solana_messages.Currency
+	(*TransactionStatus)(nil),         // 14: solana_messages.TransactionStatus
+	(*TransactionHeader)(nil),         // 15: solana_messages.TransactionHeader
+	(*ParsedIdlInstruction)(nil),      // 16: solana_messages.ParsedIdlInstruction
+	(*Account)(nil),                   // 17: solana_messages.Account
+	(*BalanceUpdate)(nil),             // 18: solana_messages.BalanceUpdate
+	(*BlockHeader)(nil),               // 19: solana_messages.BlockHeader
 }
 var file_solana_dex_block_message_proto_depIdxs = []int32{
-	12, // 0: solana_messages.DexMarket.BaseCurrency:type_name -> solana_messages.Currency
-	12, // 1: solana_messages.DexMarket.QuoteCurrency:type_name -> solana_messages.Currency
-	13, // 2: solana_messages.ParsedPoolLiquidityChange.Status:type_name -> solana_messages.TransactionStatus
-	14, // 3: solana_messages.ParsedPoolLiquidityChange.Header:type_name -> solana_messages.TransactionHeader
-	5,  // 4: solana_messages.ParsedPoolLiquidityChange.Changes:type_name -> solana_messages.PoolLiquidityChangeEvent
+	13, // 0: solana_messages.DexMarket.BaseCurrency:type_name -> solana_messages.Currency
+	13, // 1: solana_messages.DexMarket.QuoteCurrency:type_name -> solana_messages.Currency
+	14, // 2: solana_messages.ParsedPoolLiquidityChange.Status:type_name -> solana_messages.TransactionStatus
+	15, // 3: solana_messages.ParsedPoolLiquidityChange.Header:type_name -> solana_messages.TransactionHeader
+	6,  // 4: solana_messages.ParsedPoolLiquidityChange.Changes:type_name -> solana_messages.PoolLiquidityChangeEvent
 	1,  // 5: solana_messages.PoolLiquidityChangeEvent.Dex:type_name -> solana_messages.DexInfo
 	2,  // 6: solana_messages.PoolLiquidityChangeEvent.Market:type_name -> solana_messages.DexMarket
-	6,  // 7: solana_messages.PoolLiquidityChangeEvent.BaseCurrency:type_name -> solana_messages.PoolSide
-	6,  // 8: solana_messages.PoolLiquidityChangeEvent.QuoteCurrency:type_name -> solana_messages.PoolSide
-	15, // 9: solana_messages.PoolLiquidityChangeEvent.Instruction:type_name -> solana_messages.ParsedIdlInstruction
-	0,  // 10: solana_messages.DexOrderEvent.Type:type_name -> solana_messages.DexOrderEventType
-	1,  // 11: solana_messages.DexOrderEvent.Dex:type_name -> solana_messages.DexInfo
-	2,  // 12: solana_messages.DexOrderEvent.Market:type_name -> solana_messages.DexMarket
-	3,  // 13: solana_messages.DexOrderEvent.Order:type_name -> solana_messages.DexOrder
-	15, // 14: solana_messages.DexOrderEvent.Instruction:type_name -> solana_messages.ParsedIdlInstruction
-	12, // 15: solana_messages.DexTradeSide.Currency:type_name -> solana_messages.Currency
-	16, // 16: solana_messages.DexTradeSide.Account:type_name -> solana_messages.Account
-	3,  // 17: solana_messages.DexTradeSide.Order:type_name -> solana_messages.DexOrder
-	1,  // 18: solana_messages.DexTradeEvent.Dex:type_name -> solana_messages.DexInfo
-	2,  // 19: solana_messages.DexTradeEvent.Market:type_name -> solana_messages.DexMarket
-	8,  // 20: solana_messages.DexTradeEvent.Buy:type_name -> solana_messages.DexTradeSide
-	8,  // 21: solana_messages.DexTradeEvent.Sell:type_name -> solana_messages.DexTradeSide
-	15, // 22: solana_messages.DexTradeEvent.Instruction:type_name -> solana_messages.ParsedIdlInstruction
-	13, // 23: solana_messages.ParsedDexTransaction.Status:type_name -> solana_messages.TransactionStatus
-	14, // 24: solana_messages.ParsedDexTransaction.Header:type_name -> solana_messages.TransactionHeader
-	9,  // 25: solana_messages.ParsedDexTransaction.Trades:type_name -> solana_messages.DexTradeEvent
-	7,  // 26: solana_messages.ParsedDexTransaction.OrderEvents:type_name -> solana_messages.DexOrderEvent
-	5,  // 27: solana_messages.ParsedDexTransaction.PoolEvents:type_name -> solana_messages.PoolLiquidityChangeEvent
-	17, // 28: solana_messages.ParsedDexTransaction.TotalBalanceUpdates:type_name -> solana_messages.BalanceUpdate
-	17, // 29: solana_messages.ParsedDexTransaction.TotalTokenBalanceUpdates:type_name -> solana_messages.BalanceUpdate
-	18, // 30: solana_messages.DexParsedBlockMessage.Header:type_name -> solana_messages.BlockHeader
-	10, // 31: solana_messages.DexParsedBlockMessage.Transactions:type_name -> solana_messages.ParsedDexTransaction
-	32, // [32:32] is the sub-list for method output_type
-	32, // [32:32] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	7,  // 7: solana_messages.PoolLiquidityChangeEvent.BaseCurrency:type_name -> solana_messages.PoolSide
+	7,  // 8: solana_messages.PoolLiquidityChangeEvent.QuoteCurrency:type_name -> solana_messages.PoolSide
+	16, // 9: solana_messages.PoolLiquidityChangeEvent.Instruction:type_name -> solana_messages.ParsedIdlInstruction
+	5,  // 10: solana_messages.PoolLiquidityChangeEvent.Price:type_name -> solana_messages.PoolPrice
+	0,  // 11: solana_messages.DexOrderEvent.Type:type_name -> solana_messages.DexOrderEventType
+	1,  // 12: solana_messages.DexOrderEvent.Dex:type_name -> solana_messages.DexInfo
+	2,  // 13: solana_messages.DexOrderEvent.Market:type_name -> solana_messages.DexMarket
+	3,  // 14: solana_messages.DexOrderEvent.Order:type_name -> solana_messages.DexOrder
+	16, // 15: solana_messages.DexOrderEvent.Instruction:type_name -> solana_messages.ParsedIdlInstruction
+	13, // 16: solana_messages.DexTradeSide.Currency:type_name -> solana_messages.Currency
+	17, // 17: solana_messages.DexTradeSide.Account:type_name -> solana_messages.Account
+	3,  // 18: solana_messages.DexTradeSide.Order:type_name -> solana_messages.DexOrder
+	1,  // 19: solana_messages.DexTradeEvent.Dex:type_name -> solana_messages.DexInfo
+	2,  // 20: solana_messages.DexTradeEvent.Market:type_name -> solana_messages.DexMarket
+	9,  // 21: solana_messages.DexTradeEvent.Buy:type_name -> solana_messages.DexTradeSide
+	9,  // 22: solana_messages.DexTradeEvent.Sell:type_name -> solana_messages.DexTradeSide
+	16, // 23: solana_messages.DexTradeEvent.Instruction:type_name -> solana_messages.ParsedIdlInstruction
+	14, // 24: solana_messages.ParsedDexTransaction.Status:type_name -> solana_messages.TransactionStatus
+	15, // 25: solana_messages.ParsedDexTransaction.Header:type_name -> solana_messages.TransactionHeader
+	10, // 26: solana_messages.ParsedDexTransaction.Trades:type_name -> solana_messages.DexTradeEvent
+	8,  // 27: solana_messages.ParsedDexTransaction.OrderEvents:type_name -> solana_messages.DexOrderEvent
+	6,  // 28: solana_messages.ParsedDexTransaction.PoolEvents:type_name -> solana_messages.PoolLiquidityChangeEvent
+	18, // 29: solana_messages.ParsedDexTransaction.TotalBalanceUpdates:type_name -> solana_messages.BalanceUpdate
+	18, // 30: solana_messages.ParsedDexTransaction.TotalTokenBalanceUpdates:type_name -> solana_messages.BalanceUpdate
+	19, // 31: solana_messages.DexParsedBlockMessage.Header:type_name -> solana_messages.BlockHeader
+	11, // 32: solana_messages.DexParsedBlockMessage.Transactions:type_name -> solana_messages.ParsedDexTransaction
+	33, // [33:33] is the sub-list for method output_type
+	33, // [33:33] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_solana_dex_block_message_proto_init() }
@@ -1144,7 +1233,7 @@ func file_solana_dex_block_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solana_dex_block_message_proto_rawDesc), len(file_solana_dex_block_message_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

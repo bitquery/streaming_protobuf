@@ -131,6 +131,27 @@ message Liquidity {
   float NetQuoteUsd = 9;
 }
 
+// PoolPrice is a pool's own price: what its curve quotes at its current liquidity, read
+// from the pool event beside the reserves (the EVM slippage table's spot, a Solana venue's
+// post-swap state or the reserves of a constant-product pool). It is the marginal price
+// after the last swap the pool saw, not the price any trade executed at, and it is not
+// blended: a consumer wanting the pool's curve reads this, one wanting what traded reads
+// PriceUpdate. Pair level only; absent when no pool event with a price is held.
+message PoolPrice {
+  // Price is quote tokens per base token, oriented as the PairUpdate it rides on.
+  float Price = 1;
+  // PriceInUsd is Price times the quote currency's USD rate the index used for the same
+  // pair update; 0 when the quote has none.
+  float PriceInUsd = 2;
+  // Source names where the price was read from: "table" (the spot of an EVM
+  // PoolPriceTable), "event" (a Solana venue's swap event reports the post-swap state),
+  // "reserves" (quote reserve over base reserve on a constant-product pool).
+  string Source = 3;
+  // UpdatedAt is the unix second of the pool event the price was read from, so a price
+  // older than the row's trades can be told apart.
+  uint32 UpdatedAt = 4;
+}
+
 message CurrencyUpdate {
   Currency Currency = 1;
   PriceUpdate PriceUpdate = 2;
@@ -195,6 +216,7 @@ message PairUpdate {
   Pool Pool = 10;
   Liquidity Liquidity = 11;
   RankingDetail RankingDetail = 12;
+  PoolPrice PoolPrice = 13;
 }
 
 message PriceIndexMessage {

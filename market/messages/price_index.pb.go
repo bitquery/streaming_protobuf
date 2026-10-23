@@ -919,6 +919,88 @@ func (x *Liquidity) GetNetQuoteUsd() float32 {
 	return 0
 }
 
+// PoolPrice is a pool's own price: what its curve quotes at its current liquidity, read
+// from the pool event beside the reserves (the EVM slippage table's spot, a Solana venue's
+// post-swap state or the reserves of a constant-product pool). It is the marginal price
+// after the last swap the pool saw, not the price any trade executed at, and it is not
+// blended: a consumer wanting the pool's curve reads this, one wanting what traded reads
+// PriceUpdate. Pair level only; absent when no pool event with a price is held.
+type PoolPrice struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Price is quote tokens per base token, oriented as the PairUpdate it rides on.
+	Price float32 `protobuf:"fixed32,1,opt,name=Price,proto3" json:"Price,omitempty"`
+	// PriceInUsd is Price times the quote currency's USD rate the index used for the same
+	// pair update; 0 when the quote has none.
+	PriceInUsd float32 `protobuf:"fixed32,2,opt,name=PriceInUsd,proto3" json:"PriceInUsd,omitempty"`
+	// Source names where the price was read from: "table" (the spot of an EVM
+	// PoolPriceTable), "event" (a Solana venue's swap event reports the post-swap state),
+	// "reserves" (quote reserve over base reserve on a constant-product pool).
+	Source string `protobuf:"bytes,3,opt,name=Source,proto3" json:"Source,omitempty"`
+	// UpdatedAt is the unix second of the pool event the price was read from, so a price
+	// older than the row's trades can be told apart.
+	UpdatedAt     uint32 `protobuf:"varint,4,opt,name=UpdatedAt,proto3" json:"UpdatedAt,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PoolPrice) Reset() {
+	*x = PoolPrice{}
+	mi := &file_market_price_index_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PoolPrice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PoolPrice) ProtoMessage() {}
+
+func (x *PoolPrice) ProtoReflect() protoreflect.Message {
+	mi := &file_market_price_index_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PoolPrice.ProtoReflect.Descriptor instead.
+func (*PoolPrice) Descriptor() ([]byte, []int) {
+	return file_market_price_index_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PoolPrice) GetPrice() float32 {
+	if x != nil {
+		return x.Price
+	}
+	return 0
+}
+
+func (x *PoolPrice) GetPriceInUsd() float32 {
+	if x != nil {
+		return x.PriceInUsd
+	}
+	return 0
+}
+
+func (x *PoolPrice) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *PoolPrice) GetUpdatedAt() uint32 {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return 0
+}
+
 type CurrencyUpdate struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Currency        *Currency              `protobuf:"bytes,1,opt,name=Currency,proto3" json:"Currency,omitempty"`
@@ -931,7 +1013,7 @@ type CurrencyUpdate struct {
 
 func (x *CurrencyUpdate) Reset() {
 	*x = CurrencyUpdate{}
-	mi := &file_market_price_index_proto_msgTypes[12]
+	mi := &file_market_price_index_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -943,7 +1025,7 @@ func (x *CurrencyUpdate) String() string {
 func (*CurrencyUpdate) ProtoMessage() {}
 
 func (x *CurrencyUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[12]
+	mi := &file_market_price_index_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -956,7 +1038,7 @@ func (x *CurrencyUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CurrencyUpdate.ProtoReflect.Descriptor instead.
 func (*CurrencyUpdate) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{12}
+	return file_market_price_index_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CurrencyUpdate) GetCurrency() *Currency {
@@ -1003,7 +1085,7 @@ type TokenUpdate struct {
 
 func (x *TokenUpdate) Reset() {
 	*x = TokenUpdate{}
-	mi := &file_market_price_index_proto_msgTypes[13]
+	mi := &file_market_price_index_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1015,7 +1097,7 @@ func (x *TokenUpdate) String() string {
 func (*TokenUpdate) ProtoMessage() {}
 
 func (x *TokenUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[13]
+	mi := &file_market_price_index_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1028,7 +1110,7 @@ func (x *TokenUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TokenUpdate.ProtoReflect.Descriptor instead.
 func (*TokenUpdate) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{13}
+	return file_market_price_index_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *TokenUpdate) GetCurrency() *Currency {
@@ -1097,7 +1179,7 @@ type Ranking struct {
 
 func (x *Ranking) Reset() {
 	*x = Ranking{}
-	mi := &file_market_price_index_proto_msgTypes[14]
+	mi := &file_market_price_index_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1109,7 +1191,7 @@ func (x *Ranking) String() string {
 func (*Ranking) ProtoMessage() {}
 
 func (x *Ranking) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[14]
+	mi := &file_market_price_index_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1122,7 +1204,7 @@ func (x *Ranking) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ranking.ProtoReflect.Descriptor instead.
 func (*Ranking) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{14}
+	return file_market_price_index_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Ranking) GetPosition() uint32 {
@@ -1160,7 +1242,7 @@ type RankingDetail struct {
 
 func (x *RankingDetail) Reset() {
 	*x = RankingDetail{}
-	mi := &file_market_price_index_proto_msgTypes[15]
+	mi := &file_market_price_index_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1172,7 +1254,7 @@ func (x *RankingDetail) String() string {
 func (*RankingDetail) ProtoMessage() {}
 
 func (x *RankingDetail) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[15]
+	mi := &file_market_price_index_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1185,7 +1267,7 @@ func (x *RankingDetail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RankingDetail.ProtoReflect.Descriptor instead.
 func (*RankingDetail) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{15}
+	return file_market_price_index_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RankingDetail) GetVerdict() string {
@@ -1219,7 +1301,7 @@ type LeadingPool struct {
 
 func (x *LeadingPool) Reset() {
 	*x = LeadingPool{}
-	mi := &file_market_price_index_proto_msgTypes[16]
+	mi := &file_market_price_index_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1231,7 +1313,7 @@ func (x *LeadingPool) String() string {
 func (*LeadingPool) ProtoMessage() {}
 
 func (x *LeadingPool) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[16]
+	mi := &file_market_price_index_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1244,7 +1326,7 @@ func (x *LeadingPool) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeadingPool.ProtoReflect.Descriptor instead.
 func (*LeadingPool) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{16}
+	return file_market_price_index_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *LeadingPool) GetMarketId() string {
@@ -1282,13 +1364,14 @@ type PairUpdate struct {
 	Pool                     *Pool                  `protobuf:"bytes,10,opt,name=Pool,proto3" json:"Pool,omitempty"`
 	Liquidity                *Liquidity             `protobuf:"bytes,11,opt,name=Liquidity,proto3" json:"Liquidity,omitempty"`
 	RankingDetail            *RankingDetail         `protobuf:"bytes,12,opt,name=RankingDetail,proto3" json:"RankingDetail,omitempty"`
+	PoolPrice                *PoolPrice             `protobuf:"bytes,13,opt,name=PoolPrice,proto3" json:"PoolPrice,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
 
 func (x *PairUpdate) Reset() {
 	*x = PairUpdate{}
-	mi := &file_market_price_index_proto_msgTypes[17]
+	mi := &file_market_price_index_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1300,7 +1383,7 @@ func (x *PairUpdate) String() string {
 func (*PairUpdate) ProtoMessage() {}
 
 func (x *PairUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[17]
+	mi := &file_market_price_index_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1313,7 +1396,7 @@ func (x *PairUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PairUpdate.ProtoReflect.Descriptor instead.
 func (*PairUpdate) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{17}
+	return file_market_price_index_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PairUpdate) GetCurrency() *Currency {
@@ -1400,6 +1483,13 @@ func (x *PairUpdate) GetRankingDetail() *RankingDetail {
 	return nil
 }
 
+func (x *PairUpdate) GetPoolPrice() *PoolPrice {
+	if x != nil {
+		return x.PoolPrice
+	}
+	return nil
+}
+
 type PriceIndexMessage struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Time            uint64                 `protobuf:"varint,1,opt,name=Time,proto3" json:"Time,omitempty"`
@@ -1412,7 +1502,7 @@ type PriceIndexMessage struct {
 
 func (x *PriceIndexMessage) Reset() {
 	*x = PriceIndexMessage{}
-	mi := &file_market_price_index_proto_msgTypes[18]
+	mi := &file_market_price_index_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1424,7 +1514,7 @@ func (x *PriceIndexMessage) String() string {
 func (*PriceIndexMessage) ProtoMessage() {}
 
 func (x *PriceIndexMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_market_price_index_proto_msgTypes[18]
+	mi := &file_market_price_index_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1437,7 +1527,7 @@ func (x *PriceIndexMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PriceIndexMessage.ProtoReflect.Descriptor instead.
 func (*PriceIndexMessage) Descriptor() ([]byte, []int) {
-	return file_market_price_index_proto_rawDescGZIP(), []int{18}
+	return file_market_price_index_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *PriceIndexMessage) GetTime() uint64 {
@@ -1544,7 +1634,14 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\x06Source\x18\x06 \x01(\tR\x06Source\x12\x1c\n" +
 	"\tRealShare\x18\a \x01(\x02R\tRealShare\x12\x1a\n" +
 	"\bDepthUsd\x18\b \x01(\x02R\bDepthUsd\x12 \n" +
-	"\vNetQuoteUsd\x18\t \x01(\x02R\vNetQuoteUsd\"\xb6\x02\n" +
+	"\vNetQuoteUsd\x18\t \x01(\x02R\vNetQuoteUsd\"w\n" +
+	"\tPoolPrice\x12\x14\n" +
+	"\x05Price\x18\x01 \x01(\x02R\x05Price\x12\x1e\n" +
+	"\n" +
+	"PriceInUsd\x18\x02 \x01(\x02R\n" +
+	"PriceInUsd\x12\x16\n" +
+	"\x06Source\x18\x03 \x01(\tR\x06Source\x12\x1c\n" +
+	"\tUpdatedAt\x18\x04 \x01(\rR\tUpdatedAt\"\xb6\x02\n" +
 	"\x0eCurrencyUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x12B\n" +
 	"\vPriceUpdate\x18\x02 \x01(\v2 .marketdata_messages.PriceUpdateR\vPriceUpdate\x12S\n" +
@@ -1570,7 +1667,7 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\vLeadingPool\x12\x1a\n" +
 	"\bMarketId\x18\x01 \x01(\tR\bMarketId\x12\"\n" +
 	"\fQuoteTokenId\x18\x02 \x01(\tR\fQuoteTokenId\x12 \n" +
-	"\vPoolAddress\x18\x03 \x01(\tR\vPoolAddress\"\xa9\x06\n" +
+	"\vPoolAddress\x18\x03 \x01(\tR\vPoolAddress\"\xe7\x06\n" +
 	"\n" +
 	"PairUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x12C\n" +
@@ -1587,7 +1684,8 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\x04Pool\x18\n" +
 	" \x01(\v2\x19.marketdata_messages.PoolR\x04Pool\x12<\n" +
 	"\tLiquidity\x18\v \x01(\v2\x1e.marketdata_messages.LiquidityR\tLiquidity\x12H\n" +
-	"\rRankingDetail\x18\f \x01(\v2\".marketdata_messages.RankingDetailR\rRankingDetailB\x12\n" +
+	"\rRankingDetail\x18\f \x01(\v2\".marketdata_messages.RankingDetailR\rRankingDetail\x12<\n" +
+	"\tPoolPrice\x18\r \x01(\v2\x1e.marketdata_messages.PoolPriceR\tPoolPriceB\x12\n" +
 	"\x10_MarketCapUpdate\"\xff\x01\n" +
 	"\x11PriceIndexMessage\x12\x12\n" +
 	"\x04Time\x18\x01 \x01(\x04R\x04Time\x12M\n" +
@@ -1607,7 +1705,7 @@ func file_market_price_index_proto_rawDescGZIP() []byte {
 	return file_market_price_index_proto_rawDescData
 }
 
-var file_market_price_index_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_market_price_index_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_market_price_index_proto_goTypes = []any{
 	(*Currency)(nil),            // 0: marketdata_messages.Currency
 	(*Market)(nil),              // 1: marketdata_messages.Market
@@ -1621,15 +1719,16 @@ var file_market_price_index_proto_goTypes = []any{
 	(*PriceUpdate)(nil),         // 9: marketdata_messages.PriceUpdate
 	(*MarketCapUpdate)(nil),     // 10: marketdata_messages.MarketCapUpdate
 	(*Liquidity)(nil),           // 11: marketdata_messages.Liquidity
-	(*CurrencyUpdate)(nil),      // 12: marketdata_messages.CurrencyUpdate
-	(*TokenUpdate)(nil),         // 13: marketdata_messages.TokenUpdate
-	(*Ranking)(nil),             // 14: marketdata_messages.Ranking
-	(*RankingDetail)(nil),       // 15: marketdata_messages.RankingDetail
-	(*LeadingPool)(nil),         // 16: marketdata_messages.LeadingPool
-	(*PairUpdate)(nil),          // 17: marketdata_messages.PairUpdate
-	(*PriceIndexMessage)(nil),   // 18: marketdata_messages.PriceIndexMessage
-	(*Token)(nil),               // 19: marketdata_messages.Token
-	(*Pool)(nil),                // 20: marketdata_messages.Pool
+	(*PoolPrice)(nil),           // 12: marketdata_messages.PoolPrice
+	(*CurrencyUpdate)(nil),      // 13: marketdata_messages.CurrencyUpdate
+	(*TokenUpdate)(nil),         // 14: marketdata_messages.TokenUpdate
+	(*Ranking)(nil),             // 15: marketdata_messages.Ranking
+	(*RankingDetail)(nil),       // 16: marketdata_messages.RankingDetail
+	(*LeadingPool)(nil),         // 17: marketdata_messages.LeadingPool
+	(*PairUpdate)(nil),          // 18: marketdata_messages.PairUpdate
+	(*PriceIndexMessage)(nil),   // 19: marketdata_messages.PriceIndexMessage
+	(*Token)(nil),               // 20: marketdata_messages.Token
+	(*Pool)(nil),                // 21: marketdata_messages.Pool
 }
 var file_market_price_index_proto_depIdxs = []int32{
 	0,  // 0: marketdata_messages.Quote.QuoteCurrency:type_name -> marketdata_messages.Currency
@@ -1648,33 +1747,34 @@ var file_market_price_index_proto_depIdxs = []int32{
 	10, // 13: marketdata_messages.CurrencyUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
 	11, // 14: marketdata_messages.CurrencyUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
 	0,  // 15: marketdata_messages.TokenUpdate.Currency:type_name -> marketdata_messages.Currency
-	19, // 16: marketdata_messages.TokenUpdate.Token:type_name -> marketdata_messages.Token
+	20, // 16: marketdata_messages.TokenUpdate.Token:type_name -> marketdata_messages.Token
 	9,  // 17: marketdata_messages.TokenUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
 	10, // 18: marketdata_messages.TokenUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
-	14, // 19: marketdata_messages.TokenUpdate.Ranking:type_name -> marketdata_messages.Ranking
+	15, // 19: marketdata_messages.TokenUpdate.Ranking:type_name -> marketdata_messages.Ranking
 	11, // 20: marketdata_messages.TokenUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
-	15, // 21: marketdata_messages.TokenUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
-	16, // 22: marketdata_messages.TokenUpdate.LeadingPool:type_name -> marketdata_messages.LeadingPool
+	16, // 21: marketdata_messages.TokenUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
+	17, // 22: marketdata_messages.TokenUpdate.LeadingPool:type_name -> marketdata_messages.LeadingPool
 	0,  // 23: marketdata_messages.PairUpdate.Currency:type_name -> marketdata_messages.Currency
 	0,  // 24: marketdata_messages.PairUpdate.QuoteCurrency:type_name -> marketdata_messages.Currency
-	19, // 25: marketdata_messages.PairUpdate.Token:type_name -> marketdata_messages.Token
-	19, // 26: marketdata_messages.PairUpdate.QuoteToken:type_name -> marketdata_messages.Token
+	20, // 25: marketdata_messages.PairUpdate.Token:type_name -> marketdata_messages.Token
+	20, // 26: marketdata_messages.PairUpdate.QuoteToken:type_name -> marketdata_messages.Token
 	1,  // 27: marketdata_messages.PairUpdate.Market:type_name -> marketdata_messages.Market
 	9,  // 28: marketdata_messages.PairUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
 	9,  // 29: marketdata_messages.PairUpdate.PriceUpdateInQuoteTokens:type_name -> marketdata_messages.PriceUpdate
 	10, // 30: marketdata_messages.PairUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
-	14, // 31: marketdata_messages.PairUpdate.Ranking:type_name -> marketdata_messages.Ranking
-	20, // 32: marketdata_messages.PairUpdate.Pool:type_name -> marketdata_messages.Pool
+	15, // 31: marketdata_messages.PairUpdate.Ranking:type_name -> marketdata_messages.Ranking
+	21, // 32: marketdata_messages.PairUpdate.Pool:type_name -> marketdata_messages.Pool
 	11, // 33: marketdata_messages.PairUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
-	15, // 34: marketdata_messages.PairUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
-	12, // 35: marketdata_messages.PriceIndexMessage.CurrencyUpdates:type_name -> marketdata_messages.CurrencyUpdate
-	13, // 36: marketdata_messages.PriceIndexMessage.TokenUpdates:type_name -> marketdata_messages.TokenUpdate
-	17, // 37: marketdata_messages.PriceIndexMessage.PairUpdates:type_name -> marketdata_messages.PairUpdate
-	38, // [38:38] is the sub-list for method output_type
-	38, // [38:38] is the sub-list for method input_type
-	38, // [38:38] is the sub-list for extension type_name
-	38, // [38:38] is the sub-list for extension extendee
-	0,  // [0:38] is the sub-list for field type_name
+	16, // 34: marketdata_messages.PairUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
+	12, // 35: marketdata_messages.PairUpdate.PoolPrice:type_name -> marketdata_messages.PoolPrice
+	13, // 36: marketdata_messages.PriceIndexMessage.CurrencyUpdates:type_name -> marketdata_messages.CurrencyUpdate
+	14, // 37: marketdata_messages.PriceIndexMessage.TokenUpdates:type_name -> marketdata_messages.TokenUpdate
+	18, // 38: marketdata_messages.PriceIndexMessage.PairUpdates:type_name -> marketdata_messages.PairUpdate
+	39, // [39:39] is the sub-list for method output_type
+	39, // [39:39] is the sub-list for method input_type
+	39, // [39:39] is the sub-list for extension type_name
+	39, // [39:39] is the sub-list for extension extendee
+	0,  // [0:39] is the sub-list for field type_name
 }
 
 func init() { file_market_price_index_proto_init() }
@@ -1685,16 +1785,16 @@ func file_market_price_index_proto_init() {
 	file_market_marketdata_proto_init()
 	file_market_pool_proto_init()
 	file_market_price_index_proto_msgTypes[10].OneofWrappers = []any{}
-	file_market_price_index_proto_msgTypes[12].OneofWrappers = []any{}
 	file_market_price_index_proto_msgTypes[13].OneofWrappers = []any{}
-	file_market_price_index_proto_msgTypes[17].OneofWrappers = []any{}
+	file_market_price_index_proto_msgTypes[14].OneofWrappers = []any{}
+	file_market_price_index_proto_msgTypes[18].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_market_price_index_proto_rawDesc), len(file_market_price_index_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
