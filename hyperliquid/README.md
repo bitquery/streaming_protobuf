@@ -21,9 +21,14 @@ The package has **two layers**:
   `HyperliquidCoreBlockMessage` (all trading activity) and `CandlesBlockMessage` (OHLC).
   **This is what subscribers receive.** It is a normalization, not a re-encoding: the raw
   streams are reassembled, decoded into typed sub-objects, and sorted into per-kind lists.
+  Next to it, `hyperliquid_snapshot_message.proto` (`HyperliquidSnapshotMessage`) delivers
+  the exchange **state** every 10,000 blocks — positions, margin, the L4 book with owners,
+  spot balances, Earn, vaults — projected from the node's own state snapshot, not from the event
+  streams (§7).
 
-If you consume the Bitquery stream, start at **§5 (the product)**. §2–§4 (conventions,
-identity, symbology) underlie both layers. §7 documents the raw node streams for reference.
+If you consume the Bitquery stream, start at **§5 (the product)** and **§7 (snapshots)**.
+§2–§4 (conventions, identity, symbology) underlie both layers. §8 documents the raw node
+streams for reference.
 
 **Schema evolution.** When the node starts emitting a new field, it first appears in
 `Extra` (§2.4) on the raw layer — already usable, as a raw JSON string. The upgrade path
@@ -48,21 +53,24 @@ renumbered, so old and new binaries stay compatible both ways.
 Hyperliquid node (hl-visor) writes NDJSON under ~/hl/data
  ├── 7 event streams   (fills, order_statuses, raw_book_diffs, twap_statuses,
  │                       hip3_oracle_updates, misc_events, core_writer_actions)
- └── replica_cmds       (consensus transactions — what went INTO each block)
+ ├── replica_cmds       (consensus transactions — what went INTO each block)
+ └── periodic_abci_states (msgpack state dump every 10,000 blocks — archived as is, §7)
         │
         ▼  lossless typed re-encoding   (raw ingestion — internal)
  ├── HyperCoreBlock / HyperCoreBlocks              (hypercore.proto)       — the 7 event streams
  └── HyperCoreTransactionsBlock / …Blocks          (transactions.proto)    — consensus transactions
         │
         ▼  projection / normalization   (the product)
- ├── HyperliquidCoreBlockMessage                   (hyperliquid_block_message.proto)  ──▶ subscribers
- └── CandlesBlockMessage                           (candles.proto)                    ──▶ subscribers
+ ├── HyperliquidCoreBlockMessage                   (hyperliquid_block_message.proto)    ──▶ subscribers
+ ├── CandlesBlockMessage                           (candles.proto)                      ──▶ subscribers
+ └── HyperliquidSnapshotMessage  ◀── the .rmp      (hyperliquid_snapshot_message.proto) ──▶ subscribers
 ```
 
 | Message | Role | Contents |
 |---|---|---|
 | **`HyperliquidCoreBlockMessage`** | **delivered** — one per block | All trading activity of a block, one list per kind: trades, order updates, funding, liquidations, TWAP lifecycle, book deltas, prices, leverage changes, signed consensus actions |
 | **`CandlesBlockMessage`** | **delivered** — one per trades block | OHLC bars touched by the block (1m / 5m / 15m / 1h) |
+| **`HyperliquidSnapshotMessage`** | **delivered** — one snapshot per 10,000 blocks, in parts | Exchange state at one block: markets, accounts per perp dex, open positions, every book and trigger order with its owner, spot balances, vaults and their depositors |
 | `HyperCoreBlock` | raw ingestion — internal | The 7 node event streams for one block, re-encoded losslessly |
 | `HyperCoreTransactionsBlock` | raw ingestion — internal | The consensus `replica_cmds` for one block: every signed action bundle with signatures, nonces and the engine's accept/reject verdict |
 
@@ -131,6 +139,11 @@ preserves the source precision of each field it carries.
 | `SignedAction.Nonce`, `SignedActionEvent.Nonce`, `Trader.SignedAt` | ms *(by wallet convention)* | signer nonce / signing time |
 | `SignedAction.ExpiresAfter`, `SignedActionEvent.ExpiresAfter` | ms | action deadline, `0` = absent |
 | `TimeInterval.Duration/Start/End` (candles) | **s** | candle bucket boundaries |
+| `MarketPrices.UpdateTime` (snapshot) | **ns** | last oracle update |
+| `OrderState.PlacedTime` (snapshot) | **ms** | order placement time (same as `OrderUpdate.PlacedTime`) |
+| `VaultState.CreateTime`, `VaultFollowTimes.EntryTime` / `LastDepositTime` / `LockupUntil` (snapshot) | **ns** | vault creation, first and last deposit, end of lockup |
+| `EarnReserveState.UpdateTime` (snapshot) | **ns** | the last interest update of an Earn token |
+| `VaultTerms.LockupSeconds` (snapshot) | **s** | lockup after each deposit |
 
 ### 2.3 Addresses and hashes are `bytes` (raw) or `0x…` strings (product)
 
@@ -585,7 +598,585 @@ block, mirroring the envelope (`BlockNumber` + epoch-ns `BlockTime` + repeated p
 
 ---
 
-## 7. Raw source streams (node ingestion — internal)
+## 7. State snapshots — `HyperliquidSnapshotMessage`
+
+`hyperliquid_snapshot_message.proto`. The exchange **state** at one block, every 10,000 blocks
+(≈ 12 min): what the event streams never carry — every open position with its margin, every
+account's balance on every perp dex, the whole L4 book **with owners** plus the trigger orders
+still waiting, spot balances, Earn (the borrow / lend pool), vaults and their depositors.
+
+The source is the node's own state dump, `periodic_abci_states/<YYYYMMDD>/<height>.rmp`
+(`hl-visor` writes it; msgpack, ~1.9 GB, root `exchange`). Bitquery archives every file byte
+for byte, so **the `.rmp` is the raw layer** — there is no raw snapshot protobuf. Its keys are
+mostly one letter and undocumented; the meanings below were checked against the node's info
+API (`clearinghouseState`, `spotClearinghouseState`, `vaultDetails`), the HIP-3 oracle stream
+and the node's own L4 dump (`hl-node compute-l4-snapshots --include-users
+--include-trigger-orders`) (*observed*, October 2026).
+
+All conventions of §2 hold: decimal strings, `0x…` strings for addresses, **empty = source
+silent, NOT zero**. Rows are built like the block product (§5): the shared `Trader`, `Market`
+and `PerpPosition` of §5.2, plus small per-topic sub-messages (as `Execution`, `Fees` or
+`TwapOrder` there). `Market` is built exactly as for trades, so snapshot rows join trade rows
+on `Market.CoinRaw`. `Trader` carries only `Address` — except on orders, whose `Signer`,
+`Vault`, `Broadcaster` and `SignedAt` come from the processor's order attribution by `Oid`,
+as on `OrderUpdate` (§7.5). A number or flag the snapshot may lack is `optional`: **null =
+unknown, never 0** (strings keep empty = unknown). Fields marked *computed* are not in the
+snapshot: they are derived from its other fields at the market's `MarkPx` **of the same
+snapshot** (§7.2).
+
+One converter makes every row, as a pure function of the `.rmp`: the realtime stream, the
+archive datasets and any later historical export all come from the same code over the same
+archived files, so they cannot disagree.
+
+### 7.1 Envelope and parts
+
+| Field | Type | Description |
+|---|---|---|
+| `BlockNumber` | uint64 | snapshot height (`exchange.locus.ctx.height`), a multiple of 10,000 |
+| `BlockTime` | int64 | that block's consensus time, epoch **ns** (`ctx.time`) — equal to the block stream's `BlockTime` |
+| `Part` | uint32 | `1..Parts` |
+| `Parts` | uint32 | number of parts of this snapshot |
+| `IsFull` | bool | `true` at heights that are multiples of 300,000 (≈ 6 h): every list is sent |
+| `Markets` | repeated MarketState | every market: perp, HIP-3, spot, outcome (§7.3) |
+| `Accounts` | repeated AccountState | per (account, perp dex) with collateral or a position (§7.4) |
+| `Positions` | repeated PositionState | every open perp position (§7.4) |
+| `LeverageSettings` | repeated LeverageSetting | **full only**: per (account, perp market) the account touched, with a position or without (§7.4) |
+| `Orders` | repeated OrderState | every order in the books and every waiting trigger order (§7.5) |
+| `Balances` | repeated BalanceState | **full only**: per (account, spot token), non-zero only (§7.6) |
+| `EarnReserves` | repeated EarnReserveState | every token of Earn: pool totals, utilization, LTV, rate terms (§7.8) |
+| `EarnPositions` | repeated EarnPositionState | per (account, token) with a supply or a borrow in Earn (§7.8) |
+| `Vaults` | repeated VaultState | every vault (§7.7) |
+| `VaultFollowers` | repeated VaultFollowerState | **full only**: per (vault, depositor), leader included (§7.7) |
+
+A snapshot is far larger than one message (hundreds of MB), so it is cut into `Parts`
+messages of ≤ ~1 MB with the same `BlockNumber`/`BlockTime`. Rows go into parts in list order
+(`Markets`, `Accounts`, `Positions`, `LeverageSettings`, `Orders`, `Balances`, `EarnReserves`,
+`EarnPositions`, `Vaults`, `VaultFollowers`); a part may carry rows of several lists, and every
+row is in exactly one part. A snapshot never changes, so a re-delivered part is identical — unlike block messages
+(§9), **deduplicating on `(BlockNumber, Part)` is safe**. The snapshot is whole once all parts
+`1..Parts` have arrived.
+
+**Full and light snapshots.** Every snapshot (each 10,000 blocks) carries what moves fast:
+markets, accounts, positions, orders, Earn, vaults. The heavy, slow-moving lists — leverage settings
+(~8.6 M rows), spot balances (~2.5 M), vault depositors (~0.2 M) — ride only the **full**
+snapshots, at heights that are multiples of 300,000 (≈ 6 h, the heights the archive also keeps
+whole rather than as patches). In a light snapshot (`IsFull = false`) those lists are empty
+because they were not sent, not because there is nothing. A consumer that needs only the
+slow state reads the full snapshots alone.
+
+Field numbers 14–17 of the envelope are kept for sections planned later: staking
+(`c_staking`), sub-accounts (`sub_account_tracker`), agents (`agent_tracker`) and fee tracking
+(`locus.ftr`); Earn, added after them, took 18 and 19.
+
+### 7.2 Units and computed fields
+
+How the snapshot stores numbers, and what the product turns them into:
+
+| Quantity | Stored in the `.rmp` as | Product |
+|---|---|---|
+| perp size, open interest | integer = value × 10^`szDecimals` | decimal string |
+| perp price (book, oracle, trigger) | integer = value × 10^(6 − `szDecimals`) | decimal string |
+| spot / outcome price | integer = value × 10^(8 − `szDecimals` of the base token) | decimal string |
+| perp-dex money: balance, entry notional, funding, isolated margin, tier bounds, vault deposits | integer micro-units (× 10^6) of the dex collateral, signed where it can be negative | decimal string |
+| spot balance, hold | integer = value × 10^`weiDecimals` of the token | decimal string |
+| spot entry notional | integer = USDC × 10^8 | decimal string |
+| Earn shares and basis | integer = value × 10^`weiDecimals` of the token | decimal string |
+| Earn indexes, rates, LTV, protocol share | integer × 10^14 | decimal string |
+| time | ISO string with nanoseconds | epoch ns (order placement: the stored epoch-ms integer) |
+| vault fraction, leader commission | float | shortest decimal string |
+| perp asset index | native `i`; HIP-3 dex `n`: `n × 10000 + i` | `MarketState.AssetId` uses the action numbering: `100000 + n × 10000 + i` |
+
+Decimal strings are printed the way the node prints them in its streams and in its L4 dump —
+trailing zeros trimmed, a whole number keeps `.0` (`"82076.0"`, `"0.02986"`) — so a value
+reads the same in `OrderState` and `OrderUpdate`.
+
+The snapshot **omits zero numbers**: a number missing from an entry that exists (an account
+with no cross balance, a balance with no entry notional) is zero and is written as `"0.0"`.
+An empty field still means the source has no such value at all (`Prices.ExternalPerpPx` of a
+spot market, `Tif` of a waiting trigger order).
+
+The **mark price** is the second of the three prices the snapshot keeps per perp
+(`cls[dex].oracle.pxs2[i]` = [oracle, mark, external perp], each `{u: time, p: price,
+d: daily price}`; the order was checked against `PriceUpdate` of the same block).
+
+Computed fields — `Mark` is the market's `Prices.MarkPx`; the sums run over one account's
+positions on one dex:
+
+| Field | Formula |
+|---|---|
+| `PositionState.Position.EntryPrice` | `Valuation.EntryNotional / abs(Size)` |
+| `PositionState.Valuation.PositionValue` | `abs(Size) × Mark` |
+| `PositionState.Valuation.UnrealizedPnl` | `Size × Mark − sign(Size) × EntryNotional` |
+| `PositionState.Margin.MarginUsed` | cross: `PositionValue / Leverage`; isolated: `IsolatedRawUsd + Size × Mark` |
+| `PositionState.Margin.MaintenanceMargin` | `PositionValue / (2 × MaxLeverage) − MaintenanceDeduction` of the last tier with `LowerBound ≤ PositionValue` |
+| `AccountState.Cross.AccountValue` | `Cross.RawUsd + Σcross Size × Mark` |
+| `AccountState.Total.AccountValue` | `Cross.AccountValue + Σisolated (IsolatedRawUsd + Size × Mark)` + isolated margin left in markets without a position |
+| `AccountState.Total.RawUsd` | `Cross.RawUsd + Σisolated IsolatedRawUsd` + isolated margin left in markets without a position |
+| `AccountState.{Total,Cross}.MarginUsed` | `Σ MarginUsed` — every position / cross only; `Total` also counts isolated margin left in markets without a position |
+| `AccountState.{Total,Cross}.TotalNotional` | `Σ PositionValue` — every position / cross only |
+| `AccountState.{Total,Cross}.MaintenanceMarginUsed` | `Σ MaintenanceMargin` — every position / cross only |
+| `MarketState.Margin.IsolatedOnly` | `Mode` is `"strictIsolated"` or `"noCross"` |
+| `MarketState.Margin.DefaultLeverage` | `min(20, Market.MaxLeverage)` |
+| `LeverageSetting.EffectiveLeverage` | `Leverage`, else `min(20, MaxLeverage)`, else `min(20, Market.MaxLeverage)` |
+| `LeverageSetting.EffectiveIsCross` | `IsCross`, else `not Margin.IsolatedOnly` |
+| `VaultState.Summary.Equity` | the vault's `Total.AccountValue` on the native dex + its net USDC in Earn; a parent vault (HLP) + its children's equity (§7.7) |
+| `VaultFollowerState.Share.Equity` / `AllTimePnl` | `Fraction × Summary.Equity` / `Equity − NetDeposit` |
+| `AccountState` / `PositionState` / `OrderState` `.IsVault` | the account is one of `locus.vlt[]` |
+| `MarketOutcome.SiblingCoin` | `#<encoding XOR 1>` |
+
+These are the info API's `clearinghouseState` / `vaultDetails` fields (`positionValue`,
+`unrealizedPnl`, `marginUsed`, `marginSummary`, `crossMarginSummary`,
+`crossMaintenanceMarginUsed`, `vaultEquity`, `allTimePnl`). Sums are exact; the per-position
+divisions — `MarginUsed` of a cross position, `MaintenanceMargin` — are **cut** toward zero to
+6 decimals, and `EntryPrice` to the market's price decimals, as Hyperliquid does (rounding
+missed `entryPx` on a quarter of the positions, and `crossMaintenanceMarginUsed` of a
+50-position account by 0.000011).
+
+*Observed* on snapshot 1194040000 (October 23, 2026) against the public info API, answers
+taken just before and just after the block time and compared where the account did not
+change in between: 190 (account, dex) pairs, 374 positions, 354 orders, 71 spot balances,
+547 perp markets, 722 outcome sides, the 100 listed HLP depositors and 500 depositors of 5
+more vaults matched field for field — sizes, entry prices, leverage, isolated margins,
+cumulative funding, raw balances, every order field, and the computed fields to the last
+digit when put at the API's own mark price.
+
+The liquidation price and the withdrawable amount are not in the product yet. For the
+withdrawable amount the documented rule ([margining](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/margining):
+`transfer_margin_required = max(initial_margin_required, 0.1 × total_position_value)`) holds
+with the dex's own share and the margin of open orders: `max(0, Cross.AccountValue −
+max(Cross.MarginUsed, Cross.TotalNotional / max_withdraw_leverage) − order margin)`, where
+`max_withdraw_leverage` is `cls[dex].max_withdraw_leverage` (10 native, 50 on the HIP-3 dexes)
+and the order margin `cls[dex].user_states.open_order_tracker.user_to_data[account].e`. It
+matched 383 of 402 answers; the rest were market makers whose orders moved in the minutes
+between the snapshot and the answer, and unified / portfolio-margin accounts, whose spot side
+the rule does not cover.
+
+One market's oracle differed: `io:GPRO`, 1.018 here and in the node's own price stream
+(`PriceUpdate` of block 1194040000: oracle 1.018, mark 1.0233), 1.0251 on the info API — the
+API's `oraclePx` there is not the chain's oracle.
+
+### 7.3 Markets (`MarketState`)
+
+Source: perp — `exchange.locus.cls[dex].meta.universe[i]`, `.meta.marginTableIdToMarginTable`,
+`.oracle.pxs2[i]`, `.user_states.asset_to_oi_szi`, `.halted_assets`; spot and outcome —
+`exchange.locus.scl.meta.spot_infos[i]` / `token_infos`, prediction markets also
+`scl.meta.outr`; the book from `exchange.perp_dexs[dex].books[i]` / `exchange.spot_books[i]`.
+`Margin`, `Prices` and the open interest are perp-only and stay empty on spot and outcome
+markets; `Outcome` is set on outcome markets only.
+
+| Field | Type | Description |
+|---|---|---|
+| `Market` | Market | resolved market (§5.2) |
+| `AssetId` | uint32 | asset id of exchange actions ([asset IDs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/asset-ids)): perp `i`, HIP-3 `100000 + dex × 10000 + i`, spot `10000 + i`, outcome `100000000 + encoding`, where `encoding = 10 × outcome + side` is the `n` of `CoinRaw` `#<n>` |
+| `SzDecimals` | uint32 | size decimals; spot/outcome: the base token's |
+| `Margin` | MarketMargin | margin mode, collateral, tiers |
+| `Prices` | MarketPrices | oracle, mark and external perp prices |
+| `Book` | MarketBook | top of the book |
+| `OpenInterest` | string | one side, in coins (info API `openInterest`) |
+| `Positions` | uint32 | *computed*: open positions in the market |
+| `IsHalted` | bool | trading halted |
+| `Outcome` | MarketOutcome | prediction (outcome) markets only: the question and the side |
+
+**`MarketMargin`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `Mode` | string | `"normal"` \| `"strictIsolated"` \| `"noCross"` |
+| `Collateral` | string | the dex's collateral token: `"USDC"` \| `"USDH"` \| `"USDE"` \| `"USDT0"` \| … |
+| `Tiers` | repeated MarginTier | by `LowerBound`; one tier when the market has no tier table |
+| `IsolatedOnly` | bool | *computed*: no cross margin in this market — an account that never set leverage here is isolated |
+| `DefaultLeverage` | uint32 | *computed*: the leverage of an account that never set one here, `min(20, Market.MaxLeverage)` |
+
+**`MarginTier`** — from `LowerBound` of position notional on, `MaxLeverage` applies and the
+maintenance margin is `notional / (2 × MaxLeverage) − MaintenanceDeduction`
+([margin tiers](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/margin-tiers)). A
+market whose `marginTableId` is below 50 has no table: one tier, `MaxLeverage` = the id.
+
+| Field | Type | Description |
+|---|---|---|
+| `LowerBound` | string | USD |
+| `MaxLeverage` | uint32 | max leverage in the tier |
+| `MaintenanceDeduction` | string | USD |
+
+**`MarketPrices`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `OraclePx` | string | oracle price |
+| `MarkPx` | string | mark price — the price of every *computed* field |
+| `ExternalPerpPx` | string | external perp price |
+| `MarkDailyPx` | string | daily reference price of the mark (as `PriceUpdate.DailyPx`) |
+| `UpdateTime` | int64 | last oracle update, epoch **ns** |
+
+**`MarketBook`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `LastTradePx` | string | last trade price |
+| `BestBid` / `BestAsk` | string | best price levels; empty = that side is empty |
+| `Orders` | uint32 | *computed*: orders resting in the book |
+
+**`MarketOutcome`** — one side of a prediction market, from `scl.meta.outr` (`ots[]` per
+outcome, `qts[]` per question). It is field for field the public info API `outcomeMeta`
+(*observed*: the same 341 outcomes and 32 questions, the same names and descriptions). An
+outcome has two sides, each its own market (§4): `encoding = 10 × OutcomeId + Side`, `CoinRaw`
+`#<encoding>`, token `+<encoding>`. In the snapshot a side is a spot pair whose base token is
+the side's token (`ots[].s[].t`), so its book is that pair's `spot_books[pair]`; the pair is
+listed once, as the outcome market, not also as an `@<pair>` spot market. The price of a side
+in its `Book` reads as the probability, 0..1.
+
+| Field | Type | Description |
+|---|---|---|
+| `OutcomeId` | uint32 | outcome id (`outcomes[].outcome`) |
+| `Side` | uint32 | `0` \| `1` |
+| `SideName` | string | `sideSpecs[Side].name`: `"Yes"` \| `"No"` \| … |
+| `SiblingCoin` | string | the other side of the same outcome, `#<encoding XOR 1>` |
+| `Name` | string | outcome name, e.g. `"template:sportsTournamentParticipant"` |
+| `Description` | string | `key:value\|key:value` as published, e.g. `"participant:Oklahoma City Thunder"` |
+| `Question` | OutcomeQuestion | the question the outcome answers; empty when it stands alone |
+
+**`OutcomeQuestion`** — a question groups several outcomes, one per answer
+(`namedOutcomes`), plus a fallback ("other"):
+
+| Field | Type | Description |
+|---|---|---|
+| `QuestionId` | uint32 | question id (`questions[].question`) |
+| `Name` | string | e.g. `"template:sportsContestResult"` |
+| `Description` | string | `key:value\|…` as published: competition, participants, resolution deadline, … |
+| `IsFallback` | bool | this outcome is the question's `fallbackOutcome` |
+| `IsSettled` | bool | this outcome is in `settledNamedOutcomes` |
+
+### 7.4 Accounts and positions (`AccountState`, `PositionState`)
+
+Source: `exchange.locus.cls[dex].user_states.user_to_state[]` — `[address, state]`, one
+clearinghouse per perp dex (the native one and every HIP-3 dex keep separate margin, each in its
+own collateral). The state's `u` is the cross balance; `p.p[]` holds one `[asset, entry]` per
+asset the account touched — only entries with a size are positions, the others keep a leverage
+setting.
+
+**`AccountState`** — one account on one dex (info API `clearinghouseState` with that `dex`),
+for every account with a cross balance, a position, or isolated margin left in a market:
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | the account (`Address` only) |
+| `Protocol` | string | `"hypercore"` native, else the HIP-3 dex — as `Market.Protocol` |
+| `Collateral` | string | the dex's collateral token |
+| `Total` | MarginSummary | every position (`marginSummary`) |
+| `Cross` | MarginSummary | cross positions only (`crossMarginSummary`) |
+| `Positions` | uint32 | *computed*: open positions on this dex |
+| `IsVault` | bool | *computed*: the account is a vault (`locus.vlt[]`) — HLP or a user vault |
+
+**`MarginSummary`** — the info API's `marginSummary` / `crossMarginSummary`, plus the
+maintenance margin, which the API gives for cross only (`crossMaintenanceMarginUsed`):
+
+| Field | Type | Description |
+|---|---|---|
+| `AccountValue` | string | *computed* (`accountValue`) |
+| `MarginUsed` | string | *computed* (`totalMarginUsed`) |
+| `MaintenanceMarginUsed` | string | *computed*: `Σ MaintenanceMargin` (`Cross`: `crossMaintenanceMarginUsed`) |
+| `TotalNotional` | string | *computed* (`totalNtlPos`) |
+| `RawUsd` | string | `Cross`: the cross balance `u`, signed — collateral net of the cross positions' entry notional; `Total`: *computed*, plus the isolated margins (`totalRawUsd`) |
+
+**`PositionState`** — one open position (info API `assetPositions[].position`):
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | position owner (`Address` only) |
+| `Market` | Market | perp market |
+| `Position` | PerpPosition | the shared position object of trades (§5.2) |
+| `Margin` | PositionMargin | isolated margin, margin used, maintenance margin |
+| `Valuation` | PositionValuation | entry notional and the position marked |
+| `CumFunding` | CumFunding | cumulative funding, as on the Hyperliquid position |
+| `IsVault` | bool | *computed*: the owner is a vault — HLP or a user vault |
+
+**`PerpPosition` in a snapshot** — the same object as on trades, filled from the snapshot:
+
+| Field | Description |
+|---|---|
+| `Side` | `"Long"` \| `"Short"` |
+| `Size` | signed (`szi`) |
+| `EntryPrice` | *computed* (`entryPx`) |
+| `Leverage` | the setting; an entry without one is at the exchange default `min(20, MaxLeverage)` |
+| `IsCross` | cross vs isolated; an entry without a setting is cross unless the market is isolated-only |
+| `SizeBefore`, `RealizedPnl`, `Funding`, `Closed` | empty — event fields; funding is in `PositionState.CumFunding` |
+
+**`PositionMargin`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `IsolatedRawUsd` | string | isolated only, signed: margin net of the entry notional (`leverage.rawUsd`) |
+| `MarginUsed` | string | *computed* (`marginUsed`) |
+| `MaintenanceMargin` | string | *computed* |
+
+**`PositionValuation`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `EntryNotional` | string | USD paid at entry |
+| `MarkPx` | string | the market's `Prices.MarkPx` in this snapshot |
+| `PositionValue` | string | *computed* (`positionValue`) |
+| `UnrealizedPnl` | string | *computed* (`unrealizedPnl`) |
+
+**`CumFunding`** — cumulative funding of the position as Hyperliquid keeps it: the info API
+`clearinghouseState` `cumFunding`, the same values, signed **+ paid by the account,
+− received**. That is the **opposite** sign to `PerpFunding.Amount` (§5.7, + received): the
+funding events of a position since it opened sum to `−SinceOpen` (*observed*: a short received
+funding at 11:00 on October 22 — `PerpFunding.Amount` +0.097984 — and its `cumFunding.allTime`
+fell by the same 0.097984).
+
+| Field | Type | Description |
+|---|---|---|
+| `AllTime` | string | over the account's whole history in the market |
+| `SinceOpen` | string | since the position opened |
+| `SinceChange` | string | since its size last changed |
+
+**`LeverageSetting`** — full snapshots only. Every `[asset, entry]` of `p.p[]`, with a
+position or without (~8.6 M on mainnet, October 2026; open positions are ~0.4 M of them): the
+leverage the account's **next** trade in that market gets, until an accepted `updateLeverage`
+(`TraderLeverageUpdate`, §5.7) changes it. A leverage set without a position counts too. A
+market the account never touched has no row and is at `MarketMargin.DefaultLeverage` /
+`IsolatedOnly`. With the stream's leverage changes, the earliest snapshot is the starting point
+for the leverage of any account at any later block.
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | the account (`Address` only) |
+| `Market` | Market | perp market |
+| `Leverage` | optional uint32 | the account's own setting (`l.C` cross / `l.I.l` isolated); null = never set |
+| `IsCross` | optional bool | null = never set |
+| `MaxLeverage` | optional uint32 | the entry's own cap: its margin table (`M`) resolved to the first tier's max leverage — it can differ from the market's (HLP vaults hold every market at 50); null = no cap of its own |
+| `EffectiveLeverage` | uint32 | *computed*: the setting, else the default under the entry's cap, else under the market's (§7.2) |
+| `EffectiveIsCross` | bool | *computed*: the setting, else cross unless the market is isolated-only |
+
+The same rule fills `PositionState.Position.Leverage` / `IsCross`, and matched the info API on
+sampled accounts, HLP vaults included (*observed*).
+
+### 7.5 Orders (`OrderState`)
+
+Source: `exchange.perp_dexs[dex].books[i]` and `exchange.spot_books[i]`, one book per market.
+The book proper is a slab `bod.e[]` of orders linked per price level (`halfs[side].levels[]`
+names the first slot of each level, every order the next); orders are listed in that queue
+order. Trigger orders that have not fired are not in the book: they wait in the book's
+`user_states[].U[]`. The rows match the node's own L4 dump, owner included (*observed*: the
+same order counts on a full mainnet snapshot, sampled orders field by field). The row is flat,
+like `OrderUpdate` (§5.4), with the same names and values.
+
+The snapshot names only the owner. Who signed the order is not in it: `Trader.Signer`,
+`Vault`, `Broadcaster` and `SignedAt` come from the processor's order attribution — the same
+map of live orders by `Oid` that fills them on `OrderUpdate` — and stay empty for an order it
+does not know.
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | owner (`Address`) and its signer (`Signer`, `Vault`, `Broadcaster`, `SignedAt`) |
+| `Market` | Market | resolved market |
+| `Side` | string | `"Buy"` \| `"Sell"` |
+| `OrderType` | string | `"Limit"` \| `"Stop Market"` \| `"Stop Limit"` \| `"Take Profit Market"` \| `"Take Profit Limit"` \| `"Trailing Stop Market"` |
+| `Tif` | string | `"Gtc"` \| `"Alo"`; empty on waiting trigger orders and on the oldest book orders |
+| `ReduceOnly` | bool | order may only reduce a position |
+| `LimitPx` | string | limit price (for a market trigger: its slippage limit) |
+| `Size` | string | **remaining** size; `"0.0"` on a position TP/SL, which closes the whole position |
+| `OrigSz` | string | original size |
+| `TriggerPx` | string | trigger price, `"0.0"` without a trigger; trailing stop: *computed* from `Trailing.BestPx` and the retracement |
+| `TriggerCondition` | string | `"N/A"` \| `"Price above 86000"` \| `"Triggered"` (fired, now in the book) \| trailing: `"Activation above 0.05, retracement 5%, best waiting"` |
+| `IsTrigger` | bool | a trigger order still waiting — **not in the book** |
+| `IsPositionTpsl` | bool | TP/SL bound to the whole position |
+| `ParentOid` | optional uint64 | a TP/SL leg → its parent order, while the parent rests unfilled; null = none |
+| `SiblingOid` | optional uint64 | the other leg of a TP/SL pair (one cancels the other); null = none |
+| `Oid` | uint64 | order id |
+| `Cloid` | string | client order id |
+| `PlacedTime` | int64 | placement time, epoch **ms** |
+| `Builder` | string | builder address (usually empty) |
+| `BuilderFee` | uint32 | builder fee rate in tenths of a basis point |
+| `QueuePosition` | optional uint32 | place at its price level, from `1` = filled first; null on waiting trigger orders |
+| `Trailing` | TrailingStop | trailing stops only |
+| `IsVault` | bool | *computed*: the owner is a vault — e.g. the HLP market-making orders |
+
+**`TrailingStop`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `RetracementPct` | string | percent (`"15"` = 15%); empty when given as `RetracementPx` |
+| `RetracementPx` | string | price distance; empty when given as `RetracementPct` |
+| `ActivationPx` | string | empty = active from placement |
+| `BestPx` | string | best price since activation; empty = not active yet |
+
+### 7.6 Spot balances (`BalanceState`)
+
+Source: `exchange.locus.scl.user_states[]` — `[address, {b: [[token, {t, h, e}]]}]` (info API
+`spotClearinghouseState`). Zero balances are left out; token names and decimals come from
+`scl.meta.token_infos`.
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | the account (`Address` only) |
+| `Token` | string | `"USDC"`, `"HYPE"`, …; an outcome side's token is `"+<encoding>"`, as the info API names it |
+| `TokenIndex` | uint32 | token index (spotMeta `tokens[].index`) |
+| `Total` | string | balance — the spot ledger itself |
+| `Hold` | string | part of `Total` locked in open orders |
+| `EntryNotional` | string | USDC paid for `Total` |
+
+`Total` is what the spot ledger holds. For an account that trades perps from its spot balance
+(unified account, dex abstraction), the info API's `spotClearinghouseState` adds the USDC its
+perp dexes hold to `total` and shows it as `hold`; that money is the account's
+`AccountState.Total.AccountValue` here, so it is not counted twice (*observed*: the ledger
+equals the API's `total` on plain accounts and `total − hold` on unified ones). The system
+accounts that mint outcome tokens can go negative: the snapshot keeps that as a wrapped
+unsigned integer and the API prints it as such (`184467440736536.5`); here it is the signed
+value (`-559.00001`).
+
+There is no USD value of a balance: Hyperliquid publishes none, and a price rule of our own
+would not be its data. USD is priced downstream, by the Bitquery price index used for the other
+products.
+
+### 7.7 Vaults (`VaultState`, `VaultFollowerState`)
+
+Source: `exchange.locus.vlt[]` — `[vault, {name, leader, user_states, …}]`. A vault trades as
+its own account: its positions, margin and orders are the rows of that address in the lists
+above. Depositors are their own list, since the largest vault has ~94,000 of them.
+
+**`VaultState`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `Vault` | string | vault account |
+| `Name` | string | |
+| `Description` | string | |
+| `Leader` | string | leader address |
+| `CreateTime` | int64 | epoch **ns** |
+| `Terms` | VaultTerms | commission, lockup, deposits |
+| `Relationship` | VaultRelationship | parent / child vaults |
+| `Summary` | VaultSummary | equity and depositors |
+
+**`VaultTerms`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `LeaderCommission` | string | share of the followers' profit, e.g. `"0.1"` |
+| `LockupSeconds` | uint32 | lockup after each deposit, **s** |
+| `AllowDeposits` | bool | |
+| `AlwaysCloseOnWithdraw` | bool | |
+| `IsClosed` | bool | |
+
+**`VaultRelationship`:** `Type` (`"normal"` \| `"parent"` \| `"child"`), `ChildVaults`
+(repeated string, parent vaults only).
+
+**`VaultSummary`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `Equity` | string | *computed*: the vault's `Total.AccountValue` on the native dex + its net USDC in Earn; a parent vault adds its children's |
+| `LeaderFraction` | string | *computed*: the leader's share of the vault |
+| `Followers` | uint32 | *computed*: depositors, leader included |
+
+A vault's `Equity` is its account value on the native dex **plus what it holds in Earn**
+(`locus.blp`, the borrow/lend pool: shares × the token's interest index / 10¹⁴, supply minus
+borrow), and a **parent** vault adds its children's equity. That is how Hyperliquid values
+HLP, which "supplies USDC in Earn" ([protocol vaults](https://hyperliquid.gitbook.io/hyperliquid-docs/hypercore/vaults/protocol-vaults)):
+at 1194040000 HLP Strategy X held 100,598,280.50 USDC there, and HLP came to 177,129,170.86 —
+the info API said 177,129,122.25 27 s later. A depositor's share is `Fraction × Equity`
+(*observed*: the 100 HLP depositors the API lists within 4·10⁻⁷, and 500 depositors of the 5
+largest open vaults — shares, lockups and the leader's fraction exact). A vault with Earn in a
+token other than USDC would need a price: its `Equity` (and its depositors' `Share.Equity` /
+`AllTimePnl`) stays empty — none at 1194040000.
+
+**`VaultFollowerState`** — one depositor (info API `vaultDetails.followers`):
+
+| Field | Type | Description |
+|---|---|---|
+| `Vault` | string | vault account |
+| `Trader` | Trader | the depositor (`Address` only) |
+| `IsLeader` | bool | the depositor is the leader |
+| `Share` | VaultShare | share, equity, deposits, PnL |
+| `Times` | VaultFollowTimes | entry, last deposit, end of lockup |
+
+**`VaultShare`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `Fraction` | string | share of the vault |
+| `Equity` | string | *computed* (`vaultEquity`) |
+| `NetDeposit` | string | deposits − withdrawals, USD, signed |
+| `AllTimePnl` | string | *computed* (`allTimePnl`) |
+
+**`VaultFollowTimes`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `EntryTime` | int64 | first deposit, epoch **ns** (`vaultEntryTime`) |
+| `LastDepositTime` | int64 | last deposit, epoch **ns** |
+| `LockupUntil` | int64 | *computed*: `LastDepositTime + Terms.LockupSeconds`, epoch **ns** (`lockupUntil`) |
+
+### 7.8 Earn (`EarnReserveState`, `EarnPositionState`)
+
+Earn is Hyperliquid's borrow / lend pool: accounts supply tokens and earn interest, and
+portfolio-margin accounts borrow from it ([portfolio margin](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/portfolio-margin));
+HLP supplies USDC there (§7.7). Source: `exchange.locus.blp` — `r.t[]` one entry per token
+(USDC, HYPE, UBTC, USDT0, USDH at 1194040000), `u[]` one entry per account. A position is held
+as shares of the pool; its value with interest is `shares × index / 10^14`, the token's index
+rising hourly. Both lists ride every snapshot (5 tokens, ~17,000 positions, ~2 MB).
+
+**`EarnReserveState`** — one token (info API `allBorrowLendReserveStates`):
+
+| Field | Type | Description |
+|---|---|---|
+| `Token` / `TokenIndex` | string / uint32 | the token |
+| `TotalSupplied` | string | *computed*: the pool's supply shares (`l[1].t`) × `SupplyIndex` (`totalSupplied`) |
+| `TotalBorrowed` | string | *computed*: the pool's borrow shares (`l[0].t`) × `BorrowIndex` (`totalBorrowed`) |
+| `Utilization` | string | *computed*: `TotalBorrowed / TotalSupplied`, cut to 10 decimals (`utilization`) |
+| `Ltv` | string | share of the token's value that can be borrowed against it (`v`, `ltv`): HYPE `0.65`, UBTC `0.5`; `"0.0"` = not collateral |
+| `SupplyIndex` / `BorrowIndex` | string | interest indexes (`l[1].i` / `l[0].i`): what one share is worth in tokens |
+| `UpdateTime` | int64 | the last interest update (`T`), epoch **ns** |
+| `RateModel` | EarnRateModel | the terms the yearly rates follow from |
+
+**`EarnRateModel`** (`y`, and `r.p` for the protocol share):
+
+| Field | Type | Description |
+|---|---|---|
+| `BaseRate` | string | yearly borrow rate up to the kink (`y.i`), `0.05` |
+| `KinkUtilization` | string | the kink (`y.u`), `0.8` |
+| `MaxRate` | string | yearly borrow rate at full utilization (`y.a`), `1.0` |
+| `ProtocolShare` | string | share of the borrow interest the protocol keeps as a liquidation buffer (`r.p`), `0.1` |
+
+The yearly rates are not in the row — they follow from it, so ClickHouse / GraphQL compute
+them (as an `ALIAS`), and a change of Hyperliquid's formula needs no reprocessing:
+
+```
+BorrowYearlyRate = BaseRate + (MaxRate − BaseRate) / (1 − KinkUtilization) × max(0, Utilization − KinkUtilization)
+SupplyYearlyRate = BorrowYearlyRate × Utilization × (1 − ProtocolShare)
+```
+
+For stablecoins that is the documented `0.05 + 4.75 × max(0, utilization − 0.8)`. With the API's
+own utilization it gave the API's `borrowYearlyRate` and `supplyYearlyRate` to the last of their
+10 digits for all five tokens (*observed*). `y.k` (`0.05`, equal to `y.i` on every token) is
+not exposed: its role below the kink cannot be told apart while it equals the base rate.
+
+**`EarnPositionState`** — one account's position in one token (info API `borrowLendUserState`
+`tokenToState`):
+
+| Field | Type | Description |
+|---|---|---|
+| `Trader` | Trader | the account (`Address` only) |
+| `Token` / `TokenIndex` | string / uint32 | the token |
+| `Supply` / `Borrow` | EarnAmount | the two sides, `"0.0"` where the account has none |
+| `IsVault` | bool | *computed*: the account is a vault — HLP Strategy X supplies ~100.6 M USDC |
+
+**`EarnAmount`:**
+
+| Field | Type | Description |
+|---|---|---|
+| `Basis` | string | what was supplied / borrowed, without interest (`b`, `basis`) |
+| `Value` | string | *computed*: `Shares × index / 10^14`, with interest (`value`) |
+| `Shares` | string | shares of the pool (`s`) |
+
+*Observed* against the info API 1.8 h after snapshot 1194040000: `Basis` equal on 146 of 154
+sampled positions (the other 8 had supplied or borrowed since), `Value` higher by the interest
+of those 1.8 h only (1.0·10⁻⁵ on a 5% borrow), LTVs equal, pool totals within the flows since.
+
+---
+
+## 8. Raw source streams (node ingestion — internal)
 
 The raw layer that the product (§5–§6) is projected from. A **lossless typed re-encoding**
 of the node NDJSON — documented here for reference; subscribers consume the product, not
@@ -623,7 +1214,7 @@ single mainnet block spread over 3,782 order-status lines). The protobuf
 
 ---
 
-### 7.1 Fills (`fills.proto` — `Fill`)
+### 8.1 Fills (`fills.proto` — `Fill`)
 
 One **execution for one user**. A match normally yields two `Fill`s — taker
 (`Crossed=true`) and maker (`Crossed=false`) — paired by `(BlockNumber, Coin, Tid)`.
@@ -679,7 +1270,7 @@ already included). `PriorityGas` is *separate* — do not add it to `Fee`.
 
 ---
 
-### 7.2 Order statuses (`order_statuses.proto` — `OrderStatus`)
+### 8.2 Order statuses (`order_statuses.proto` — `OrderStatus`)
 
 One order-lifecycle event: placement, fill, cancel, trigger, or any of the many
 rejections. This stream is the **complete L1 order audit trail** — including orders that
@@ -732,7 +1323,7 @@ keys); nesting never goes deeper than one level. Children are always `ReduceOnly
 
 ---
 
-### 7.3 Raw book diffs (`raw_book_diffs.proto` — `BookDiff`)
+### 8.3 Raw book diffs (`raw_book_diffs.proto` — `BookDiff`)
 
 One **L4 order-book delta** — order-level (not price-level-aggregated) book changes.
 Applied on top of an L4 snapshot, this stream reconstructs the entire book in real time,
@@ -765,7 +1356,7 @@ The node's `raw_book_diff` field is a tagged union, flattened into `Kind` + vari
 
 ---
 
-### 7.4 TWAP statuses (`twap_statuses.proto` — `TwapStatus`)
+### 8.4 TWAP statuses (`twap_statuses.proto` — `TwapStatus`)
 
 Lifecycle of TWAP (time-weighted average price) orders: large orders sliced into
 sub-orders over `Minutes`. The individual executions appear in the **fills** stream
@@ -801,7 +1392,7 @@ The node's `status` is `string | {"error": msg}`, flattened:
 
 ---
 
-### 7.5 HIP-3 oracle updates (`oracle_updates.proto` — `OracleUpdate`)
+### 8.5 HIP-3 oracle updates (`oracle_updates.proto` — `OracleUpdate`)
 
 Price-oracle updates for [HIP-3](https://hyperliquid.gitbook.io/hyperliquid-docs/hips/hip-3-builder-deployed-perpetuals)
 builder-deployed perp dexes (equities, FX, commodities, indices — `xyz:AAPL`,
@@ -838,7 +1429,7 @@ records each push and the resulting oracle state. Projected to `PriceUpdate` (§
 
 ---
 
-### 7.6 Misc events (`misc_events.proto` — `MiscEvent`)
+### 8.6 Misc events (`misc_events.proto` — `MiscEvent`)
 
 Everything financial that is not a trade: ledger movements (transfers, deposits,
 withdrawals, vault operations), hourly funding, staking, delegation, and a few consensus
@@ -915,7 +1506,7 @@ Funding events are block-wide and huge — a single funding line can exceed 20 M
 
 ---
 
-### 7.7 Core-writer & system actions (`core_writer_actions.proto` — `SystemAction`)
+### 8.7 Core-writer & system actions (`core_writer_actions.proto` — `SystemAction`)
 
 The **HyperEVM → HyperCore bridge**: actions on the Core side that originate from EVM
 transactions — system transfers of tokens/USD between the two sides, and Core actions
@@ -952,7 +1543,7 @@ same as the event-level `Nonce`.
 
 ---
 
-### 7.8 Consensus transactions (`transactions.proto` — replica_cmds)
+### 8.8 Consensus transactions (`transactions.proto` — replica_cmds)
 
 The input side of the chain: every signed action bundle that consensus ordered into a
 block, with the execution engine's verdict. Source: the node's `replica_cmds` files
@@ -1002,7 +1593,7 @@ unknown fields; parse at read time instead.
 
 ---
 
-## 8. Delivery semantics (Bitquery pipeline)
+## 9. Delivery semantics (Bitquery pipeline)
 
 For consumers of the Kafka / archive representation of these messages:
 
@@ -1017,15 +1608,24 @@ For consumers of the Kafka / archive representation of these messages:
    event streams still appear (with the real `BlockTime`) so every bucket holds 1000
    entries.
 
+Snapshots (§7) are the exception to 1–2: a snapshot is the state at one block, cut into
+`Parts` messages that never change, so a redelivered part is identical and
+`(BlockNumber, Part)` is a safe dedup key; the snapshot is complete once parts `1..Parts`
+have arrived. Only full snapshots (`IsFull`) carry the slow-moving lists.
+
 ---
 
-## 9. Generated code
+## 10. Generated code
 
-* Go: `messages/*.pb.go` (package `hyperliquid_messages`)
-* Python: `python/`
+* Go: `messages/*.pb.go` (package `hyperliquid_messages`), one file per proto — the product
+  in `hyperliquid_block_message.pb.go`, `candles.pb.go` and `hyperliquid_snapshot_message.pb.go`
+* Python: `python/hyperliquid/*_pb2.py`, likewise (`hyperliquid_snapshot_message_pb2.py`)
+* The protos carry no `option go_package`: every proto needs its own
+  `--go_opt="Mhyperliquid/<file>.proto=hyperliquid/messages;hyperliquid_messages"` line in
+  the root `Makefile`.
 * Regenerate: `make generate_hyperliquid` from the repository root.
 
-## 10. Official references
+## 11. Official references
 
 * [Node repository & data flags](https://github.com/hyperliquid-dex/node)
 * [L1 data schemas](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/nodes/l1-data-schemas)
@@ -1033,3 +1633,8 @@ For consumers of the Kafka / archive representation of these messages:
 * [Exchange API (order wire format, statuses)](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api)
 * [HIP-3: builder-deployed perpetuals](https://hyperliquid.gitbook.io/hyperliquid-docs/hips/hip-3-builder-deployed-perpetuals)
 * [Builder codes](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes)
+* [Margining](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/margining),
+  [margin tiers](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/margin-tiers),
+  [liquidations](https://hyperliquid.gitbook.io/hyperliquid-docs/trading/liquidations) — the formulas of §7.2
+* [Info endpoint, perpetuals](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals) — `clearinghouseState`, `metaAndAssetCtxs`
+* [Asset IDs](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/asset-ids) — perp, HIP-3, spot and outcome numbering (`MarketState.AssetId`)

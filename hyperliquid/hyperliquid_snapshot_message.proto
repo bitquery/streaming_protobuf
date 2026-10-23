@@ -1,0 +1,374 @@
+syntax = "proto3";
+
+// HyperCore state snapshot for Bitquery streaming — the node's own state dump
+// (periodic_abci_states/<YYYYMMDD>/<height>.rmp, every 10,000 blocks ≈ 12 min) projected into product rows.
+// It carries what no event stream does: every open position with its margin, every account's balance on
+// every perp dex, the whole L4 book with owners plus the trigger orders still waiting, spot balances and
+// vaults. There is no raw snapshot protobuf: the raw layer is the .rmp itself, archived byte for byte.
+// Built like hyperliquid_block_message.proto: one envelope with a list per kind, rows made of the shared
+// Trader / Market / PerpPosition plus small per-topic sub-messages; money, prices and sizes are decimal
+// strings, addresses 0x… strings, empty = source silent, NOT zero. A number or flag the snapshot may lack is
+// `optional`: null = unknown, never 0. Fields marked "computed" are not in the snapshot: they are derived from
+// its other fields at the market's MarkPx of the same snapshot (README §7). One converter, a pure function of
+// the .rmp, makes every row — for the realtime stream and, from the archived .rmp, for any later export.
+
+package hyperliquid_messages;
+
+import "hyperliquid/hyperliquid_block_message.proto"; // for the shared Trader, Market and PerpPosition
+
+
+// ONE snapshot = Parts messages (each ≤ ~1 MB) sharing BlockNumber and BlockTime. Rows are cut into parts in
+// list order (Markets, Accounts, Positions, LeverageSettings, Orders, Balances, EarnReserves, EarnPositions,
+// Vaults, VaultFollowers); a part may carry rows of several lists, every row is in exactly one part. A snapshot never changes, so a
+// re-delivered part is identical: dedup on (BlockNumber, Part).
+message HyperliquidSnapshotMessage {
+  uint64 BlockNumber = 1; // snapshot height (exchange.locus.ctx.height), a multiple of 10,000
+  int64  BlockTime   = 2; // epoch ns (ctx.time) — that block's consensus time, as in the block stream
+  uint32 Part        = 3; // 1..Parts
+  uint32 Parts       = 4; // the snapshot is whole once all of 1..Parts have arrived
+  // True at heights that are multiples of 300,000 (≈ 6 h; the heights the archive keeps whole): every list is
+  // sent. The other snapshots leave out the heavy, slow-moving lists marked "full only" below — empty there
+  // because they were not sent, not because there is nothing.
+  bool   IsFull      = 5;
+
+  repeated MarketState        Markets          = 6;  // every market: perp, HIP-3, spot, outcome
+  repeated AccountState       Accounts         = 7;  // per (account, perp dex) with collateral or a position
+  repeated PositionState      Positions        = 8;  // every open perp position
+  repeated LeverageSetting    LeverageSettings = 9;  // full only: per (account, perp market) the account touched
+  repeated OrderState         Orders           = 10; // every order in the books + every waiting trigger order
+  repeated BalanceState       Balances         = 11; // full only: per (account, spot token), non-zero only
+  repeated VaultState         Vaults           = 12;
+  repeated VaultFollowerState VaultFollowers   = 13; // full only: per (vault, depositor), leader included
+  // 14–17 are kept for later sections (not `reserved`, which would forbid them for good): staking
+  // (c_staking), sub-accounts (sub_account_tracker), agents (agent_tracker), fee tracking (locus.ftr).
+  repeated EarnReserveState   EarnReserves     = 18; // every token of Earn, the borrow / lend pool
+  repeated EarnPositionState  EarnPositions    = 19; // per (account, token) with a supply or a borrow
+}
+
+
+// ── Markets ──
+
+// MarketState ← perp: exchange.locus.cls[dex].meta.universe[i]; spot/outcome: exchange.locus.scl.meta.spot_infos[i];
+// the book from exchange.perp_dexs[dex].books[i] / exchange.spot_books[i]. Margin, Prices and the open interest
+// are perp-only and stay empty on spot and outcome markets; Outcome is set on outcome markets only.
+message MarketState {
+  Market          Market     = 1;
+  uint32          AssetId    = 2; // asset id of exchange actions: perp i, HIP-3 100000 + dex*10000 + i, spot 10000 + i, outcome 100000000 + encoding (CoinRaw "#<encoding>")
+  uint32          SzDecimals = 3; // spot/outcome: the base token's
+  MarketMargin    Margin     = 4;
+  MarketPrices    Prices     = 5;
+  MarketBook      Book       = 6;
+
+  string OpenInterest = 7; // one side, in coins (info API openInterest)
+  uint32 Positions    = 8; // computed: open positions in this market
+  bool   IsHalted     = 9;
+
+  MarketOutcome Outcome = 10; // prediction (outcome) markets only
+}
+
+// ← cls[dex].meta: universe[i].marginMode, collateralTokenName, marginTableIdToMarginTable.
+message MarketMargin {
+  string Mode       = 1; // "normal" | "strictIsolated" | "noCross". LowCardinality
+  string Collateral = 2; // the dex's collateral token: "USDC" | "USDH" | "USDE" | "USDT0" | …
+  repeated MarginTier Tiers = 3; // by LowerBound; one tier when the market has no tier table
+  // The setting of an account that never set one in this market (no LeverageSetting row, or one with Leverage null):
+  bool   IsolatedOnly    = 4; // computed: Mode "strictIsolated" or "noCross" — no cross margin, the default is isolated
+  uint32 DefaultLeverage = 5; // computed: min(20, Market.MaxLeverage)
+}
+
+// One margin tier: from LowerBound of position notional on, MaxLeverage applies and the maintenance margin
+// is notional / (2 × MaxLeverage) − MaintenanceDeduction.
+message MarginTier {
+  string LowerBound           = 1; // USD
+  uint32 MaxLeverage          = 2;
+  string MaintenanceDeduction = 3; // USD
+}
+
+// ← cls[dex].oracle.pxs2[i] = [oracle, mark, external perp], each {u: time, p: price, d: daily price}.
+message MarketPrices {
+  string OraclePx       = 1;
+  string MarkPx         = 2; // the price of every computed field
+  string ExternalPerpPx = 3;
+  string MarkDailyPx    = 4; // daily reference price of the mark, as PriceUpdate.DailyPx
+  int64  UpdateTime     = 5; // epoch ns, last oracle update
+}
+
+// ← perp_dexs[dex].books[i] / spot_books[i].
+message MarketBook {
+  string LastTradePx = 1;
+  string BestBid     = 2; // empty = no bids
+  string BestAsk     = 3; // empty = no asks
+  uint32 Orders      = 4; // computed: orders resting in the book (OrderState rows with IsTrigger = false)
+}
+
+// One side of a prediction market ← exchange.locus.scl.meta.outr: ots[OutcomeId] and the question it belongs to,
+// qts[QuestionId] — the same as the info API outcomeMeta outcomes[] / questions[]. An outcome has two sides,
+// each its own market: encoding = 10 × OutcomeId + Side, CoinRaw "#<encoding>", token "+<encoding>"; the price
+// of a side (MarketBook) reads as its probability, 0..1.
+message MarketOutcome {
+  uint32 OutcomeId   = 1;
+  uint32 Side        = 2; // 0 | 1
+  string SideName    = 3; // sideSpecs[Side].name: "Yes" | "No" | …
+  string SiblingCoin = 4; // the other side of the same outcome: "#<encoding XOR 1>"
+  string Name        = 5; // e.g. "template:sportsTournamentParticipant"
+  string Description = 6; // "key:value|key:value" as published, e.g. "participant:Oklahoma City Thunder"
+  OutcomeQuestion Question = 7; // empty when the outcome stands alone
+}
+
+// A question groups several outcomes, one per answer (questions[].namedOutcomes), plus a fallback ("other").
+message OutcomeQuestion {
+  uint32 QuestionId  = 1;
+  string Name        = 2; // e.g. "template:sportsContestResult"
+  string Description = 3; // "key:value|…" as published: competition, participants, resolution deadline, …
+  bool   IsFallback  = 4; // this outcome is the question's fallback (fallbackOutcome)
+  bool   IsSettled   = 5; // this outcome is already settled (settledNamedOutcomes)
+}
+
+
+// ── Accounts and positions ──
+
+// AccountState ← exchange.locus.cls[dex].user_states.user_to_state[] — an account on ONE perp dex: the native
+// clearinghouse and every HIP-3 dex keep separate margin, each in its own collateral. Total and Cross are the
+// info API clearinghouseState marginSummary and crossMarginSummary, summed over this account's PositionState
+// rows on the same dex.
+message AccountState {
+  Trader        Trader     = 1; // Address only
+  string        Protocol   = 2; // "hypercore" native, else the HIP-3 dex — as Market.Protocol
+  string        Collateral = 3; // the dex's collateral token
+  MarginSummary Total      = 4; // every position
+  MarginSummary Cross      = 5; // cross positions only
+  uint32        Positions  = 6; // computed: open positions on this dex
+  bool          IsVault    = 7; // computed: the account is a vault (exchange.locus.vlt[]) — HLP or a user vault
+}
+
+message MarginSummary {
+  string AccountValue          = 1; // computed: RawUsd + Σ Size × Mark
+  string MarginUsed            = 2; // computed: Σ Margin.MarginUsed
+  string MaintenanceMarginUsed = 3; // computed: Σ Margin.MaintenanceMargin (Cross: info API crossMaintenanceMarginUsed)
+  string TotalNotional         = 4; // computed: Σ Valuation.PositionValue
+  string RawUsd                = 5; // Cross: the cross balance (u), signed — collateral net of the cross entry notional;
+                                    // Total: Cross.RawUsd + Σ Margin.IsolatedRawUsd
+}
+
+// PositionState ← exchange.locus.cls[dex].user_states.user_to_state[].p.p[] — one entry per (account, asset);
+// only the entries with a size are positions (the others keep a leverage setting).
+message PositionState {
+  Trader            Trader     = 1; // Address only
+  Market            Market     = 2;
+  PerpPosition      Position   = 3; // as on trades: Side, Size, EntryPrice (computed), Leverage, IsCross; SizeBefore,
+                                    // RealizedPnl, Funding and Closed stay empty — funding is in CumFunding below
+  PositionMargin    Margin     = 4;
+  PositionValuation Valuation  = 5;
+  CumFunding        CumFunding = 6;
+  bool              IsVault    = 7; // computed: the owner is a vault (exchange.locus.vlt[]) — HLP or a user vault
+  // The liquidation price will come later, under a new number.
+}
+
+message PositionMargin {
+  string IsolatedRawUsd    = 1; // isolated only, signed: margin net of the entry notional (info API leverage.rawUsd)
+  string MarginUsed        = 2; // computed: cross PositionValue / Leverage; isolated IsolatedRawUsd + Size × MarkPx
+  string MaintenanceMargin = 3; // computed: PositionValue / (2 × tier MaxLeverage) − tier MaintenanceDeduction
+}
+
+message PositionValuation {
+  string EntryNotional = 1; // USD paid at entry; Position.EntryPrice = EntryNotional / |Size|
+  string MarkPx        = 2; // the market's MarkPx in this snapshot
+  string PositionValue = 3; // computed: |Size| × MarkPx
+  string UnrealizedPnl = 4; // computed: Size × MarkPx − sign(Size) × EntryNotional
+}
+
+// Cumulative funding of the position as Hyperliquid keeps it (info API clearinghouseState cumFunding, the same
+// values): + paid by the account, − received. The opposite sign to PerpFunding.Amount: the funding events of a
+// position since it opened sum to −SinceOpen.
+message CumFunding {
+  string AllTime     = 1;
+  string SinceOpen   = 2;
+  string SinceChange = 3; // since the last change of size
+}
+
+// LeverageSetting ← exchange.locus.cls[dex].user_states.user_to_state[].p.p[] — EVERY (account, asset) entry,
+// with a position or without (~8.6 M on mainnet, Oct 2026): the leverage the account's next trade in that
+// market gets, until an accepted updateLeverage in the block stream (TraderLeverageUpdate) changes it. A market
+// the account never touched has no row and is at MarketMargin.DefaultLeverage / IsolatedOnly. This is the
+// starting point for replaying leverage over the archive.
+message LeverageSetting {
+  Trader          Trader            = 1; // Address only
+  Market          Market            = 2;
+  optional uint32 Leverage          = 3; // the account's own setting (l.C or l.I.l); null = never set
+  optional bool   IsCross           = 4; // null = never set
+  optional uint32 MaxLeverage       = 5; // the entry's own cap: its margin table (M) resolved to the first tier's max
+                                         // leverage, which may differ from the market's (HLP vaults: 50); null = no cap of its own
+  uint32          EffectiveLeverage = 6; // computed: Leverage, else min(20, MaxLeverage, else Market.MaxLeverage)
+  bool            EffectiveIsCross  = 7; // computed: IsCross, else not MarketMargin.IsolatedOnly
+}
+
+
+// ── Orders ──
+
+// OrderState ← exchange.perp_dexs[dex].books[i] / exchange.spot_books[i]: every order resting in the book
+// (bod.e[], walked per price level in queue order) and every trigger order still waiting (user_states[].U[],
+// NOT in the book). Flat like OrderUpdate, with the same names and values, and as in the node's own L4
+// snapshot (hl-node compute-l4-snapshots --include-users --include-trigger-orders).
+message OrderState {
+  // Owner. Address from the snapshot; Signer / Vault / Broadcaster / SignedAt are not in it — they come from
+  // the processor's order attribution by Oid, as on OrderUpdate, and stay empty for an order it does not know.
+  Trader Trader = 1;
+  Market Market = 2;
+
+  string Side       = 3; // "Buy" | "Sell"
+  string OrderType  = 4; // "Limit" | "Stop Market" | "Stop Limit" | "Take Profit Market" | "Take Profit Limit" | "Trailing Stop Market"
+  string Tif        = 5; // "Gtc" | "Alo"; empty on waiting trigger orders and on the oldest book orders
+  bool   ReduceOnly = 6;
+
+  string LimitPx = 7;
+  string Size    = 8; // remaining; "0.0" on a position TP/SL, which closes the whole position
+  string OrigSz  = 9;
+
+  string          TriggerPx        = 10; // "0.0" without a trigger; trailing stop: computed from Trailing.BestPx and the retracement
+  string          TriggerCondition = 11; // "N/A" | "Price above 86000" | "Triggered" (fired, now in the book) | trailing: "Activation …, retracement …, best …"
+  bool            IsTrigger        = 12; // a trigger order still waiting — NOT in the book
+  bool            IsPositionTpsl   = 13;
+  optional uint64 ParentOid        = 14; // a TP/SL leg → its parent order, while the parent rests unfilled; null = none
+  optional uint64 SiblingOid       = 15; // the other leg of a TP/SL pair (one cancels the other); null = none
+
+  uint64 Oid        = 16;
+  string Cloid      = 17;
+  int64  PlacedTime = 18; // epoch ms
+
+  string Builder    = 19; // builder address (usually empty)
+  uint32 BuilderFee = 20; // tenths of a basis point
+
+  optional uint32 QueuePosition = 21; // place at its price level, from 1 = filled first; null on waiting trigger orders
+  TrailingStop    Trailing      = 22; // trailing stops only
+  bool            IsVault       = 23; // computed: the owner is a vault (exchange.locus.vlt[]) — HLP or a user vault
+}
+
+message TrailingStop {
+  string RetracementPct = 1; // percent ("15" = 15%); empty when given as RetracementPx
+  string RetracementPx  = 2; // price distance; empty when given as RetracementPct
+  string ActivationPx   = 3; // empty = active from placement
+  string BestPx         = 4; // best price since activation; empty = not active yet
+}
+
+
+// ── Spot ──
+
+// BalanceState ← exchange.locus.scl.user_states[].b[] — one spot token of one account (info API
+// spotClearinghouseState); zero balances are left out.
+message BalanceState {
+  Trader Trader        = 1; // Address only
+  string Token         = 2; // "USDC", "HYPE", …; an outcome side's token "+<encoding>". LowCardinality
+  uint32 TokenIndex    = 3; // spotMeta tokens[].index
+  string Total         = 4; // the spot ledger (the info API adds a unified account's perp USDC as hold)
+  string Hold          = 5; // part of Total locked in open orders
+  string EntryNotional = 6; // USDC paid for Total
+  // No USD value here: Hyperliquid publishes none, and USD is priced downstream by the Bitquery price index.
+}
+
+
+// ── Earn ──
+
+// EarnReserveState ← exchange.locus.blp.r.t[token] — one token of Earn, Hyperliquid's borrow / lend pool (info
+// API allBorrowLendReserveStates). HLP supplies USDC here; portfolio-margin accounts borrow from it. Amounts are
+// in the token. The yearly rates are not here: they follow from this row (RateModel, Utilization).
+message EarnReserveState {
+  string        Token         = 1;  // "USDC", "HYPE", … LowCardinality
+  uint32        TokenIndex    = 2;  // spotMeta tokens[].index
+  string        TotalSupplied = 3;  // computed: the pool's supply shares × SupplyIndex (totalSupplied)
+  string        TotalBorrowed = 4;  // computed: the pool's borrow shares × BorrowIndex (totalBorrowed)
+  string        Utilization   = 5;  // computed: TotalBorrowed / TotalSupplied (utilization)
+  string        Ltv           = 6;  // share of the token's value that can be borrowed against it (ltv); "0.0" = not collateral
+  string        SupplyIndex   = 7;  // interest index: one supply share is worth this many tokens
+  string        BorrowIndex   = 8;  // one borrow share owes this many tokens
+  int64         UpdateTime    = 9;  // epoch ns, the last interest update (hourly)
+  EarnRateModel RateModel     = 10;
+}
+
+// The borrow rate Hyperliquid charges: BaseRate up to KinkUtilization, then rising in a straight line to MaxRate
+// at full utilization — for stablecoins 0.05 + 4.75 × max(0, utilization − 0.8) (portfolio margin docs). Suppliers
+// earn borrow rate × utilization × (1 − ProtocolShare).
+message EarnRateModel {
+  string BaseRate        = 1; // yearly
+  string KinkUtilization = 2;
+  string MaxRate         = 3; // yearly, at utilization 1
+  string ProtocolShare   = 4; // share of the borrow interest the protocol keeps as a liquidation buffer
+}
+
+// EarnPositionState ← exchange.locus.blp.u[] — one account's supply and borrow of one token (info API
+// borrowLendUserState tokenToState).
+message EarnPositionState {
+  Trader     Trader     = 1; // Address only
+  string     Token      = 2; // LowCardinality
+  uint32     TokenIndex = 3;
+  EarnAmount Supply     = 4;
+  EarnAmount Borrow     = 5;
+  bool       IsVault    = 6; // computed: the account is a vault (exchange.locus.vlt[]) — HLP supplies here
+}
+
+// One side of an Earn position, in the token.
+message EarnAmount {
+  string Basis  = 1; // what was put in (supply) or taken out (borrow), without interest (basis)
+  string Value  = 2; // computed: Shares × the reserve's index — with interest (value)
+  string Shares = 3; // shares of the pool
+}
+
+
+// ── Vaults ──
+
+// VaultState ← exchange.locus.vlt[]. A vault trades as its own account (Vault): its positions, margin and
+// orders are the rows of that address in the other lists.
+message VaultState {
+  string Vault       = 1; // vault account
+  string Name        = 2;
+  string Description = 3;
+  string Leader      = 4;
+  int64  CreateTime  = 5; // epoch ns
+
+  VaultTerms        Terms        = 6;
+  VaultRelationship Relationship = 7;
+  VaultSummary      Summary      = 8;
+}
+
+message VaultTerms {
+  string LeaderCommission      = 1; // share of the followers' profit, e.g. "0.1"
+  uint32 LockupSeconds         = 2; // after each deposit
+  bool   AllowDeposits         = 3;
+  bool   AlwaysCloseOnWithdraw = 4;
+  bool   IsClosed              = 5;
+}
+
+message VaultRelationship {
+  string Type                 = 1; // "normal" | "parent" | "child". LowCardinality
+  repeated string ChildVaults = 2; // parent vaults only
+}
+
+message VaultSummary {
+  string Equity         = 1; // computed: the vault's Total.AccountValue on the native dex + its net USDC in Earn;
+                               // a parent vault (HLP) adds its children's. Empty when Earn holds a token needing a price
+  string LeaderFraction = 2; // computed: the leader's share of the vault (its VaultFollowerState.Share.Fraction)
+  uint32 Followers      = 3; // computed: depositors, leader included
+}
+
+// VaultFollowerState ← exchange.locus.vlt[].user_states[] — one depositor of one vault (info API vaultDetails
+// followers).
+message VaultFollowerState {
+  string Vault    = 1;
+  Trader Trader   = 2; // the depositor, Address only
+  bool   IsLeader = 3;
+
+  VaultShare       Share = 4;
+  VaultFollowTimes Times = 5;
+}
+
+message VaultShare {
+  string Fraction   = 1; // share of the vault
+  string Equity     = 2; // computed: Fraction × VaultSummary.Equity (vaultEquity)
+  string NetDeposit = 3; // deposits − withdrawals, USD, signed
+  string AllTimePnl = 4; // computed: Equity − NetDeposit
+}
+
+message VaultFollowTimes {
+  int64 EntryTime       = 1; // epoch ns, first deposit (vaultEntryTime)
+  int64 LastDepositTime = 2; // epoch ns
+  int64 LockupUntil     = 3; // epoch ns, computed: LastDepositTime + Terms.LockupSeconds (lockupUntil)
+}

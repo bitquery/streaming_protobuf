@@ -16,6 +16,7 @@ generate_hyperliquid:
 	--go_opt="Mhyperliquid/transactions.proto=hyperliquid/messages;hyperliquid_messages" \
 	--go_opt="Mhyperliquid/hyperliquid_block_message.proto=hyperliquid/messages;hyperliquid_messages" \
 	--go_opt="Mhyperliquid/candles.proto=hyperliquid/messages;hyperliquid_messages" \
+	--go_opt="Mhyperliquid/hyperliquid_snapshot_message.proto=hyperliquid/messages;hyperliquid_messages" \
 	$(shell find ./hyperliquid -type f -name '*.proto')
 	protoc \
 	-I=. \
