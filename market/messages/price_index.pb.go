@@ -919,44 +919,52 @@ func (x *Liquidity) GetNetQuoteUsd() float32 {
 	return 0
 }
 
-// PoolPrice is a pool's own price: what its curve quotes at its current liquidity, read
-// from the pool event beside the reserves (the EVM slippage table's spot, a Solana venue's
-// post-swap state or the reserves of a constant-product pool). It is the marginal price
-// after the last swap the pool saw, not the price any trade executed at, and it is not
-// blended: a consumer wanting the pool's curve reads this, one wanting what traded reads
-// PriceUpdate. Pair level only; absent when no pool event with a price is held.
-type PoolPrice struct {
+// PoolPriceUpdate is a pool's own price: what its curve quotes at its current liquidity,
+// read from the pool event beside the reserves (the EVM slippage table's spot, a Solana
+// venue's post-swap state or the reserves of a constant-product pool). It is the marginal
+// price after the last swap the pool saw, not the price any trade executed at, and it is
+// not blended: a consumer wanting the pool's curve reads this, one wanting what traded
+// reads PriceUpdate. Pair level only, in two units like the traded price: every value in
+// PairUpdate.PoolPriceUpdate is in USD through the quote currency's rate the pair's trades
+// are priced with, every value in PairUpdate.PoolPriceUpdateInQuoteTokens is in quote
+// tokens per base token, oriented as the PairUpdate. Absent when the pool holds no priced
+// snapshot; the USD one is also absent when the quote currency has no USD rate.
+type PoolPriceUpdate struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Price is quote tokens per base token, oriented as the PairUpdate it rides on.
+	// Price is the latest spot, the close of the shortest interval below.
 	Price float32 `protobuf:"fixed32,1,opt,name=Price,proto3" json:"Price,omitempty"`
-	// PriceInUsd is Price times the quote currency's USD rate the index used for the same
-	// pair update; 0 when the quote has none.
-	PriceInUsd float32 `protobuf:"fixed32,2,opt,name=PriceInUsd,proto3" json:"PriceInUsd,omitempty"`
 	// Source names where the price was read from: "table" (the spot of an EVM
 	// PoolPriceTable), "event" (a Solana venue's swap event reports the post-swap state),
 	// "reserves" (quote reserve over base reserve on a constant-product pool).
-	Source string `protobuf:"bytes,3,opt,name=Source,proto3" json:"Source,omitempty"`
+	Source string `protobuf:"bytes,2,opt,name=Source,proto3" json:"Source,omitempty"`
 	// UpdatedAt is the unix second of the pool event the price was read from, so a price
 	// older than the row's trades can be told apart.
-	UpdatedAt     uint32 `protobuf:"varint,4,opt,name=UpdatedAt,proto3" json:"UpdatedAt,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	UpdatedAt uint32 `protobuf:"varint,3,opt,name=UpdatedAt,proto3" json:"UpdatedAt,omitempty"`
+	// PriceByTimeIntervals is the spot over each configured interval, one entry per
+	// interval of PriceUpdate.PriceByTimeIntervals on the same PairUpdate, matched by
+	// TimeInterval. Ohlc is the spot's: Open the previous interval's close, High and Low the
+	// extremes the curve quoted after a swap inside the interval, so on a thin pool they sit
+	// beyond the traded Ohlc by each swap's own impact. The moving averages are over the
+	// same series. Amounts, MeanPrice and Ohlc.Volume are not set: a spot has no volume.
+	PriceByTimeIntervals []*PriceByTimeInterval `protobuf:"bytes,4,rep,name=PriceByTimeIntervals,proto3" json:"PriceByTimeIntervals,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
-func (x *PoolPrice) Reset() {
-	*x = PoolPrice{}
+func (x *PoolPriceUpdate) Reset() {
+	*x = PoolPriceUpdate{}
 	mi := &file_market_price_index_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PoolPrice) String() string {
+func (x *PoolPriceUpdate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PoolPrice) ProtoMessage() {}
+func (*PoolPriceUpdate) ProtoMessage() {}
 
-func (x *PoolPrice) ProtoReflect() protoreflect.Message {
+func (x *PoolPriceUpdate) ProtoReflect() protoreflect.Message {
 	mi := &file_market_price_index_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -968,37 +976,37 @@ func (x *PoolPrice) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PoolPrice.ProtoReflect.Descriptor instead.
-func (*PoolPrice) Descriptor() ([]byte, []int) {
+// Deprecated: Use PoolPriceUpdate.ProtoReflect.Descriptor instead.
+func (*PoolPriceUpdate) Descriptor() ([]byte, []int) {
 	return file_market_price_index_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *PoolPrice) GetPrice() float32 {
+func (x *PoolPriceUpdate) GetPrice() float32 {
 	if x != nil {
 		return x.Price
 	}
 	return 0
 }
 
-func (x *PoolPrice) GetPriceInUsd() float32 {
-	if x != nil {
-		return x.PriceInUsd
-	}
-	return 0
-}
-
-func (x *PoolPrice) GetSource() string {
+func (x *PoolPriceUpdate) GetSource() string {
 	if x != nil {
 		return x.Source
 	}
 	return ""
 }
 
-func (x *PoolPrice) GetUpdatedAt() uint32 {
+func (x *PoolPriceUpdate) GetUpdatedAt() uint32 {
 	if x != nil {
 		return x.UpdatedAt
 	}
 	return 0
+}
+
+func (x *PoolPriceUpdate) GetPriceByTimeIntervals() []*PriceByTimeInterval {
+	if x != nil {
+		return x.PriceByTimeIntervals
+	}
+	return nil
 }
 
 type CurrencyUpdate struct {
@@ -1351,22 +1359,23 @@ func (x *LeadingPool) GetPoolAddress() string {
 }
 
 type PairUpdate struct {
-	state                    protoimpl.MessageState `protogen:"open.v1"`
-	Currency                 *Currency              `protobuf:"bytes,1,opt,name=Currency,proto3" json:"Currency,omitempty"`
-	QuoteCurrency            *Currency              `protobuf:"bytes,2,opt,name=QuoteCurrency,proto3" json:"QuoteCurrency,omitempty"`
-	Token                    *Token                 `protobuf:"bytes,3,opt,name=Token,proto3" json:"Token,omitempty"`
-	QuoteToken               *Token                 `protobuf:"bytes,4,opt,name=QuoteToken,proto3" json:"QuoteToken,omitempty"`
-	Market                   *Market                `protobuf:"bytes,5,opt,name=Market,proto3" json:"Market,omitempty"`
-	PriceUpdate              *PriceUpdate           `protobuf:"bytes,6,opt,name=PriceUpdate,proto3" json:"PriceUpdate,omitempty"`
-	PriceUpdateInQuoteTokens *PriceUpdate           `protobuf:"bytes,7,opt,name=PriceUpdateInQuoteTokens,proto3" json:"PriceUpdateInQuoteTokens,omitempty"`
-	MarketCapUpdate          *MarketCapUpdate       `protobuf:"bytes,8,opt,name=MarketCapUpdate,proto3,oneof" json:"MarketCapUpdate,omitempty"`
-	Ranking                  *Ranking               `protobuf:"bytes,9,opt,name=Ranking,proto3" json:"Ranking,omitempty"`
-	Pool                     *Pool                  `protobuf:"bytes,10,opt,name=Pool,proto3" json:"Pool,omitempty"`
-	Liquidity                *Liquidity             `protobuf:"bytes,11,opt,name=Liquidity,proto3" json:"Liquidity,omitempty"`
-	RankingDetail            *RankingDetail         `protobuf:"bytes,12,opt,name=RankingDetail,proto3" json:"RankingDetail,omitempty"`
-	PoolPrice                *PoolPrice             `protobuf:"bytes,13,opt,name=PoolPrice,proto3" json:"PoolPrice,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	state                        protoimpl.MessageState `protogen:"open.v1"`
+	Currency                     *Currency              `protobuf:"bytes,1,opt,name=Currency,proto3" json:"Currency,omitempty"`
+	QuoteCurrency                *Currency              `protobuf:"bytes,2,opt,name=QuoteCurrency,proto3" json:"QuoteCurrency,omitempty"`
+	Token                        *Token                 `protobuf:"bytes,3,opt,name=Token,proto3" json:"Token,omitempty"`
+	QuoteToken                   *Token                 `protobuf:"bytes,4,opt,name=QuoteToken,proto3" json:"QuoteToken,omitempty"`
+	Market                       *Market                `protobuf:"bytes,5,opt,name=Market,proto3" json:"Market,omitempty"`
+	PriceUpdate                  *PriceUpdate           `protobuf:"bytes,6,opt,name=PriceUpdate,proto3" json:"PriceUpdate,omitempty"`
+	PriceUpdateInQuoteTokens     *PriceUpdate           `protobuf:"bytes,7,opt,name=PriceUpdateInQuoteTokens,proto3" json:"PriceUpdateInQuoteTokens,omitempty"`
+	MarketCapUpdate              *MarketCapUpdate       `protobuf:"bytes,8,opt,name=MarketCapUpdate,proto3,oneof" json:"MarketCapUpdate,omitempty"`
+	Ranking                      *Ranking               `protobuf:"bytes,9,opt,name=Ranking,proto3" json:"Ranking,omitempty"`
+	Pool                         *Pool                  `protobuf:"bytes,10,opt,name=Pool,proto3" json:"Pool,omitempty"`
+	Liquidity                    *Liquidity             `protobuf:"bytes,11,opt,name=Liquidity,proto3" json:"Liquidity,omitempty"`
+	RankingDetail                *RankingDetail         `protobuf:"bytes,12,opt,name=RankingDetail,proto3" json:"RankingDetail,omitempty"`
+	PoolPriceUpdate              *PoolPriceUpdate       `protobuf:"bytes,13,opt,name=PoolPriceUpdate,proto3" json:"PoolPriceUpdate,omitempty"`
+	PoolPriceUpdateInQuoteTokens *PoolPriceUpdate       `protobuf:"bytes,14,opt,name=PoolPriceUpdateInQuoteTokens,proto3" json:"PoolPriceUpdateInQuoteTokens,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *PairUpdate) Reset() {
@@ -1483,9 +1492,16 @@ func (x *PairUpdate) GetRankingDetail() *RankingDetail {
 	return nil
 }
 
-func (x *PairUpdate) GetPoolPrice() *PoolPrice {
+func (x *PairUpdate) GetPoolPriceUpdate() *PoolPriceUpdate {
 	if x != nil {
-		return x.PoolPrice
+		return x.PoolPriceUpdate
+	}
+	return nil
+}
+
+func (x *PairUpdate) GetPoolPriceUpdateInQuoteTokens() *PoolPriceUpdate {
+	if x != nil {
+		return x.PoolPriceUpdateInQuoteTokens
 	}
 	return nil
 }
@@ -1634,14 +1650,12 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\x06Source\x18\x06 \x01(\tR\x06Source\x12\x1c\n" +
 	"\tRealShare\x18\a \x01(\x02R\tRealShare\x12\x1a\n" +
 	"\bDepthUsd\x18\b \x01(\x02R\bDepthUsd\x12 \n" +
-	"\vNetQuoteUsd\x18\t \x01(\x02R\vNetQuoteUsd\"w\n" +
-	"\tPoolPrice\x12\x14\n" +
-	"\x05Price\x18\x01 \x01(\x02R\x05Price\x12\x1e\n" +
-	"\n" +
-	"PriceInUsd\x18\x02 \x01(\x02R\n" +
-	"PriceInUsd\x12\x16\n" +
-	"\x06Source\x18\x03 \x01(\tR\x06Source\x12\x1c\n" +
-	"\tUpdatedAt\x18\x04 \x01(\rR\tUpdatedAt\"\xb6\x02\n" +
+	"\vNetQuoteUsd\x18\t \x01(\x02R\vNetQuoteUsd\"\xbb\x01\n" +
+	"\x0fPoolPriceUpdate\x12\x14\n" +
+	"\x05Price\x18\x01 \x01(\x02R\x05Price\x12\x16\n" +
+	"\x06Source\x18\x02 \x01(\tR\x06Source\x12\x1c\n" +
+	"\tUpdatedAt\x18\x03 \x01(\rR\tUpdatedAt\x12\\\n" +
+	"\x14PriceByTimeIntervals\x18\x04 \x03(\v2(.marketdata_messages.PriceByTimeIntervalR\x14PriceByTimeIntervals\"\xb6\x02\n" +
 	"\x0eCurrencyUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x12B\n" +
 	"\vPriceUpdate\x18\x02 \x01(\v2 .marketdata_messages.PriceUpdateR\vPriceUpdate\x12S\n" +
@@ -1667,7 +1681,7 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\vLeadingPool\x12\x1a\n" +
 	"\bMarketId\x18\x01 \x01(\tR\bMarketId\x12\"\n" +
 	"\fQuoteTokenId\x18\x02 \x01(\tR\fQuoteTokenId\x12 \n" +
-	"\vPoolAddress\x18\x03 \x01(\tR\vPoolAddress\"\xe7\x06\n" +
+	"\vPoolAddress\x18\x03 \x01(\tR\vPoolAddress\"\xe3\a\n" +
 	"\n" +
 	"PairUpdate\x129\n" +
 	"\bCurrency\x18\x01 \x01(\v2\x1d.marketdata_messages.CurrencyR\bCurrency\x12C\n" +
@@ -1684,8 +1698,9 @@ const file_market_price_index_proto_rawDesc = "" +
 	"\x04Pool\x18\n" +
 	" \x01(\v2\x19.marketdata_messages.PoolR\x04Pool\x12<\n" +
 	"\tLiquidity\x18\v \x01(\v2\x1e.marketdata_messages.LiquidityR\tLiquidity\x12H\n" +
-	"\rRankingDetail\x18\f \x01(\v2\".marketdata_messages.RankingDetailR\rRankingDetail\x12<\n" +
-	"\tPoolPrice\x18\r \x01(\v2\x1e.marketdata_messages.PoolPriceR\tPoolPriceB\x12\n" +
+	"\rRankingDetail\x18\f \x01(\v2\".marketdata_messages.RankingDetailR\rRankingDetail\x12N\n" +
+	"\x0fPoolPriceUpdate\x18\r \x01(\v2$.marketdata_messages.PoolPriceUpdateR\x0fPoolPriceUpdate\x12h\n" +
+	"\x1cPoolPriceUpdateInQuoteTokens\x18\x0e \x01(\v2$.marketdata_messages.PoolPriceUpdateR\x1cPoolPriceUpdateInQuoteTokensB\x12\n" +
 	"\x10_MarketCapUpdate\"\xff\x01\n" +
 	"\x11PriceIndexMessage\x12\x12\n" +
 	"\x04Time\x18\x01 \x01(\x04R\x04Time\x12M\n" +
@@ -1719,7 +1734,7 @@ var file_market_price_index_proto_goTypes = []any{
 	(*PriceUpdate)(nil),         // 9: marketdata_messages.PriceUpdate
 	(*MarketCapUpdate)(nil),     // 10: marketdata_messages.MarketCapUpdate
 	(*Liquidity)(nil),           // 11: marketdata_messages.Liquidity
-	(*PoolPrice)(nil),           // 12: marketdata_messages.PoolPrice
+	(*PoolPriceUpdate)(nil),     // 12: marketdata_messages.PoolPriceUpdate
 	(*CurrencyUpdate)(nil),      // 13: marketdata_messages.CurrencyUpdate
 	(*TokenUpdate)(nil),         // 14: marketdata_messages.TokenUpdate
 	(*Ranking)(nil),             // 15: marketdata_messages.Ranking
@@ -1742,39 +1757,41 @@ var file_market_price_index_proto_depIdxs = []int32{
 	6,  // 8: marketdata_messages.PriceUpdate.PriceByTimeIntervals:type_name -> marketdata_messages.PriceByTimeInterval
 	7,  // 9: marketdata_messages.PriceUpdate.PriceByVolumes:type_name -> marketdata_messages.PriceByVolume
 	8,  // 10: marketdata_messages.PriceUpdate.Estimates:type_name -> marketdata_messages.EstimatedPrices
-	0,  // 11: marketdata_messages.CurrencyUpdate.Currency:type_name -> marketdata_messages.Currency
-	9,  // 12: marketdata_messages.CurrencyUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
-	10, // 13: marketdata_messages.CurrencyUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
-	11, // 14: marketdata_messages.CurrencyUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
-	0,  // 15: marketdata_messages.TokenUpdate.Currency:type_name -> marketdata_messages.Currency
-	20, // 16: marketdata_messages.TokenUpdate.Token:type_name -> marketdata_messages.Token
-	9,  // 17: marketdata_messages.TokenUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
-	10, // 18: marketdata_messages.TokenUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
-	15, // 19: marketdata_messages.TokenUpdate.Ranking:type_name -> marketdata_messages.Ranking
-	11, // 20: marketdata_messages.TokenUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
-	16, // 21: marketdata_messages.TokenUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
-	17, // 22: marketdata_messages.TokenUpdate.LeadingPool:type_name -> marketdata_messages.LeadingPool
-	0,  // 23: marketdata_messages.PairUpdate.Currency:type_name -> marketdata_messages.Currency
-	0,  // 24: marketdata_messages.PairUpdate.QuoteCurrency:type_name -> marketdata_messages.Currency
-	20, // 25: marketdata_messages.PairUpdate.Token:type_name -> marketdata_messages.Token
-	20, // 26: marketdata_messages.PairUpdate.QuoteToken:type_name -> marketdata_messages.Token
-	1,  // 27: marketdata_messages.PairUpdate.Market:type_name -> marketdata_messages.Market
-	9,  // 28: marketdata_messages.PairUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
-	9,  // 29: marketdata_messages.PairUpdate.PriceUpdateInQuoteTokens:type_name -> marketdata_messages.PriceUpdate
-	10, // 30: marketdata_messages.PairUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
-	15, // 31: marketdata_messages.PairUpdate.Ranking:type_name -> marketdata_messages.Ranking
-	21, // 32: marketdata_messages.PairUpdate.Pool:type_name -> marketdata_messages.Pool
-	11, // 33: marketdata_messages.PairUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
-	16, // 34: marketdata_messages.PairUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
-	12, // 35: marketdata_messages.PairUpdate.PoolPrice:type_name -> marketdata_messages.PoolPrice
-	13, // 36: marketdata_messages.PriceIndexMessage.CurrencyUpdates:type_name -> marketdata_messages.CurrencyUpdate
-	14, // 37: marketdata_messages.PriceIndexMessage.TokenUpdates:type_name -> marketdata_messages.TokenUpdate
-	18, // 38: marketdata_messages.PriceIndexMessage.PairUpdates:type_name -> marketdata_messages.PairUpdate
-	39, // [39:39] is the sub-list for method output_type
-	39, // [39:39] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	6,  // 11: marketdata_messages.PoolPriceUpdate.PriceByTimeIntervals:type_name -> marketdata_messages.PriceByTimeInterval
+	0,  // 12: marketdata_messages.CurrencyUpdate.Currency:type_name -> marketdata_messages.Currency
+	9,  // 13: marketdata_messages.CurrencyUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
+	10, // 14: marketdata_messages.CurrencyUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
+	11, // 15: marketdata_messages.CurrencyUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
+	0,  // 16: marketdata_messages.TokenUpdate.Currency:type_name -> marketdata_messages.Currency
+	20, // 17: marketdata_messages.TokenUpdate.Token:type_name -> marketdata_messages.Token
+	9,  // 18: marketdata_messages.TokenUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
+	10, // 19: marketdata_messages.TokenUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
+	15, // 20: marketdata_messages.TokenUpdate.Ranking:type_name -> marketdata_messages.Ranking
+	11, // 21: marketdata_messages.TokenUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
+	16, // 22: marketdata_messages.TokenUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
+	17, // 23: marketdata_messages.TokenUpdate.LeadingPool:type_name -> marketdata_messages.LeadingPool
+	0,  // 24: marketdata_messages.PairUpdate.Currency:type_name -> marketdata_messages.Currency
+	0,  // 25: marketdata_messages.PairUpdate.QuoteCurrency:type_name -> marketdata_messages.Currency
+	20, // 26: marketdata_messages.PairUpdate.Token:type_name -> marketdata_messages.Token
+	20, // 27: marketdata_messages.PairUpdate.QuoteToken:type_name -> marketdata_messages.Token
+	1,  // 28: marketdata_messages.PairUpdate.Market:type_name -> marketdata_messages.Market
+	9,  // 29: marketdata_messages.PairUpdate.PriceUpdate:type_name -> marketdata_messages.PriceUpdate
+	9,  // 30: marketdata_messages.PairUpdate.PriceUpdateInQuoteTokens:type_name -> marketdata_messages.PriceUpdate
+	10, // 31: marketdata_messages.PairUpdate.MarketCapUpdate:type_name -> marketdata_messages.MarketCapUpdate
+	15, // 32: marketdata_messages.PairUpdate.Ranking:type_name -> marketdata_messages.Ranking
+	21, // 33: marketdata_messages.PairUpdate.Pool:type_name -> marketdata_messages.Pool
+	11, // 34: marketdata_messages.PairUpdate.Liquidity:type_name -> marketdata_messages.Liquidity
+	16, // 35: marketdata_messages.PairUpdate.RankingDetail:type_name -> marketdata_messages.RankingDetail
+	12, // 36: marketdata_messages.PairUpdate.PoolPriceUpdate:type_name -> marketdata_messages.PoolPriceUpdate
+	12, // 37: marketdata_messages.PairUpdate.PoolPriceUpdateInQuoteTokens:type_name -> marketdata_messages.PoolPriceUpdate
+	13, // 38: marketdata_messages.PriceIndexMessage.CurrencyUpdates:type_name -> marketdata_messages.CurrencyUpdate
+	14, // 39: marketdata_messages.PriceIndexMessage.TokenUpdates:type_name -> marketdata_messages.TokenUpdate
+	18, // 40: marketdata_messages.PriceIndexMessage.PairUpdates:type_name -> marketdata_messages.PairUpdate
+	41, // [41:41] is the sub-list for method output_type
+	41, // [41:41] is the sub-list for method input_type
+	41, // [41:41] is the sub-list for extension type_name
+	41, // [41:41] is the sub-list for extension extendee
+	0,  // [0:41] is the sub-list for field type_name
 }
 
 func init() { file_market_price_index_proto_init() }
