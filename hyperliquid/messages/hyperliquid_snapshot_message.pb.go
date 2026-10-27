@@ -38,23 +38,19 @@ const (
 // Vaults, VaultFollowers); a part may carry rows of several lists, every row is in exactly one part. A snapshot never changes, so a
 // re-delivered part is identical: dedup on (BlockNumber, Part).
 type HyperliquidSnapshotMessage struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	BlockNumber uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"` // snapshot height (exchange.locus.ctx.height), a multiple of 10,000
-	BlockTime   int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`     // epoch ns (ctx.time) — that block's consensus time, as in the block stream
-	Part        uint32                 `protobuf:"varint,3,opt,name=Part,proto3" json:"Part,omitempty"`               // 1..Parts
-	Parts       uint32                 `protobuf:"varint,4,opt,name=Parts,proto3" json:"Parts,omitempty"`             // the snapshot is whole once all of 1..Parts have arrived
-	// True at heights that are multiples of 300,000 (≈ 6 h; the heights the archive keeps whole): every list is
-	// sent. The other snapshots leave out the heavy, slow-moving lists marked "full only" below — empty there
-	// because they were not sent, not because there is nothing.
-	IsFull           bool                  `protobuf:"varint,5,opt,name=IsFull,proto3" json:"IsFull,omitempty"`
-	Markets          []*MarketState        `protobuf:"bytes,6,rep,name=Markets,proto3" json:"Markets,omitempty"`                   // every market: perp, HIP-3, spot, outcome
-	Accounts         []*AccountState       `protobuf:"bytes,7,rep,name=Accounts,proto3" json:"Accounts,omitempty"`                 // per (account, perp dex) with collateral or a position
-	Positions        []*PositionState      `protobuf:"bytes,8,rep,name=Positions,proto3" json:"Positions,omitempty"`               // every open perp position
-	LeverageSettings []*LeverageSetting    `protobuf:"bytes,9,rep,name=LeverageSettings,proto3" json:"LeverageSettings,omitempty"` // full only: per (account, perp market) the account touched
-	Orders           []*OrderState         `protobuf:"bytes,10,rep,name=Orders,proto3" json:"Orders,omitempty"`                    // every order in the books + every waiting trigger order
-	Balances         []*BalanceState       `protobuf:"bytes,11,rep,name=Balances,proto3" json:"Balances,omitempty"`                // full only: per (account, spot token), non-zero only
-	Vaults           []*VaultState         `protobuf:"bytes,12,rep,name=Vaults,proto3" json:"Vaults,omitempty"`
-	VaultFollowers   []*VaultFollowerState `protobuf:"bytes,13,rep,name=VaultFollowers,proto3" json:"VaultFollowers,omitempty"` // full only: per (vault, depositor), leader included
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	BlockNumber      uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`          // snapshot height (exchange.locus.ctx.height), a multiple of 10,000
+	BlockTime        int64                  `protobuf:"varint,2,opt,name=BlockTime,proto3" json:"BlockTime,omitempty"`              // epoch ns (ctx.time) — that block's consensus time, as in the block stream
+	Part             uint32                 `protobuf:"varint,3,opt,name=Part,proto3" json:"Part,omitempty"`                        // 1..Parts
+	Parts            uint32                 `protobuf:"varint,4,opt,name=Parts,proto3" json:"Parts,omitempty"`                      // the snapshot is whole once all of 1..Parts have arrived
+	Markets          []*MarketState         `protobuf:"bytes,6,rep,name=Markets,proto3" json:"Markets,omitempty"`                   // every market: perp, HIP-3, spot, outcome
+	Accounts         []*AccountState        `protobuf:"bytes,7,rep,name=Accounts,proto3" json:"Accounts,omitempty"`                 // per (account, perp dex) with collateral or a position
+	Positions        []*PositionState       `protobuf:"bytes,8,rep,name=Positions,proto3" json:"Positions,omitempty"`               // every open perp position
+	LeverageSettings []*LeverageSetting     `protobuf:"bytes,9,rep,name=LeverageSettings,proto3" json:"LeverageSettings,omitempty"` // per (account, perp market) the account touched
+	Orders           []*OrderState          `protobuf:"bytes,10,rep,name=Orders,proto3" json:"Orders,omitempty"`                    // every order in the books + every waiting trigger order
+	Balances         []*BalanceState        `protobuf:"bytes,11,rep,name=Balances,proto3" json:"Balances,omitempty"`                // per (account, spot token), non-zero only
+	Vaults           []*VaultState          `protobuf:"bytes,12,rep,name=Vaults,proto3" json:"Vaults,omitempty"`
+	VaultFollowers   []*VaultFollowerState  `protobuf:"bytes,13,rep,name=VaultFollowers,proto3" json:"VaultFollowers,omitempty"` // per (vault, depositor), leader included
 	// 14–17 are kept for later sections (not `reserved`, which would forbid them for good): staking
 	// (c_staking), sub-accounts (sub_account_tracker), agents (agent_tracker), fee tracking (locus.ftr).
 	EarnReserves  []*EarnReserveState  `protobuf:"bytes,18,rep,name=EarnReserves,proto3" json:"EarnReserves,omitempty"`   // every token of Earn, the borrow / lend pool
@@ -119,13 +115,6 @@ func (x *HyperliquidSnapshotMessage) GetParts() uint32 {
 		return x.Parts
 	}
 	return 0
-}
-
-func (x *HyperliquidSnapshotMessage) GetIsFull() bool {
-	if x != nil {
-		return x.IsFull
-	}
-	return false
 }
 
 func (x *HyperliquidSnapshotMessage) GetMarkets() []*MarketState {
@@ -2550,13 +2539,12 @@ var File_hyperliquid_hyperliquid_snapshot_message_proto protoreflect.FileDescrip
 
 const file_hyperliquid_hyperliquid_snapshot_message_proto_rawDesc = "" +
 	"\n" +
-	".hyperliquid/hyperliquid_snapshot_message.proto\x12\x14hyperliquid_messages\x1a+hyperliquid/hyperliquid_block_message.proto\"\xd2\x06\n" +
+	".hyperliquid/hyperliquid_snapshot_message.proto\x12\x14hyperliquid_messages\x1a+hyperliquid/hyperliquid_block_message.proto\"\xc8\x06\n" +
 	"\x1aHyperliquidSnapshotMessage\x12 \n" +
 	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
 	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x12\x12\n" +
 	"\x04Part\x18\x03 \x01(\rR\x04Part\x12\x14\n" +
-	"\x05Parts\x18\x04 \x01(\rR\x05Parts\x12\x16\n" +
-	"\x06IsFull\x18\x05 \x01(\bR\x06IsFull\x12;\n" +
+	"\x05Parts\x18\x04 \x01(\rR\x05Parts\x12;\n" +
 	"\aMarkets\x18\x06 \x03(\v2!.hyperliquid_messages.MarketStateR\aMarkets\x12>\n" +
 	"\bAccounts\x18\a \x03(\v2\".hyperliquid_messages.AccountStateR\bAccounts\x12A\n" +
 	"\tPositions\x18\b \x03(\v2#.hyperliquid_messages.PositionStateR\tPositions\x12Q\n" +
@@ -2567,7 +2555,7 @@ const file_hyperliquid_hyperliquid_snapshot_message_proto_rawDesc = "" +
 	"\x06Vaults\x18\f \x03(\v2 .hyperliquid_messages.VaultStateR\x06Vaults\x12P\n" +
 	"\x0eVaultFollowers\x18\r \x03(\v2(.hyperliquid_messages.VaultFollowerStateR\x0eVaultFollowers\x12J\n" +
 	"\fEarnReserves\x18\x12 \x03(\v2&.hyperliquid_messages.EarnReserveStateR\fEarnReserves\x12M\n" +
-	"\rEarnPositions\x18\x13 \x03(\v2'.hyperliquid_messages.EarnPositionStateR\rEarnPositions\"\xc8\x03\n" +
+	"\rEarnPositions\x18\x13 \x03(\v2'.hyperliquid_messages.EarnPositionStateR\rEarnPositionsJ\x04\b\x05\x10\x06R\x06IsFull\"\xc8\x03\n" +
 	"\vMarketState\x124\n" +
 	"\x06Market\x18\x01 \x01(\v2\x1c.hyperliquid_messages.MarketR\x06Market\x12\x18\n" +
 	"\aAssetId\x18\x02 \x01(\rR\aAssetId\x12\x1e\n" +

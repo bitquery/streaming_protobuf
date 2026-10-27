@@ -636,17 +636,16 @@ archived files, so they cannot disagree.
 | `BlockTime` | int64 | that block's consensus time, epoch **ns** (`ctx.time`) — equal to the block stream's `BlockTime` |
 | `Part` | uint32 | `1..Parts` |
 | `Parts` | uint32 | number of parts of this snapshot |
-| `IsFull` | bool | `true` at heights that are multiples of 300,000 (≈ 6 h): every list is sent |
 | `Markets` | repeated MarketState | every market: perp, HIP-3, spot, outcome (§7.3) |
 | `Accounts` | repeated AccountState | per (account, perp dex) with collateral or a position (§7.4) |
 | `Positions` | repeated PositionState | every open perp position (§7.4) |
-| `LeverageSettings` | repeated LeverageSetting | **full only**: per (account, perp market) the account touched, with a position or without (§7.4) |
+| `LeverageSettings` | repeated LeverageSetting | per (account, perp market) the account touched, with a position or without (§7.4) |
 | `Orders` | repeated OrderState | every order in the books and every waiting trigger order (§7.5) |
-| `Balances` | repeated BalanceState | **full only**: per (account, spot token), non-zero only (§7.6) |
+| `Balances` | repeated BalanceState | per (account, spot token), non-zero only (§7.6) |
 | `EarnReserves` | repeated EarnReserveState | every token of Earn: pool totals, utilization, LTV, rate terms (§7.8) |
 | `EarnPositions` | repeated EarnPositionState | per (account, token) with a supply or a borrow in Earn (§7.8) |
 | `Vaults` | repeated VaultState | every vault (§7.7) |
-| `VaultFollowers` | repeated VaultFollowerState | **full only**: per (vault, depositor), leader included (§7.7) |
+| `VaultFollowers` | repeated VaultFollowerState | per (vault, depositor), leader included (§7.7) |
 
 A snapshot is far larger than one message (hundreds of MB), so it is cut into `Parts`
 messages of ≤ ~1 MB with the same `BlockNumber`/`BlockTime`. Rows go into parts in list order
@@ -656,13 +655,10 @@ row is in exactly one part. A snapshot never changes, so a re-delivered part is 
 (§9), **deduplicating on `(BlockNumber, Part)` is safe**. The snapshot is whole once all parts
 `1..Parts` have arrived.
 
-**Full and light snapshots.** Every snapshot (each 10,000 blocks) carries what moves fast:
-markets, accounts, positions, orders, Earn, vaults. The heavy, slow-moving lists — leverage settings
-(~8.6 M rows), spot balances (~2.5 M), vault depositors (~0.2 M) — ride only the **full**
-snapshots, at heights that are multiples of 300,000 (≈ 6 h, the heights the archive also keeps
-whole rather than as patches). In a light snapshot (`IsFull = false`) those lists are empty
-because they were not sent, not because there is nothing. A consumer that needs only the
-slow state reads the full snapshots alone.
+**Every list in every snapshot.** Each snapshot (each 10,000 blocks) carries all the lists, the heavy,
+slow-moving ones too — leverage settings (~8.6 M rows), spot balances (~2.5 M), vault depositors
+(~0.2 M) — so any snapshot answers any question about its height alone. Field 5 (`IsFull`) marked the
+heights that are multiples of 300,000, once the only ones to carry those three lists; it is reserved.
 
 Field numbers 14–17 of the envelope are kept for sections planned later: staking
 (`c_staking`), sub-accounts (`sub_account_tracker`), agents (`agent_tracker`) and fee tracking
@@ -931,7 +927,7 @@ fell by the same 0.097984).
 | `SinceOpen` | string | since the position opened |
 | `SinceChange` | string | since its size last changed |
 
-**`LeverageSetting`** — full snapshots only. Every `[asset, entry]` of `p.p[]`, with a
+**`LeverageSetting`** — every `[asset, entry]` of `p.p[]`, with a
 position or without (~8.6 M on mainnet, October 2026; open positions are ~0.4 M of them): the
 leverage the account's **next** trade in that market gets, until an accepted `updateLeverage`
 (`TraderLeverageUpdate`, §5.7) changes it. A leverage set without a position counts too. A
@@ -1611,7 +1607,7 @@ For consumers of the Kafka / archive representation of these messages:
 Snapshots (§7) are the exception to 1–2: a snapshot is the state at one block, cut into
 `Parts` messages that never change, so a redelivered part is identical and
 `(BlockNumber, Part)` is a safe dedup key; the snapshot is complete once parts `1..Parts`
-have arrived. Only full snapshots (`IsFull`) carry the slow-moving lists.
+have arrived.
 
 ---
 

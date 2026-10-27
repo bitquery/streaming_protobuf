@@ -26,19 +26,19 @@ message HyperliquidSnapshotMessage {
   int64  BlockTime   = 2; // epoch ns (ctx.time) — that block's consensus time, as in the block stream
   uint32 Part        = 3; // 1..Parts
   uint32 Parts       = 4; // the snapshot is whole once all of 1..Parts have arrived
-  // True at heights that are multiples of 300,000 (≈ 6 h; the heights the archive keeps whole): every list is
-  // sent. The other snapshots leave out the heavy, slow-moving lists marked "full only" below — empty there
-  // because they were not sent, not because there is nothing.
-  bool   IsFull      = 5;
+  // Every snapshot carries every list. 5 was IsFull, when only the heights that are multiples of 300,000 sent
+  // the leverage settings, balances and vault followers.
+  reserved 5;
+  reserved "IsFull";
 
   repeated MarketState        Markets          = 6;  // every market: perp, HIP-3, spot, outcome
   repeated AccountState       Accounts         = 7;  // per (account, perp dex) with collateral or a position
   repeated PositionState      Positions        = 8;  // every open perp position
-  repeated LeverageSetting    LeverageSettings = 9;  // full only: per (account, perp market) the account touched
+  repeated LeverageSetting    LeverageSettings = 9;  // per (account, perp market) the account touched
   repeated OrderState         Orders           = 10; // every order in the books + every waiting trigger order
-  repeated BalanceState       Balances         = 11; // full only: per (account, spot token), non-zero only
+  repeated BalanceState       Balances         = 11; // per (account, spot token), non-zero only
   repeated VaultState         Vaults           = 12;
-  repeated VaultFollowerState VaultFollowers   = 13; // full only: per (vault, depositor), leader included
+  repeated VaultFollowerState VaultFollowers   = 13; // per (vault, depositor), leader included
   // 14–17 are kept for later sections (not `reserved`, which would forbid them for good): staking
   // (c_staking), sub-accounts (sub_account_tracker), agents (agent_tracker), fee tracking (locus.ftr).
   repeated EarnReserveState   EarnReserves     = 18; // every token of Earn, the borrow / lend pool
