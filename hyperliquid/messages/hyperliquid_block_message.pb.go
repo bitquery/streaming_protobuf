@@ -335,16 +335,20 @@ func (x *Market) GetOutcome() *MarketOutcome {
 // dateTime value "20261028-0600" as "2026-10-28 06:00 UTC", the others as the node keeps them), the validators'
 // Recurring outcomes by their class. Empty = not known.
 type MarketOutcome struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OutcomeId     uint32                 `protobuf:"varint,1,opt,name=OutcomeId,proto3" json:"OutcomeId,omitempty"`
-	Side          uint32                 `protobuf:"varint,2,opt,name=Side,proto3" json:"Side,omitempty"`              // 0 | 1
-	SideName      string                 `protobuf:"bytes,3,opt,name=SideName,proto3" json:"SideName,omitempty"`       // sideSpecs[Side].name: "Yes" | "No" | …
-	SiblingCoin   string                 `protobuf:"bytes,4,opt,name=SiblingCoin,proto3" json:"SiblingCoin,omitempty"` // the other side of the same outcome: "#<encoding XOR 1>"
-	Name          string                 `protobuf:"bytes,5,opt,name=Name,proto3" json:"Name,omitempty"`               // e.g. "template:sportsTournamentParticipant"
-	Description   string                 `protobuf:"bytes,6,opt,name=Description,proto3" json:"Description,omitempty"` // "key:value|key:value" as published, e.g. "participant:Oklahoma City Thunder"
-	Question      *OutcomeQuestion       `protobuf:"bytes,7,opt,name=Question,proto3" json:"Question,omitempty"`       // empty when the outcome stands alone
-	Title         string                 `protobuf:"bytes,8,opt,name=Title,proto3" json:"Title,omitempty"`             // "BTC above 79850 at 2026-10-27 12:00 UTC?", "Arsenal", "Other" (a question's fallback)
-	SideTitle     string                 `protobuf:"bytes,9,opt,name=SideTitle,proto3" json:"SideTitle,omitempty"`     // "Yes" | "No" | the template's side with its values: "template:{shortNameA}" → "Browns"
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	OutcomeId   uint32                 `protobuf:"varint,1,opt,name=OutcomeId,proto3" json:"OutcomeId,omitempty"`
+	Side        uint32                 `protobuf:"varint,2,opt,name=Side,proto3" json:"Side,omitempty"`              // 0 | 1
+	SideName    string                 `protobuf:"bytes,3,opt,name=SideName,proto3" json:"SideName,omitempty"`       // sideSpecs[Side].name: "Yes" | "No" | …
+	SiblingCoin string                 `protobuf:"bytes,4,opt,name=SiblingCoin,proto3" json:"SiblingCoin,omitempty"` // the other side of the same outcome: "#<encoding XOR 1>"
+	Name        string                 `protobuf:"bytes,5,opt,name=Name,proto3" json:"Name,omitempty"`               // e.g. "template:sportsTournamentParticipant"
+	Description string                 `protobuf:"bytes,6,opt,name=Description,proto3" json:"Description,omitempty"` // "key:value|key:value" as published, e.g. "participant:Oklahoma City Thunder"
+	Question    *OutcomeQuestion       `protobuf:"bytes,7,opt,name=Question,proto3" json:"Question,omitempty"`       // empty when the outcome stands alone
+	Title       string                 `protobuf:"bytes,8,opt,name=Title,proto3" json:"Title,omitempty"`             // "BTC above 79850 at 2026-10-27 12:00 UTC?", "Arsenal", "Other" (a question's fallback)
+	SideTitle   string                 `protobuf:"bytes,9,opt,name=SideTitle,proto3" json:"SideTitle,omitempty"`     // "Yes" | "No" | the template's side with its values: "template:{shortNameA}" → "Browns"
+	// The market's headline: a standalone outcome's Title, the Question.Title of a question's outcome (a named one or
+	// the fallback). A standalone outcome is one Yes / No market and has no question; a question has an outcome per
+	// answer, each its own Yes / No market, plus the fallback "Other". Empty when that title is.
+	Headline      string `protobuf:"bytes,10,opt,name=Headline,proto3" json:"Headline,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -438,6 +442,13 @@ func (x *MarketOutcome) GetTitle() string {
 func (x *MarketOutcome) GetSideTitle() string {
 	if x != nil {
 		return x.SideTitle
+	}
+	return ""
+}
+
+func (x *MarketOutcome) GetHeadline() string {
+	if x != nil {
+		return x.Headline
 	}
 	return ""
 }
@@ -2316,7 +2327,7 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\aCoinRaw\x18\x04 \x01(\tR\aCoinRaw\x12\x16\n" +
 	"\x06IsPerp\x18\x05 \x01(\bR\x06IsPerp\x12 \n" +
 	"\vMaxLeverage\x18\x06 \x01(\rR\vMaxLeverage\x12=\n" +
-	"\aOutcome\x18\a \x01(\v2#.hyperliquid_messages.MarketOutcomeR\aOutcome\"\xac\x02\n" +
+	"\aOutcome\x18\a \x01(\v2#.hyperliquid_messages.MarketOutcomeR\aOutcome\"\xc8\x02\n" +
 	"\rMarketOutcome\x12\x1c\n" +
 	"\tOutcomeId\x18\x01 \x01(\rR\tOutcomeId\x12\x12\n" +
 	"\x04Side\x18\x02 \x01(\rR\x04Side\x12\x1a\n" +
@@ -2326,7 +2337,9 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\vDescription\x18\x06 \x01(\tR\vDescription\x12A\n" +
 	"\bQuestion\x18\a \x01(\v2%.hyperliquid_messages.OutcomeQuestionR\bQuestion\x12\x14\n" +
 	"\x05Title\x18\b \x01(\tR\x05Title\x12\x1c\n" +
-	"\tSideTitle\x18\t \x01(\tR\tSideTitle\"\xbb\x01\n" +
+	"\tSideTitle\x18\t \x01(\tR\tSideTitle\x12\x1a\n" +
+	"\bHeadline\x18\n" +
+	" \x01(\tR\bHeadline\"\xbb\x01\n" +
 	"\x0fOutcomeQuestion\x12\x1e\n" +
 	"\n" +
 	"QuestionId\x18\x01 \x01(\rR\n" +

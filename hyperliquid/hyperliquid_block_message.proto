@@ -68,6 +68,10 @@ message MarketOutcome {
   OutcomeQuestion Question = 7; // empty when the outcome stands alone
   string Title     = 8; // "BTC above 79850 at 2026-10-27 12:00 UTC?", "Arsenal", "Other" (a question's fallback)
   string SideTitle = 9; // "Yes" | "No" | the template's side with its values: "template:{shortNameA}" → "Browns"
+  // The market's headline: a standalone outcome's Title, the Question.Title of a question's outcome (a named one or
+  // the fallback). A standalone outcome is one Yes / No market and has no question; a question has an outcome per
+  // answer, each its own Yes / No market, plus the fallback "Other". Empty when that title is.
+  string Headline  = 10;
 }
 
 // A question groups several outcomes, one per answer (questions[].namedOutcomes), plus a fallback ("other").

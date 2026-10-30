@@ -361,6 +361,18 @@ are titled by their class (their `expiry` formatted the same way):
 `Recurring Fallback`, description `other`) is `Other`. A title the processor cannot fill — a template it has
 not seen in a snapshot yet, a keyword the description lacks, a class it does not know — is empty.
 
+**Two kinds of prediction market.** A *standalone outcome* is one Yes / No market and has no question: its
+headline is its own `Title`. A *question* has several answers, each an outcome of its own Yes / No market, plus a
+fallback `Other`: the headline is the question's, `Question.Title`, and `Title` names the answer. `Headline` is
+that headline on every row, whichever kind — the field to group by for a market as a whole:
+
+| | standalone outcome | outcome of a question |
+|---|---|---|
+| `Headline` | `BTC above 77970 at 2026-10-30 06:00 UTC?` | `2026/2027 English Premier League winner` |
+| `Title` | `BTC above 77970 at 2026-10-30 06:00 UTC?` | `Arsenal` (`Other` for the fallback) |
+| `SideTitle` | `Yes` / `No` | `Yes` / `No` |
+| `Question.Title` | empty — no question | `2026/2027 English Premier League winner` |
+
 **`PerpPosition`** — the trader's position **as of** the event. Only realtime fields are
 present; the snapshot fields (collateral, liquidation price, unrealized PnL) are **absent**
 because HL exposes them only via a snapshot/API, not the realtime feed. **Empty = source
@@ -856,6 +868,7 @@ in its `Book` reads as the probability, 0..1.
 | `Question` | OutcomeQuestion | the question the outcome answers; empty when it stands alone |
 | `Title` | string | display name (§5.2): `"BTC above 79850 at 2026-10-27 12:00 UTC?"`, `"Arsenal"`, `"Other"` |
 | `SideTitle` | string | the side's display name: `"Yes"` \| `"No"` \| `"Browns"` |
+| `Headline` | string | the market's headline (§5.2): a standalone outcome's `Title`, a question's outcome's `Question.Title` |
 
 **`OutcomeQuestion`** — a question groups several outcomes, one per answer
 (`namedOutcomes`), plus a fallback ("other"):
