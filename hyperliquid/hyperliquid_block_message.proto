@@ -48,6 +48,36 @@ message Market {
   string CoinRaw     = 4; // "HYPE", "xyz:NFLX", "@107", "#1890"
   bool   IsPerp      = 5; // true for perp+hip3 (full object set), false for spot/outcome — filter on this
   uint32 MaxLeverage = 6; // max leverage for the perp market (info-API meta); 0 = unknown / spot/outcome
+  MarketOutcome Outcome = 7; // outcome markets only: the side, its outcome and question as of the event or snapshot; empty when not known
+}
+
+// One side of a prediction market ← exchange.locus.scl.meta.outr: ots[OutcomeId] and the question it belongs to,
+// qts[QuestionId] — the same as the info API outcomeMeta outcomes[] / questions[]. An outcome has two sides,
+// each its own market: encoding = 10 × OutcomeId + Side, CoinRaw "#<encoding>", token "+<encoding>"; the price
+// of a side reads as its probability, 0..1. The names are the node's; the titles are its display names: a
+// template's texts (scl.meta.outr.tem) with the {keyword} places filled from the Description ("key:value|…"; a
+// dateTime value "20261028-0600" as "2026-10-28 06:00 UTC", the others as the node keeps them), the validators'
+// Recurring outcomes by their class. Empty = not known.
+message MarketOutcome {
+  uint32 OutcomeId   = 1;
+  uint32 Side        = 2; // 0 | 1
+  string SideName    = 3; // sideSpecs[Side].name: "Yes" | "No" | …
+  string SiblingCoin = 4; // the other side of the same outcome: "#<encoding XOR 1>"
+  string Name        = 5; // e.g. "template:sportsTournamentParticipant"
+  string Description = 6; // "key:value|key:value" as published, e.g. "participant:Oklahoma City Thunder"
+  OutcomeQuestion Question = 7; // empty when the outcome stands alone
+  string Title     = 8; // "BTC above 79850 at 2026-10-27 12:00 UTC?", "Arsenal", "Other" (a question's fallback)
+  string SideTitle = 9; // "Yes" | "No" | the template's side with its values: "template:{shortNameA}" → "Browns"
+}
+
+// A question groups several outcomes, one per answer (questions[].namedOutcomes), plus a fallback ("other").
+message OutcomeQuestion {
+  uint32 QuestionId  = 1;
+  string Name        = 2; // e.g. "template:sportsContestResult"
+  string Description = 3; // "key:value|…" as published: competition, participants, resolution deadline, …
+  bool   IsFallback  = 4; // this outcome is the question's fallback (fallbackOutcome)
+  bool   IsSettled   = 5; // this outcome is already settled (settledNamedOutcomes)
+  string Title       = 6; // "2026/2027 English Premier League winner", "BTC at 2026-10-30 06:00 UTC" (Recurring)
 }
 
 // The trader's position AS OF this event — realtime fields come straight from the stream; the

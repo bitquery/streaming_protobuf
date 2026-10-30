@@ -33,10 +33,10 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// ONE snapshot = Parts messages (each ≤ ~1 MB) sharing BlockNumber and BlockTime. Rows are cut into parts in
-// list order (Markets, Accounts, Positions, LeverageSettings, Orders, Balances, EarnReserves, EarnPositions,
-// Vaults, VaultFollowers); a part may carry rows of several lists, every row is in exactly one part. A snapshot never changes, so a
-// re-delivered part is identical: dedup on (BlockNumber, Part).
+// ONE snapshot = Parts messages (each ≤ ~1 MB) sharing BlockNumber, BlockTime and the outcome counters. Rows are
+// cut into parts in list order (Markets, OutcomeTemplates, Accounts, Positions, LeverageSettings, Orders, Balances,
+// EarnReserves, EarnPositions, Vaults, VaultFollowers); a part may carry rows of several lists, every row is in
+// exactly one part. A snapshot never changes, so a re-delivered part is identical: dedup on (BlockNumber, Part).
 type HyperliquidSnapshotMessage struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	BlockNumber      uint64                 `protobuf:"varint,1,opt,name=BlockNumber,proto3" json:"BlockNumber,omitempty"`          // snapshot height (exchange.locus.ctx.height), a multiple of 10,000
@@ -55,8 +55,14 @@ type HyperliquidSnapshotMessage struct {
 	// (c_staking), sub-accounts (sub_account_tracker), agents (agent_tracker), fee tracking (locus.ftr).
 	EarnReserves  []*EarnReserveState  `protobuf:"bytes,18,rep,name=EarnReserves,proto3" json:"EarnReserves,omitempty"`   // every token of Earn, the borrow / lend pool
 	EarnPositions []*EarnPositionState `protobuf:"bytes,19,rep,name=EarnPositions,proto3" json:"EarnPositions,omitempty"` // per (account, token) with a supply or a borrow
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// scl.meta.outr nou / nqu: the ids the next outcome and the next question will get. outcomeDeploy and the
+	// validators' votes hand them out one by one in block order; a settled outcome leaves Markets and its id stays
+	// spent, so the largest id listed is not the counter. On every part; null when the snapshot has no outr.
+	NextOutcomeId    *uint32            `protobuf:"varint,20,opt,name=NextOutcomeId,proto3,oneof" json:"NextOutcomeId,omitempty"`
+	NextQuestionId   *uint32            `protobuf:"varint,21,opt,name=NextQuestionId,proto3,oneof" json:"NextQuestionId,omitempty"`
+	OutcomeTemplates []*OutcomeTemplate `protobuf:"bytes,22,rep,name=OutcomeTemplates,proto3" json:"OutcomeTemplates,omitempty"` // every outcome template (scl.meta.outr.tem.ntt)
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *HyperliquidSnapshotMessage) Reset() {
@@ -187,21 +193,44 @@ func (x *HyperliquidSnapshotMessage) GetEarnPositions() []*EarnPositionState {
 	return nil
 }
 
+func (x *HyperliquidSnapshotMessage) GetNextOutcomeId() uint32 {
+	if x != nil && x.NextOutcomeId != nil {
+		return *x.NextOutcomeId
+	}
+	return 0
+}
+
+func (x *HyperliquidSnapshotMessage) GetNextQuestionId() uint32 {
+	if x != nil && x.NextQuestionId != nil {
+		return *x.NextQuestionId
+	}
+	return 0
+}
+
+func (x *HyperliquidSnapshotMessage) GetOutcomeTemplates() []*OutcomeTemplate {
+	if x != nil {
+		return x.OutcomeTemplates
+	}
+	return nil
+}
+
 // MarketState ← perp: exchange.locus.cls[dex].meta.universe[i]; spot/outcome: exchange.locus.scl.meta.spot_infos[i];
 // the book from exchange.perp_dexs[dex].books[i] / exchange.spot_books[i]. Margin, Prices and the open interest
-// are perp-only and stay empty on spot and outcome markets; Outcome is set on outcome markets only.
+// are perp-only and stay empty on spot and outcome markets; Market.Outcome is set on outcome markets only.
 type MarketState struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Market        *Market                `protobuf:"bytes,1,opt,name=Market,proto3" json:"Market,omitempty"`
-	AssetId       uint32                 `protobuf:"varint,2,opt,name=AssetId,proto3" json:"AssetId,omitempty"`       // asset id of exchange actions: perp i, HIP-3 100000 + dex*10000 + i, spot 10000 + i, outcome 100000000 + encoding (CoinRaw "#<encoding>")
-	SzDecimals    uint32                 `protobuf:"varint,3,opt,name=SzDecimals,proto3" json:"SzDecimals,omitempty"` // spot/outcome: the base token's
-	Margin        *MarketMargin          `protobuf:"bytes,4,opt,name=Margin,proto3" json:"Margin,omitempty"`
-	Prices        *MarketPrices          `protobuf:"bytes,5,opt,name=Prices,proto3" json:"Prices,omitempty"`
-	Book          *MarketBook            `protobuf:"bytes,6,opt,name=Book,proto3" json:"Book,omitempty"`
-	OpenInterest  string                 `protobuf:"bytes,7,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"` // one side, in coins (info API openInterest)
-	Positions     uint32                 `protobuf:"varint,8,opt,name=Positions,proto3" json:"Positions,omitempty"`      // computed: open positions in this market
-	IsHalted      bool                   `protobuf:"varint,9,opt,name=IsHalted,proto3" json:"IsHalted,omitempty"`
-	Outcome       *MarketOutcome         `protobuf:"bytes,10,opt,name=Outcome,proto3" json:"Outcome,omitempty"` // prediction (outcome) markets only
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Market       *Market                `protobuf:"bytes,1,opt,name=Market,proto3" json:"Market,omitempty"`
+	AssetId      uint32                 `protobuf:"varint,2,opt,name=AssetId,proto3" json:"AssetId,omitempty"`       // asset id of exchange actions: perp i, HIP-3 100000 + dex*10000 + i, spot 10000 + i, outcome 100000000 + encoding (CoinRaw "#<encoding>")
+	SzDecimals   uint32                 `protobuf:"varint,3,opt,name=SzDecimals,proto3" json:"SzDecimals,omitempty"` // spot/outcome: the base token's
+	Margin       *MarketMargin          `protobuf:"bytes,4,opt,name=Margin,proto3" json:"Margin,omitempty"`
+	Prices       *MarketPrices          `protobuf:"bytes,5,opt,name=Prices,proto3" json:"Prices,omitempty"`
+	Book         *MarketBook            `protobuf:"bytes,6,opt,name=Book,proto3" json:"Book,omitempty"`
+	OpenInterest string                 `protobuf:"bytes,7,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"` // one side, in coins (info API openInterest)
+	Positions    uint32                 `protobuf:"varint,8,opt,name=Positions,proto3" json:"Positions,omitempty"`      // computed: open positions in this market
+	IsHalted     bool                   `protobuf:"varint,9,opt,name=IsHalted,proto3" json:"IsHalted,omitempty"`
+	// The same as Market.Outcome, which every snapshot row of an outcome market carries now; kept while gateways
+	// before Market { Outcome } read it, then reserved.
+	Outcome       *MarketOutcome `protobuf:"bytes,10,opt,name=Outcome,proto3" json:"Outcome,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -592,37 +621,36 @@ func (x *MarketBook) GetOrders() uint32 {
 	return 0
 }
 
-// One side of a prediction market ← exchange.locus.scl.meta.outr: ots[OutcomeId] and the question it belongs to,
-// qts[QuestionId] — the same as the info API outcomeMeta outcomes[] / questions[]. An outcome has two sides,
-// each its own market: encoding = 10 × OutcomeId + Side, CoinRaw "#<encoding>", token "+<encoding>"; the price
-// of a side (MarketBook) reads as its probability, 0..1.
-type MarketOutcome struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OutcomeId     uint32                 `protobuf:"varint,1,opt,name=OutcomeId,proto3" json:"OutcomeId,omitempty"`
-	Side          uint32                 `protobuf:"varint,2,opt,name=Side,proto3" json:"Side,omitempty"`              // 0 | 1
-	SideName      string                 `protobuf:"bytes,3,opt,name=SideName,proto3" json:"SideName,omitempty"`       // sideSpecs[Side].name: "Yes" | "No" | …
-	SiblingCoin   string                 `protobuf:"bytes,4,opt,name=SiblingCoin,proto3" json:"SiblingCoin,omitempty"` // the other side of the same outcome: "#<encoding XOR 1>"
-	Name          string                 `protobuf:"bytes,5,opt,name=Name,proto3" json:"Name,omitempty"`               // e.g. "template:sportsTournamentParticipant"
-	Description   string                 `protobuf:"bytes,6,opt,name=Description,proto3" json:"Description,omitempty"` // "key:value|key:value" as published, e.g. "participant:Oklahoma City Thunder"
-	Question      *OutcomeQuestion       `protobuf:"bytes,7,opt,name=Question,proto3" json:"Question,omitempty"`       // empty when the outcome stands alone
+// OutcomeTemplate ← scl.meta.outr.tem.ntt[] — the info API outcomeTemplates: what outcomeDeploy makes an outcome or
+// a question from. Its outcomes and questions are named "template:<Id>" and carry the keyword values in their
+// Description ("key:value|…"); a standalone outcome's sides are named "template:<side name>".
+type OutcomeTemplate struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Id            string                    `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`                   // e.g. "binaryPrice"
+	Role          string                    `protobuf:"bytes,2,opt,name=Role,proto3" json:"Role,omitempty"`               // "standaloneOutcome" | "question" | "questionOutcome"
+	SideNames     []string                  `protobuf:"bytes,3,rep,name=SideNames,proto3" json:"SideNames,omitempty"`     // standaloneOutcome: "Yes", "No" | "Over", "Under" | "{shortNameA}", "{shortNameB}" | …
+	Parent        string                    `protobuf:"bytes,4,opt,name=Parent,proto3" json:"Parent,omitempty"`           // questionOutcome: the question template it answers, e.g. "sportsContestResult"
+	Name          string                    `protobuf:"bytes,5,opt,name=Name,proto3" json:"Name,omitempty"`               // with {keyword} places: "{perp} above {threshold} at {time}?"
+	Description   string                    `protobuf:"bytes,6,opt,name=Description,proto3" json:"Description,omitempty"` // the resolution rules, with {keyword} places
+	Keywords      []*OutcomeTemplateKeyword `protobuf:"bytes,7,rep,name=Keywords,proto3" json:"Keywords,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *MarketOutcome) Reset() {
-	*x = MarketOutcome{}
+func (x *OutcomeTemplate) Reset() {
+	*x = OutcomeTemplate{}
 	mi := &file_hyperliquid_hyperliquid_snapshot_message_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MarketOutcome) String() string {
+func (x *OutcomeTemplate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MarketOutcome) ProtoMessage() {}
+func (*OutcomeTemplate) ProtoMessage() {}
 
-func (x *MarketOutcome) ProtoReflect() protoreflect.Message {
+func (x *OutcomeTemplate) ProtoReflect() protoreflect.Message {
 	mi := &file_hyperliquid_hyperliquid_snapshot_message_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -634,86 +662,82 @@ func (x *MarketOutcome) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MarketOutcome.ProtoReflect.Descriptor instead.
-func (*MarketOutcome) Descriptor() ([]byte, []int) {
+// Deprecated: Use OutcomeTemplate.ProtoReflect.Descriptor instead.
+func (*OutcomeTemplate) Descriptor() ([]byte, []int) {
 	return file_hyperliquid_hyperliquid_snapshot_message_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *MarketOutcome) GetOutcomeId() uint32 {
+func (x *OutcomeTemplate) GetId() string {
 	if x != nil {
-		return x.OutcomeId
-	}
-	return 0
-}
-
-func (x *MarketOutcome) GetSide() uint32 {
-	if x != nil {
-		return x.Side
-	}
-	return 0
-}
-
-func (x *MarketOutcome) GetSideName() string {
-	if x != nil {
-		return x.SideName
+		return x.Id
 	}
 	return ""
 }
 
-func (x *MarketOutcome) GetSiblingCoin() string {
+func (x *OutcomeTemplate) GetRole() string {
 	if x != nil {
-		return x.SiblingCoin
+		return x.Role
 	}
 	return ""
 }
 
-func (x *MarketOutcome) GetName() string {
+func (x *OutcomeTemplate) GetSideNames() []string {
 	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *MarketOutcome) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *MarketOutcome) GetQuestion() *OutcomeQuestion {
-	if x != nil {
-		return x.Question
+		return x.SideNames
 	}
 	return nil
 }
 
-// A question groups several outcomes, one per answer (questions[].namedOutcomes), plus a fallback ("other").
-type OutcomeQuestion struct {
+func (x *OutcomeTemplate) GetParent() string {
+	if x != nil {
+		return x.Parent
+	}
+	return ""
+}
+
+func (x *OutcomeTemplate) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *OutcomeTemplate) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *OutcomeTemplate) GetKeywords() []*OutcomeTemplateKeyword {
+	if x != nil {
+		return x.Keywords
+	}
+	return nil
+}
+
+type OutcomeTemplateKeyword struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QuestionId    uint32                 `protobuf:"varint,1,opt,name=QuestionId,proto3" json:"QuestionId,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=Name,proto3" json:"Name,omitempty"`               // e.g. "template:sportsContestResult"
-	Description   string                 `protobuf:"bytes,3,opt,name=Description,proto3" json:"Description,omitempty"` // "key:value|…" as published: competition, participants, resolution deadline, …
-	IsFallback    bool                   `protobuf:"varint,4,opt,name=IsFallback,proto3" json:"IsFallback,omitempty"`  // this outcome is the question's fallback (fallbackOutcome)
-	IsSettled     bool                   `protobuf:"varint,5,opt,name=IsSettled,proto3" json:"IsSettled,omitempty"`    // this outcome is already settled (settledNamedOutcomes)
+	Name          string                 `protobuf:"bytes,1,opt,name=Name,proto3" json:"Name,omitempty"` // e.g. "threshold"
+	Type          string                 `protobuf:"bytes,2,opt,name=Type,proto3" json:"Type,omitempty"` // "string" | "shortString" | "dateTime" | "uDecimal" | "uInt" | "hlPerp" | …
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *OutcomeQuestion) Reset() {
-	*x = OutcomeQuestion{}
+func (x *OutcomeTemplateKeyword) Reset() {
+	*x = OutcomeTemplateKeyword{}
 	mi := &file_hyperliquid_hyperliquid_snapshot_message_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *OutcomeQuestion) String() string {
+func (x *OutcomeTemplateKeyword) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OutcomeQuestion) ProtoMessage() {}
+func (*OutcomeTemplateKeyword) ProtoMessage() {}
 
-func (x *OutcomeQuestion) ProtoReflect() protoreflect.Message {
+func (x *OutcomeTemplateKeyword) ProtoReflect() protoreflect.Message {
 	mi := &file_hyperliquid_hyperliquid_snapshot_message_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -725,44 +749,23 @@ func (x *OutcomeQuestion) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OutcomeQuestion.ProtoReflect.Descriptor instead.
-func (*OutcomeQuestion) Descriptor() ([]byte, []int) {
+// Deprecated: Use OutcomeTemplateKeyword.ProtoReflect.Descriptor instead.
+func (*OutcomeTemplateKeyword) Descriptor() ([]byte, []int) {
 	return file_hyperliquid_hyperliquid_snapshot_message_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *OutcomeQuestion) GetQuestionId() uint32 {
-	if x != nil {
-		return x.QuestionId
-	}
-	return 0
-}
-
-func (x *OutcomeQuestion) GetName() string {
+func (x *OutcomeTemplateKeyword) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *OutcomeQuestion) GetDescription() string {
+func (x *OutcomeTemplateKeyword) GetType() string {
 	if x != nil {
-		return x.Description
+		return x.Type
 	}
 	return ""
-}
-
-func (x *OutcomeQuestion) GetIsFallback() bool {
-	if x != nil {
-		return x.IsFallback
-	}
-	return false
-}
-
-func (x *OutcomeQuestion) GetIsSettled() bool {
-	if x != nil {
-		return x.IsSettled
-	}
-	return false
 }
 
 // AccountState ← exchange.locus.cls[dex].user_states.user_to_state[] — an account on ONE perp dex: the native
@@ -2539,7 +2542,7 @@ var File_hyperliquid_hyperliquid_snapshot_message_proto protoreflect.FileDescrip
 
 const file_hyperliquid_hyperliquid_snapshot_message_proto_rawDesc = "" +
 	"\n" +
-	".hyperliquid/hyperliquid_snapshot_message.proto\x12\x14hyperliquid_messages\x1a+hyperliquid/hyperliquid_block_message.proto\"\xc8\x06\n" +
+	".hyperliquid/hyperliquid_snapshot_message.proto\x12\x14hyperliquid_messages\x1a+hyperliquid/hyperliquid_block_message.proto\"\x98\b\n" +
 	"\x1aHyperliquidSnapshotMessage\x12 \n" +
 	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
 	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x12\x12\n" +
@@ -2555,7 +2558,12 @@ const file_hyperliquid_hyperliquid_snapshot_message_proto_rawDesc = "" +
 	"\x06Vaults\x18\f \x03(\v2 .hyperliquid_messages.VaultStateR\x06Vaults\x12P\n" +
 	"\x0eVaultFollowers\x18\r \x03(\v2(.hyperliquid_messages.VaultFollowerStateR\x0eVaultFollowers\x12J\n" +
 	"\fEarnReserves\x18\x12 \x03(\v2&.hyperliquid_messages.EarnReserveStateR\fEarnReserves\x12M\n" +
-	"\rEarnPositions\x18\x13 \x03(\v2'.hyperliquid_messages.EarnPositionStateR\rEarnPositionsJ\x04\b\x05\x10\x06R\x06IsFull\"\xc8\x03\n" +
+	"\rEarnPositions\x18\x13 \x03(\v2'.hyperliquid_messages.EarnPositionStateR\rEarnPositions\x12)\n" +
+	"\rNextOutcomeId\x18\x14 \x01(\rH\x00R\rNextOutcomeId\x88\x01\x01\x12+\n" +
+	"\x0eNextQuestionId\x18\x15 \x01(\rH\x01R\x0eNextQuestionId\x88\x01\x01\x12Q\n" +
+	"\x10OutcomeTemplates\x18\x16 \x03(\v2%.hyperliquid_messages.OutcomeTemplateR\x10OutcomeTemplatesB\x10\n" +
+	"\x0e_NextOutcomeIdB\x11\n" +
+	"\x0f_NextQuestionIdJ\x04\b\x05\x10\x06R\x06IsFull\"\xc8\x03\n" +
 	"\vMarketState\x124\n" +
 	"\x06Market\x18\x01 \x01(\v2\x1c.hyperliquid_messages.MarketR\x06Market\x12\x18\n" +
 	"\aAssetId\x18\x02 \x01(\rR\aAssetId\x12\x1e\n" +
@@ -2598,25 +2606,18 @@ const file_hyperliquid_hyperliquid_snapshot_message_proto_rawDesc = "" +
 	"\vLastTradePx\x18\x01 \x01(\tR\vLastTradePx\x12\x18\n" +
 	"\aBestBid\x18\x02 \x01(\tR\aBestBid\x12\x18\n" +
 	"\aBestAsk\x18\x03 \x01(\tR\aBestAsk\x12\x16\n" +
-	"\x06Orders\x18\x04 \x01(\rR\x06Orders\"\xf8\x01\n" +
-	"\rMarketOutcome\x12\x1c\n" +
-	"\tOutcomeId\x18\x01 \x01(\rR\tOutcomeId\x12\x12\n" +
-	"\x04Side\x18\x02 \x01(\rR\x04Side\x12\x1a\n" +
-	"\bSideName\x18\x03 \x01(\tR\bSideName\x12 \n" +
-	"\vSiblingCoin\x18\x04 \x01(\tR\vSiblingCoin\x12\x12\n" +
+	"\x06Orders\x18\x04 \x01(\rR\x06Orders\"\xeb\x01\n" +
+	"\x0fOutcomeTemplate\x12\x0e\n" +
+	"\x02Id\x18\x01 \x01(\tR\x02Id\x12\x12\n" +
+	"\x04Role\x18\x02 \x01(\tR\x04Role\x12\x1c\n" +
+	"\tSideNames\x18\x03 \x03(\tR\tSideNames\x12\x16\n" +
+	"\x06Parent\x18\x04 \x01(\tR\x06Parent\x12\x12\n" +
 	"\x04Name\x18\x05 \x01(\tR\x04Name\x12 \n" +
-	"\vDescription\x18\x06 \x01(\tR\vDescription\x12A\n" +
-	"\bQuestion\x18\a \x01(\v2%.hyperliquid_messages.OutcomeQuestionR\bQuestion\"\xa5\x01\n" +
-	"\x0fOutcomeQuestion\x12\x1e\n" +
-	"\n" +
-	"QuestionId\x18\x01 \x01(\rR\n" +
-	"QuestionId\x12\x12\n" +
-	"\x04Name\x18\x02 \x01(\tR\x04Name\x12 \n" +
-	"\vDescription\x18\x03 \x01(\tR\vDescription\x12\x1e\n" +
-	"\n" +
-	"IsFallback\x18\x04 \x01(\bR\n" +
-	"IsFallback\x12\x1c\n" +
-	"\tIsSettled\x18\x05 \x01(\bR\tIsSettled\"\xae\x02\n" +
+	"\vDescription\x18\x06 \x01(\tR\vDescription\x12H\n" +
+	"\bKeywords\x18\a \x03(\v2,.hyperliquid_messages.OutcomeTemplateKeywordR\bKeywords\"@\n" +
+	"\x16OutcomeTemplateKeyword\x12\x12\n" +
+	"\x04Name\x18\x01 \x01(\tR\x04Name\x12\x12\n" +
+	"\x04Type\x18\x02 \x01(\tR\x04Type\"\xae\x02\n" +
 	"\fAccountState\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x12\x1a\n" +
 	"\bProtocol\x18\x02 \x01(\tR\bProtocol\x12\x1e\n" +
@@ -2827,8 +2828,8 @@ var file_hyperliquid_hyperliquid_snapshot_message_proto_goTypes = []any{
 	(*MarginTier)(nil),                 // 3: hyperliquid_messages.MarginTier
 	(*MarketPrices)(nil),               // 4: hyperliquid_messages.MarketPrices
 	(*MarketBook)(nil),                 // 5: hyperliquid_messages.MarketBook
-	(*MarketOutcome)(nil),              // 6: hyperliquid_messages.MarketOutcome
-	(*OutcomeQuestion)(nil),            // 7: hyperliquid_messages.OutcomeQuestion
+	(*OutcomeTemplate)(nil),            // 6: hyperliquid_messages.OutcomeTemplate
+	(*OutcomeTemplateKeyword)(nil),     // 7: hyperliquid_messages.OutcomeTemplateKeyword
 	(*AccountState)(nil),               // 8: hyperliquid_messages.AccountState
 	(*MarginSummary)(nil),              // 9: hyperliquid_messages.MarginSummary
 	(*PositionState)(nil),              // 10: hyperliquid_messages.PositionState
@@ -2851,8 +2852,9 @@ var file_hyperliquid_hyperliquid_snapshot_message_proto_goTypes = []any{
 	(*VaultShare)(nil),                 // 27: hyperliquid_messages.VaultShare
 	(*VaultFollowTimes)(nil),           // 28: hyperliquid_messages.VaultFollowTimes
 	(*Market)(nil),                     // 29: hyperliquid_messages.Market
-	(*Trader)(nil),                     // 30: hyperliquid_messages.Trader
-	(*PerpPosition)(nil),               // 31: hyperliquid_messages.PerpPosition
+	(*MarketOutcome)(nil),              // 30: hyperliquid_messages.MarketOutcome
+	(*Trader)(nil),                     // 31: hyperliquid_messages.Trader
+	(*PerpPosition)(nil),               // 32: hyperliquid_messages.PerpPosition
 }
 var file_hyperliquid_hyperliquid_snapshot_message_proto_depIdxs = []int32{
 	1,  // 0: hyperliquid_messages.HyperliquidSnapshotMessage.Markets:type_name -> hyperliquid_messages.MarketState
@@ -2865,43 +2867,44 @@ var file_hyperliquid_hyperliquid_snapshot_message_proto_depIdxs = []int32{
 	26, // 7: hyperliquid_messages.HyperliquidSnapshotMessage.VaultFollowers:type_name -> hyperliquid_messages.VaultFollowerState
 	18, // 8: hyperliquid_messages.HyperliquidSnapshotMessage.EarnReserves:type_name -> hyperliquid_messages.EarnReserveState
 	20, // 9: hyperliquid_messages.HyperliquidSnapshotMessage.EarnPositions:type_name -> hyperliquid_messages.EarnPositionState
-	29, // 10: hyperliquid_messages.MarketState.Market:type_name -> hyperliquid_messages.Market
-	2,  // 11: hyperliquid_messages.MarketState.Margin:type_name -> hyperliquid_messages.MarketMargin
-	4,  // 12: hyperliquid_messages.MarketState.Prices:type_name -> hyperliquid_messages.MarketPrices
-	5,  // 13: hyperliquid_messages.MarketState.Book:type_name -> hyperliquid_messages.MarketBook
-	6,  // 14: hyperliquid_messages.MarketState.Outcome:type_name -> hyperliquid_messages.MarketOutcome
-	3,  // 15: hyperliquid_messages.MarketMargin.Tiers:type_name -> hyperliquid_messages.MarginTier
-	7,  // 16: hyperliquid_messages.MarketOutcome.Question:type_name -> hyperliquid_messages.OutcomeQuestion
-	30, // 17: hyperliquid_messages.AccountState.Trader:type_name -> hyperliquid_messages.Trader
-	9,  // 18: hyperliquid_messages.AccountState.Total:type_name -> hyperliquid_messages.MarginSummary
-	9,  // 19: hyperliquid_messages.AccountState.Cross:type_name -> hyperliquid_messages.MarginSummary
-	30, // 20: hyperliquid_messages.PositionState.Trader:type_name -> hyperliquid_messages.Trader
-	29, // 21: hyperliquid_messages.PositionState.Market:type_name -> hyperliquid_messages.Market
-	31, // 22: hyperliquid_messages.PositionState.Position:type_name -> hyperliquid_messages.PerpPosition
-	11, // 23: hyperliquid_messages.PositionState.Margin:type_name -> hyperliquid_messages.PositionMargin
-	12, // 24: hyperliquid_messages.PositionState.Valuation:type_name -> hyperliquid_messages.PositionValuation
-	13, // 25: hyperliquid_messages.PositionState.CumFunding:type_name -> hyperliquid_messages.CumFunding
-	30, // 26: hyperliquid_messages.LeverageSetting.Trader:type_name -> hyperliquid_messages.Trader
-	29, // 27: hyperliquid_messages.LeverageSetting.Market:type_name -> hyperliquid_messages.Market
-	30, // 28: hyperliquid_messages.OrderState.Trader:type_name -> hyperliquid_messages.Trader
-	29, // 29: hyperliquid_messages.OrderState.Market:type_name -> hyperliquid_messages.Market
-	16, // 30: hyperliquid_messages.OrderState.Trailing:type_name -> hyperliquid_messages.TrailingStop
-	30, // 31: hyperliquid_messages.BalanceState.Trader:type_name -> hyperliquid_messages.Trader
-	19, // 32: hyperliquid_messages.EarnReserveState.RateModel:type_name -> hyperliquid_messages.EarnRateModel
-	30, // 33: hyperliquid_messages.EarnPositionState.Trader:type_name -> hyperliquid_messages.Trader
-	21, // 34: hyperliquid_messages.EarnPositionState.Supply:type_name -> hyperliquid_messages.EarnAmount
-	21, // 35: hyperliquid_messages.EarnPositionState.Borrow:type_name -> hyperliquid_messages.EarnAmount
-	23, // 36: hyperliquid_messages.VaultState.Terms:type_name -> hyperliquid_messages.VaultTerms
-	24, // 37: hyperliquid_messages.VaultState.Relationship:type_name -> hyperliquid_messages.VaultRelationship
-	25, // 38: hyperliquid_messages.VaultState.Summary:type_name -> hyperliquid_messages.VaultSummary
-	30, // 39: hyperliquid_messages.VaultFollowerState.Trader:type_name -> hyperliquid_messages.Trader
-	27, // 40: hyperliquid_messages.VaultFollowerState.Share:type_name -> hyperliquid_messages.VaultShare
-	28, // 41: hyperliquid_messages.VaultFollowerState.Times:type_name -> hyperliquid_messages.VaultFollowTimes
-	42, // [42:42] is the sub-list for method output_type
-	42, // [42:42] is the sub-list for method input_type
-	42, // [42:42] is the sub-list for extension type_name
-	42, // [42:42] is the sub-list for extension extendee
-	0,  // [0:42] is the sub-list for field type_name
+	6,  // 10: hyperliquid_messages.HyperliquidSnapshotMessage.OutcomeTemplates:type_name -> hyperliquid_messages.OutcomeTemplate
+	29, // 11: hyperliquid_messages.MarketState.Market:type_name -> hyperliquid_messages.Market
+	2,  // 12: hyperliquid_messages.MarketState.Margin:type_name -> hyperliquid_messages.MarketMargin
+	4,  // 13: hyperliquid_messages.MarketState.Prices:type_name -> hyperliquid_messages.MarketPrices
+	5,  // 14: hyperliquid_messages.MarketState.Book:type_name -> hyperliquid_messages.MarketBook
+	30, // 15: hyperliquid_messages.MarketState.Outcome:type_name -> hyperliquid_messages.MarketOutcome
+	3,  // 16: hyperliquid_messages.MarketMargin.Tiers:type_name -> hyperliquid_messages.MarginTier
+	7,  // 17: hyperliquid_messages.OutcomeTemplate.Keywords:type_name -> hyperliquid_messages.OutcomeTemplateKeyword
+	31, // 18: hyperliquid_messages.AccountState.Trader:type_name -> hyperliquid_messages.Trader
+	9,  // 19: hyperliquid_messages.AccountState.Total:type_name -> hyperliquid_messages.MarginSummary
+	9,  // 20: hyperliquid_messages.AccountState.Cross:type_name -> hyperliquid_messages.MarginSummary
+	31, // 21: hyperliquid_messages.PositionState.Trader:type_name -> hyperliquid_messages.Trader
+	29, // 22: hyperliquid_messages.PositionState.Market:type_name -> hyperliquid_messages.Market
+	32, // 23: hyperliquid_messages.PositionState.Position:type_name -> hyperliquid_messages.PerpPosition
+	11, // 24: hyperliquid_messages.PositionState.Margin:type_name -> hyperliquid_messages.PositionMargin
+	12, // 25: hyperliquid_messages.PositionState.Valuation:type_name -> hyperliquid_messages.PositionValuation
+	13, // 26: hyperliquid_messages.PositionState.CumFunding:type_name -> hyperliquid_messages.CumFunding
+	31, // 27: hyperliquid_messages.LeverageSetting.Trader:type_name -> hyperliquid_messages.Trader
+	29, // 28: hyperliquid_messages.LeverageSetting.Market:type_name -> hyperliquid_messages.Market
+	31, // 29: hyperliquid_messages.OrderState.Trader:type_name -> hyperliquid_messages.Trader
+	29, // 30: hyperliquid_messages.OrderState.Market:type_name -> hyperliquid_messages.Market
+	16, // 31: hyperliquid_messages.OrderState.Trailing:type_name -> hyperliquid_messages.TrailingStop
+	31, // 32: hyperliquid_messages.BalanceState.Trader:type_name -> hyperliquid_messages.Trader
+	19, // 33: hyperliquid_messages.EarnReserveState.RateModel:type_name -> hyperliquid_messages.EarnRateModel
+	31, // 34: hyperliquid_messages.EarnPositionState.Trader:type_name -> hyperliquid_messages.Trader
+	21, // 35: hyperliquid_messages.EarnPositionState.Supply:type_name -> hyperliquid_messages.EarnAmount
+	21, // 36: hyperliquid_messages.EarnPositionState.Borrow:type_name -> hyperliquid_messages.EarnAmount
+	23, // 37: hyperliquid_messages.VaultState.Terms:type_name -> hyperliquid_messages.VaultTerms
+	24, // 38: hyperliquid_messages.VaultState.Relationship:type_name -> hyperliquid_messages.VaultRelationship
+	25, // 39: hyperliquid_messages.VaultState.Summary:type_name -> hyperliquid_messages.VaultSummary
+	31, // 40: hyperliquid_messages.VaultFollowerState.Trader:type_name -> hyperliquid_messages.Trader
+	27, // 41: hyperliquid_messages.VaultFollowerState.Share:type_name -> hyperliquid_messages.VaultShare
+	28, // 42: hyperliquid_messages.VaultFollowerState.Times:type_name -> hyperliquid_messages.VaultFollowTimes
+	43, // [43:43] is the sub-list for method output_type
+	43, // [43:43] is the sub-list for method input_type
+	43, // [43:43] is the sub-list for extension type_name
+	43, // [43:43] is the sub-list for extension extendee
+	0,  // [0:43] is the sub-list for field type_name
 }
 
 func init() { file_hyperliquid_hyperliquid_snapshot_message_proto_init() }
@@ -2910,6 +2913,7 @@ func file_hyperliquid_hyperliquid_snapshot_message_proto_init() {
 		return
 	}
 	file_hyperliquid_hyperliquid_block_message_proto_init()
+	file_hyperliquid_hyperliquid_snapshot_message_proto_msgTypes[0].OneofWrappers = []any{}
 	file_hyperliquid_hyperliquid_snapshot_message_proto_msgTypes[14].OneofWrappers = []any{}
 	file_hyperliquid_hyperliquid_snapshot_message_proto_msgTypes[15].OneofWrappers = []any{}
 	type x struct{}

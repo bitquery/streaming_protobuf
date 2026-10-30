@@ -17,10 +17,10 @@ package hyperliquid_messages;
 import "hyperliquid/hyperliquid_block_message.proto"; // for the shared Trader, Market and PerpPosition
 
 
-// ONE snapshot = Parts messages (each ≤ ~1 MB) sharing BlockNumber and BlockTime. Rows are cut into parts in
-// list order (Markets, Accounts, Positions, LeverageSettings, Orders, Balances, EarnReserves, EarnPositions,
-// Vaults, VaultFollowers); a part may carry rows of several lists, every row is in exactly one part. A snapshot never changes, so a
-// re-delivered part is identical: dedup on (BlockNumber, Part).
+// ONE snapshot = Parts messages (each ≤ ~1 MB) sharing BlockNumber, BlockTime and the outcome counters. Rows are
+// cut into parts in list order (Markets, OutcomeTemplates, Accounts, Positions, LeverageSettings, Orders, Balances,
+// EarnReserves, EarnPositions, Vaults, VaultFollowers); a part may carry rows of several lists, every row is in
+// exactly one part. A snapshot never changes, so a re-delivered part is identical: dedup on (BlockNumber, Part).
 message HyperliquidSnapshotMessage {
   uint64 BlockNumber = 1; // snapshot height (exchange.locus.ctx.height), a multiple of 10,000
   int64  BlockTime   = 2; // epoch ns (ctx.time) — that block's consensus time, as in the block stream
@@ -43,6 +43,13 @@ message HyperliquidSnapshotMessage {
   // (c_staking), sub-accounts (sub_account_tracker), agents (agent_tracker), fee tracking (locus.ftr).
   repeated EarnReserveState   EarnReserves     = 18; // every token of Earn, the borrow / lend pool
   repeated EarnPositionState  EarnPositions    = 19; // per (account, token) with a supply or a borrow
+
+  // scl.meta.outr nou / nqu: the ids the next outcome and the next question will get. outcomeDeploy and the
+  // validators' votes hand them out one by one in block order; a settled outcome leaves Markets and its id stays
+  // spent, so the largest id listed is not the counter. On every part; null when the snapshot has no outr.
+  optional uint32 NextOutcomeId  = 20;
+  optional uint32 NextQuestionId = 21;
+  repeated OutcomeTemplate OutcomeTemplates = 22; // every outcome template (scl.meta.outr.tem.ntt)
 }
 
 
@@ -50,7 +57,7 @@ message HyperliquidSnapshotMessage {
 
 // MarketState ← perp: exchange.locus.cls[dex].meta.universe[i]; spot/outcome: exchange.locus.scl.meta.spot_infos[i];
 // the book from exchange.perp_dexs[dex].books[i] / exchange.spot_books[i]. Margin, Prices and the open interest
-// are perp-only and stay empty on spot and outcome markets; Outcome is set on outcome markets only.
+// are perp-only and stay empty on spot and outcome markets; Market.Outcome is set on outcome markets only.
 message MarketState {
   Market          Market     = 1;
   uint32          AssetId    = 2; // asset id of exchange actions: perp i, HIP-3 100000 + dex*10000 + i, spot 10000 + i, outcome 100000000 + encoding (CoinRaw "#<encoding>")
@@ -63,7 +70,9 @@ message MarketState {
   uint32 Positions    = 8; // computed: open positions in this market
   bool   IsHalted     = 9;
 
-  MarketOutcome Outcome = 10; // prediction (outcome) markets only
+  // The same as Market.Outcome, which every snapshot row of an outcome market carries now; kept while gateways
+  // before Market { Outcome } read it, then reserved.
+  MarketOutcome Outcome = 10;
 }
 
 // ← cls[dex].meta: universe[i].marginMode, collateralTokenName, marginTableIdToMarginTable.
@@ -101,27 +110,22 @@ message MarketBook {
   uint32 Orders      = 4; // computed: orders resting in the book (OrderState rows with IsTrigger = false)
 }
 
-// One side of a prediction market ← exchange.locus.scl.meta.outr: ots[OutcomeId] and the question it belongs to,
-// qts[QuestionId] — the same as the info API outcomeMeta outcomes[] / questions[]. An outcome has two sides,
-// each its own market: encoding = 10 × OutcomeId + Side, CoinRaw "#<encoding>", token "+<encoding>"; the price
-// of a side (MarketBook) reads as its probability, 0..1.
-message MarketOutcome {
-  uint32 OutcomeId   = 1;
-  uint32 Side        = 2; // 0 | 1
-  string SideName    = 3; // sideSpecs[Side].name: "Yes" | "No" | …
-  string SiblingCoin = 4; // the other side of the same outcome: "#<encoding XOR 1>"
-  string Name        = 5; // e.g. "template:sportsTournamentParticipant"
-  string Description = 6; // "key:value|key:value" as published, e.g. "participant:Oklahoma City Thunder"
-  OutcomeQuestion Question = 7; // empty when the outcome stands alone
+// OutcomeTemplate ← scl.meta.outr.tem.ntt[] — the info API outcomeTemplates: what outcomeDeploy makes an outcome or
+// a question from. Its outcomes and questions are named "template:<Id>" and carry the keyword values in their
+// Description ("key:value|…"); a standalone outcome's sides are named "template:<side name>".
+message OutcomeTemplate {
+  string          Id          = 1; // e.g. "binaryPrice"
+  string          Role        = 2; // "standaloneOutcome" | "question" | "questionOutcome"
+  repeated string SideNames   = 3; // standaloneOutcome: "Yes", "No" | "Over", "Under" | "{shortNameA}", "{shortNameB}" | …
+  string          Parent      = 4; // questionOutcome: the question template it answers, e.g. "sportsContestResult"
+  string          Name        = 5; // with {keyword} places: "{perp} above {threshold} at {time}?"
+  string          Description = 6; // the resolution rules, with {keyword} places
+  repeated OutcomeTemplateKeyword Keywords = 7;
 }
 
-// A question groups several outcomes, one per answer (questions[].namedOutcomes), plus a fallback ("other").
-message OutcomeQuestion {
-  uint32 QuestionId  = 1;
-  string Name        = 2; // e.g. "template:sportsContestResult"
-  string Description = 3; // "key:value|…" as published: competition, participants, resolution deadline, …
-  bool   IsFallback  = 4; // this outcome is the question's fallback (fallbackOutcome)
-  bool   IsSettled   = 5; // this outcome is already settled (settledNamedOutcomes)
+message OutcomeTemplateKeyword {
+  string Name = 1; // e.g. "threshold"
+  string Type = 2; // "string" | "shortString" | "dateTime" | "uDecimal" | "uInt" | "hlPerp" | …
 }
 
 

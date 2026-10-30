@@ -339,6 +339,27 @@ Reused across the lists above.
 | `CoinRaw` | string | raw coin id: `"HYPE"`, `"xyz:NFLX"`, `"@107"`, `"#1890"` |
 | `IsPerp` | bool | `true` for perp + hip3 (full object set); `false` for spot / outcome — **filter on this** |
 | `MaxLeverage` | uint32 | max leverage for the perp market (info-API meta); `0` = unknown / spot / outcome |
+| `Outcome` | MarketOutcome | outcome markets only: the side, its outcome and question as of the event or snapshot (§7.3); empty when not known |
+
+`Market.Outcome` is the same `MarketOutcome` as in the snapshots. `OutcomeId`, `Side` and `SiblingCoin` come
+from `CoinRaw` itself and are always there; the names come from the latest snapshot with the accepted
+`outcomeDeploy` actions and validator votes of every block after it applied in block order, numbered from
+the snapshot's `NextOutcomeId` / `NextQuestionId`. An outcome deployed after a block the processor did not
+get has its names empty until the next snapshot — never another outcome's.
+
+The titles are the display names a deployer's template gives (HIP-4): `Title` is the template's name text with
+its `{keyword}` places filled from `Description` (`key:value|…`), `SideTitle` the side's (`template:{shortNameA}` → `Browns`, `template:Yes` → `Yes`, a
+question's outcomes `Yes` / `No`), `Question.Title` the question template's name filled from the question's
+`Description`. A keyword the template types `dateTime` goes in as `YYYY-MM-DD HH:MM UTC` (`20261028-0600` →
+`2026-10-28 06:00 UTC`; with seconds `YYYYMMDD-HHMMSS` → `YYYY-MM-DD HH:MM:SS UTC`; a date alone `YYYYMMDD` →
+`YYYY-MM-DD`; any other form, or no real date, as the node keeps it); every other value — numbers, strings — as the
+node keeps it, and the raw `Description` stays untouched. The validators' `Recurring` outcomes have no template and
+are titled by their class (their `expiry` formatted the same way):
+`priceBinary` — `{underlying} above {targetPrice} at {expiry}?` (Yes when the price at expiry is at or above
+`targetPrice`); a `priceBucket` question — `{underlying} at {expiry}`, its outcomes `index:0` … `index:n` by
+`priceThresholds` `t1,…,tn`: `below t1`, `t1–t2`, …, `tn or above`. A question's fallback (`template fallback` /
+`Recurring Fallback`, description `other`) is `Other`. A title the processor cannot fill — a template it has
+not seen in a snapshot yet, a keyword the description lacks, a class it does not know — is empty.
 
 **`PerpPosition`** — the trader's position **as of** the event. Only realtime fields are
 present; the snapshot fields (collateral, liquidation price, unrealized PnL) are **absent**
@@ -646,11 +667,13 @@ archived files, so they cannot disagree.
 | `EarnPositions` | repeated EarnPositionState | per (account, token) with a supply or a borrow in Earn (§7.8) |
 | `Vaults` | repeated VaultState | every vault (§7.7) |
 | `VaultFollowers` | repeated VaultFollowerState | per (vault, depositor), leader included (§7.7) |
+| `NextOutcomeId` / `NextQuestionId` | optional uint32 | `scl.meta.outr.nou` / `.nqu`: the ids the next outcome and question will get; null when the snapshot has no `outr` (§7.3) |
+| `OutcomeTemplates` | repeated OutcomeTemplate | every outcome template, `scl.meta.outr.tem.ntt` (§7.3) |
 
 A snapshot is far larger than one message (hundreds of MB), so it is cut into `Parts`
-messages of ≤ ~1 MB with the same `BlockNumber`/`BlockTime`. Rows go into parts in list order
-(`Markets`, `Accounts`, `Positions`, `LeverageSettings`, `Orders`, `Balances`, `EarnReserves`,
-`EarnPositions`, `Vaults`, `VaultFollowers`); a part may carry rows of several lists, and every
+messages of ≤ ~1 MB with the same `BlockNumber`/`BlockTime` and outcome counters. Rows go into
+parts in list order (`Markets`, `OutcomeTemplates`, `Accounts`, `Positions`, `LeverageSettings`,
+`Orders`, `Balances`, `EarnReserves`, `EarnPositions`, `Vaults`, `VaultFollowers`); a part may carry rows of several lists, and every
 row is in exactly one part. A snapshot never changes, so a re-delivered part is identical — unlike block messages
 (§9), **deduplicating on `(BlockNumber, Part)` is safe**. The snapshot is whole once all parts
 `1..Parts` have arrived.
@@ -758,7 +781,8 @@ Source: perp — `exchange.locus.cls[dex].meta.universe[i]`, `.meta.marginTableI
 `exchange.locus.scl.meta.spot_infos[i]` / `token_infos`, prediction markets also
 `scl.meta.outr`; the book from `exchange.perp_dexs[dex].books[i]` / `exchange.spot_books[i]`.
 `Margin`, `Prices` and the open interest are perp-only and stay empty on spot and outcome
-markets; `Outcome` is set on outcome markets only.
+markets. Every row of an outcome market — `MarketState`, `OrderState` — carries `Market.Outcome`, as the
+event rows do.
 
 | Field | Type | Description |
 |---|---|---|
@@ -771,7 +795,7 @@ markets; `Outcome` is set on outcome markets only.
 | `OpenInterest` | string | one side, in coins (info API `openInterest`) |
 | `Positions` | uint32 | *computed*: open positions in the market |
 | `IsHalted` | bool | trading halted |
-| `Outcome` | MarketOutcome | prediction (outcome) markets only: the question and the side |
+| `Outcome` | MarketOutcome | the same as `Market.Outcome`; kept while gateways move to `Market { Outcome }`, then reserved |
 
 **`MarketMargin`:**
 
@@ -830,6 +854,8 @@ in its `Book` reads as the probability, 0..1.
 | `Name` | string | outcome name, e.g. `"template:sportsTournamentParticipant"` |
 | `Description` | string | `key:value\|key:value` as published, e.g. `"participant:Oklahoma City Thunder"` |
 | `Question` | OutcomeQuestion | the question the outcome answers; empty when it stands alone |
+| `Title` | string | display name (§5.2): `"BTC above 79850 at 2026-10-27 12:00 UTC?"`, `"Arsenal"`, `"Other"` |
+| `SideTitle` | string | the side's display name: `"Yes"` \| `"No"` \| `"Browns"` |
 
 **`OutcomeQuestion`** — a question groups several outcomes, one per answer
 (`namedOutcomes`), plus a fallback ("other"):
@@ -841,6 +867,27 @@ in its `Book` reads as the probability, 0..1.
 | `Description` | string | `key:value\|…` as published: competition, participants, resolution deadline, … |
 | `IsFallback` | bool | this outcome is the question's `fallbackOutcome` |
 | `IsSettled` | bool | this outcome is in `settledNamedOutcomes` |
+| `Title` | string | the question's display name: `"2026/2027 English Premier League winner"`, `"BTC at 2026-10-30 06:00 UTC"` |
+
+**Outcome counters.** `outcomeDeploy` and the validators' votes give each new outcome the id
+`NextOutcomeId` and each new question `NextQuestionId`, one after another in block order. A settled
+outcome leaves the snapshot and its id stays spent, so the largest id listed is not the counter.
+
+**`OutcomeTemplate`** — `scl.meta.outr.tem.ntt[]`, the info API `outcomeTemplates`: what an
+outcome or a question is deployed from. Outcomes and questions made from a template are named
+`template:<Id>` and carry its keyword values in `Description` (`key:value|…`); a standalone
+outcome's sides are `template:<side name>` (`template:Yes`). Outcomes the validators vote in
+(`Recurring`, `Recurring Named Outcome`, `Recurring Fallback`) have no template.
+
+| Field | Type | Description |
+|---|---|---|
+| `Id` | string | template id, e.g. `"binaryPrice"` |
+| `Role` | string | `"standaloneOutcome"` \| `"question"` \| `"questionOutcome"` |
+| `SideNames` | repeated string | `standaloneOutcome`: the two sides — `"Yes"`, `"No"`; `"Over"`, `"Under"`; `"{shortNameA}"`, `"{shortNameB}"` |
+| `Parent` | string | `questionOutcome`: the question template it answers, e.g. `"sportsContestResult"` |
+| `Name` | string | with `{keyword}` places: `"{perp} above {threshold} at {time}?"` |
+| `Description` | string | the resolution rules, with `{keyword}` places |
+| `Keywords` | repeated OutcomeTemplateKeyword | `Name` and `Type` of each keyword: `"threshold"`, `"uDecimal"` |
 
 ### 7.4 Accounts and positions (`AccountState`, `PositionState`)
 
