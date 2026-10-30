@@ -804,7 +804,7 @@ event rows do.
 | `Margin` | MarketMargin | margin mode, collateral, tiers |
 | `Prices` | MarketPrices | oracle, mark and external perp prices |
 | `Book` | MarketBook | top of the book |
-| `OpenInterest` | string | one side, in coins (info API `openInterest`) |
+| `OpenInterest` | string | longs plus shorts, in coins: the sum of every position's absolute size, twice one side (`asset_to_oi_szi`) |
 | `Positions` | uint32 | *computed*: open positions in the market |
 | `IsHalted` | bool | trading halted |
 | `Outcome` | MarketOutcome | the same as `Market.Outcome`; kept while gateways move to `Market { Outcome }`, then reserved |

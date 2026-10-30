@@ -225,7 +225,7 @@ type MarketState struct {
 	Margin       *MarketMargin          `protobuf:"bytes,4,opt,name=Margin,proto3" json:"Margin,omitempty"`
 	Prices       *MarketPrices          `protobuf:"bytes,5,opt,name=Prices,proto3" json:"Prices,omitempty"`
 	Book         *MarketBook            `protobuf:"bytes,6,opt,name=Book,proto3" json:"Book,omitempty"`
-	OpenInterest string                 `protobuf:"bytes,7,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"` // one side, in coins (info API openInterest)
+	OpenInterest string                 `protobuf:"bytes,7,opt,name=OpenInterest,proto3" json:"OpenInterest,omitempty"` // longs plus shorts, in coins: the sum of every position's absolute size, twice one side (asset_to_oi_szi)
 	Positions    uint32                 `protobuf:"varint,8,opt,name=Positions,proto3" json:"Positions,omitempty"`      // computed: open positions in this market
 	IsHalted     bool                   `protobuf:"varint,9,opt,name=IsHalted,proto3" json:"IsHalted,omitempty"`
 	// The same as Market.Outcome, which every snapshot row of an outcome market carries now; kept while gateways

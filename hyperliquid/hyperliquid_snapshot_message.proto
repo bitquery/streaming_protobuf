@@ -66,7 +66,7 @@ message MarketState {
   MarketPrices    Prices     = 5;
   MarketBook      Book       = 6;
 
-  string OpenInterest = 7; // one side, in coins (info API openInterest)
+  string OpenInterest = 7; // longs plus shorts, in coins: the sum of every position's absolute size, twice one side (asset_to_oi_szi)
   uint32 Positions    = 8; // computed: open positions in this market
   bool   IsHalted     = 9;
 
