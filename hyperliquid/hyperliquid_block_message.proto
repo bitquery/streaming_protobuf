@@ -34,21 +34,21 @@ message HyperliquidCoreBlockMessage {
 
 
 message Trader {
-  string Address     = 1;
-  string Signer      = 2; // signing agent (ecrecover)
-  string Vault       = 3;
-  string Broadcaster = 4;
-  int64  SignedAt    = 5; // epoch ms
+  string         Address     = 1;
+  string         Signer      = 2; // signing agent (ecrecover)
+  string         Vault       = 3;
+  string         Broadcaster = 4;
+  optional int64 SignedAt    = 5; // epoch ms, with the Signer; null when the signing action is not known
 }
 
 message Market {
-  string Symbol      = 1;
-  string Kind        = 2; // "perp" | "hip3" | "spot" | "outcome"
-  string Protocol    = 3; // "hypercore" native, else HIP-3 dex
-  string CoinRaw     = 4; // "HYPE", "xyz:NFLX", "@107", "#1890"
-  bool   IsPerp      = 5; // true for perp+hip3 (full object set), false for spot/outcome — filter on this
-  uint32 MaxLeverage = 6; // max leverage for the perp market (info-API meta); 0 = unknown / spot/outcome
-  MarketOutcome Outcome = 7; // outcome markets only: the side, its outcome and question as of the event or snapshot; empty when not known
+  string          Symbol      = 1;
+  string          Kind        = 2; // "perp" | "hip3" | "spot" | "outcome"
+  string          Protocol    = 3; // "hypercore" native, else HIP-3 dex
+  string          CoinRaw     = 4; // "HYPE", "xyz:NFLX", "@107", "#1890"
+  bool            IsPerp      = 5; // true for perp+hip3 (full object set), false for spot/outcome — filter on this
+  optional uint32 MaxLeverage = 6; // perp markets: the market's maximum as of the event (node snapshots + events); null on spot and outcome, or when not known
+  MarketOutcome   Outcome     = 7; // outcome markets only: the side, its outcome and question as of the event or snapshot; empty when not known
 }
 
 // One side of a prediction market ← exchange.locus.scl.meta.outr: ots[OutcomeId] and the question it belongs to,
@@ -86,17 +86,18 @@ message OutcomeQuestion {
 
 // The trader's position AS OF this event — realtime fields come straight from the stream; the
 // snapshot fields (Collateral/LiquidationPx/UnrealizedPnl) are intentionally absent here because
-// HL only exposes them in a snapshot/API, not the realtime feed. Empty = source silent, NOT zero.
+// HL only exposes them in a snapshot/API, not the realtime feed. Empty = source silent, NOT zero; an
+// `optional` number or flag is null when not known, never 0.
 message PerpPosition {
-  string Side        = 1; // "Long" | "Short"
-  string Size        = 2; // signed, AFTER this execution (Trade, PerpLiquidation); spot: base-token balance net of a fee charged in that token; empty on order and book events
-  string SizeBefore  = 3;
-  string EntryPrice  = 4; // empty if opened pre-window
-  string RealizedPnl = 5;
-  string Funding     = 6; // signed
-  uint32 Leverage    = 7; // 0 = not yet in map, NOT 1x
-  bool   IsCross     = 8;
-  bool   Closed      = 9;
+  string          Side        = 1; // "Long" | "Short"
+  string          Size        = 2; // signed, AFTER this execution (Trade, PerpLiquidation); spot: base-token balance net of a fee charged in that token; empty on order and book events
+  string          SizeBefore  = 3;
+  string          EntryPrice  = 4; // perp Trade, PerpLiquidation: the average entry price AFTER this execution, from the latest node snapshot carried through every execution since; empty when the position closed, is not known, or the processor could not prove every execution before it in (realtime: the ingesters' message chains)
+  string          RealizedPnl = 5;
+  string          Funding     = 6; // signed
+  optional uint32 Leverage    = 7; // perp markets: the leverage the position trades at; null when not known, never 0
+  optional bool   IsCross     = 8; // null when not known (NOT isolated)
+  bool            Closed      = 9;
 }
 
 // Money charged/credited on an execution. Reused by Trade and PerpLiquidation (only executions
@@ -136,7 +137,10 @@ message Trade {
   Fees         Fees      = 4;
   PerpPosition Position  = 5;
 
-  string MarkPx  = 6; // empty if no oracle republish this block
+  // 6 was MarkPx: a mark the processor worked out, not the node's — the dexes' marks are price_updates, the snapshots'
+  // Prices.MarkPx and Liquidation.MarkPx.
+  reserved 6;
+  reserved "MarkPx";
   string Builder = 7; // builder address (usually empty)
 
   bool   IsTwap  = 8;

@@ -327,7 +327,7 @@ Reused across the lists above.
 | `Signer` | string | signing agent (recovered via ecrecover) |
 | `Vault` | string | vault address, when acting for one |
 | `Broadcaster` | string | node/relay that broadcast the action |
-| `SignedAt` | int64 | signing time, epoch **ms** |
+| `SignedAt` | optional int64 | signing time, epoch **ms**, with the `Signer`; null when the signing action is not known |
 
 **`Market`** — the resolved market (from `CoinRaw`, §4):
 
@@ -338,7 +338,7 @@ Reused across the lists above.
 | `Protocol` | string | `"hypercore"` (native), else the HIP-3 dex namespace |
 | `CoinRaw` | string | raw coin id: `"HYPE"`, `"xyz:NFLX"`, `"@107"`, `"#1890"` |
 | `IsPerp` | bool | `true` for perp + hip3 (full object set); `false` for spot / outcome — **filter on this** |
-| `MaxLeverage` | uint32 | max leverage for the perp market (info-API meta); `0` = unknown / spot / outcome |
+| `MaxLeverage` | optional uint32 | perp markets: the market's maximum leverage as of the event (node snapshots and the events after them); null on spot and outcome markets, or when not known |
 | `Outcome` | MarketOutcome | outcome markets only: the side, its outcome and question as of the event or snapshot (§7.3); empty when not known |
 
 `Market.Outcome` is the same `MarketOutcome` as in the snapshots. `OutcomeId`, `Side` and `SiblingCoin` come
@@ -383,12 +383,26 @@ silent, NOT zero.**
 | `Side` | string | `"Long"` \| `"Short"` |
 | `Size` | string | signed size **after** this execution (`Trade`, `PerpLiquidation`); for spot, the base-token balance net of a fee charged in that token; empty on order and book events |
 | `SizeBefore` | string | size before this event |
-| `EntryPrice` | string | empty if the position was opened before the window |
+| `EntryPrice` | string | perp `Trade` / `PerpLiquidation`: the average entry price **after** this execution (below); empty once the position closed, when not known, and on other events |
 | `RealizedPnl` | string | realized PnL |
 | `Funding` | string | signed |
-| `Leverage` | uint32 | `0` = not yet in the leverage map (**NOT** 1×) |
-| `IsCross` | bool | cross vs isolated |
+| `Leverage` | optional uint32 | perp markets: the leverage the position trades at; null when not known — never 0 |
+| `IsCross` | optional bool | cross vs isolated; null when not known (**not** isolated) |
 | `Closed` | bool | position closed by this event |
+
+`optional` fields are null when not known, never `0`: a leverage of 0, a maximum of 0 or `IsCross = false` would
+read as a value (`false` as isolated).
+
+**Entry price.** The processor keeps every open perp position as the node does — its signed size in units of the
+market's size decimals and its entry notional in µUSD — from the latest node snapshot, and carries it through every
+execution after it (trades and liquidations) in block and `Execution.Index` order: an execution that opens or grows
+the position adds `Price × Size`; one that shrinks it keeps the entry price (the notional becomes
+`floor(notional × (|size after| / |size before|))`, the ratio in float64 as the node computes it); one that turns it
+over opens the rest at its price; one that closes it leaves no position. `EntryPrice` is `floor(notional / |size|)`
+with the market's price decimals (6 − size decimals), as the snapshot prints it. Measured on 30 consecutive snapshots,
+every open position: none differs. An execution whose size before it (`SizeBefore`, the node's `startPosition`) is not
+the size held — an execution not seen, or a change no execution shows — leaves `EntryPrice` empty until the next
+snapshot.
 
 **`Fees`** — money charged/credited on an execution (reused by `Trade` and
 `PerpLiquidation`; only executions carry fees). `BuilderFee` and `DeployerFee` are
@@ -436,7 +450,6 @@ the same `Execution` / `Fees` / `PerpPosition` objects plus four liquidation-onl
 | `Execution` | Execution | side / price / size / oid / tid / hash / … |
 | `Fees` | Fees | fee breakdown |
 | `Position` | PerpPosition | position as of the fill |
-| `MarkPx` | string | mark price; empty if no oracle republish this block |
 | `Builder` | string | builder address (usually empty) |
 | `IsTwap` | bool | this fill is part of a TWAP |
 | `TwapId` | uint64 | `0` when not a TWAP |
@@ -1267,6 +1280,27 @@ one block of one stream is either a single line or **many consecutive lines** �
 repeating the same envelope and carrying a slice of the block's events (*observed*: a
 single mainnet block spread over 3,782 order-status lines). The protobuf
 `HyperCoreBlock` always aggregates the whole block regardless of the node's write mode.
+
+A block without an event of a stream gives that stream no line, and so no message: a
+consumer cannot tell a block with no fills from one whose fills have not come yet. Each
+realtime message therefore says how its ingester sent it:
+
+| Field | Meaning |
+|---|---|
+| `Stream` | the node stream it carries (`fills`, `order_statuses`, `book_diffs`, `twap_statuses`, `core_writer_actions`, `oracle_updates`, `misc_events`) |
+| `PrevBlockNumber` | the stream's block before this one; set only when the node's block-times journals hold every height in between (so that a jump of the node does not pass for empty blocks); 0 when not known — a gap in the node's files, a line that does not decode, a start without a checkpoint, no journal |
+| `Closed` | the message holds the whole block of its stream — the stream's next block came |
+| `BlockEvents` | with `Closed`: the stream's events in the whole block |
+
+A message that is not `Closed` is a snapshot of a block still open (the stream quiet for
+2 s); the next block closes it with a message of the whole block, or, when the snapshot
+already held all of it, with a message of no events — which proves the block whole only
+together with a snapshot of `BlockEvents` events. A consumer that has every message of the
+`PrevBlockNumber` chain up to a block has every event of the stream up to it. Both
+ingesters send the same messages (no sender field), so the input deduplication keeps one;
+where they differ, a 0 is "not known" and the other's value stands, and two different
+non-zero values are a dispute that proves nothing. The archive's packs carry none of these
+fields.
 
 ---
 

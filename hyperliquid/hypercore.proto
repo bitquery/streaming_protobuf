@@ -21,6 +21,24 @@ message HyperCoreBlock {
   repeated OracleUpdate OracleUpdates     = 7;
   repeated MiscEvent    MiscEvents        = 8;
   repeated SystemAction CoreWriterActions = 9;
+
+  // How the ingester sent this message, so that a consumer can tell it has every message of a stream up to a block. A
+  // block without an event of a stream has no message of it; each message therefore names the stream's block before
+  // it. The two ingesters send the same messages, so that the input deduplication keeps one: there is no sender field.
+  // Unset in the archive's packs and in messages of an ingester before these.
+  string Stream          = 10; // the node stream the message carries: fills, order_statuses, book_diffs, …
+  reserved 11;                 // was Sender: the two ingesters' bodies must not differ
+  // The stream's block before this one: set only when the node's block-times journals hold every height in between,
+  // so that a jump of the node (a bootstrap after a panic) does not pass for blocks without events. 0: not known (a
+  // gap in the node's files, a line that does not decode, a start without a checkpoint, no journal).
+  uint64 PrevBlockNumber = 12;
+  // The message holds the whole block of its stream: the stream's next block came. False on a snapshot sent while the
+  // block was open; the stream's next block closes it with the whole block, or, when the snapshot held all of it, with
+  // a message of no events.
+  bool Closed = 13;
+  // With Closed: the stream's events in the whole block. A closing message of no events vouches only for a snapshot
+  // of this many: messages of one block are converted apart, and the snapshot may not be in yet.
+  uint32 BlockEvents = 14;
 }
 
 message HyperCoreBlocks {
