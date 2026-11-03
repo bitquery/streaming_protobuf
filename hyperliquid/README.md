@@ -383,7 +383,7 @@ silent, NOT zero.**
 | `Side` | string | `"Long"` \| `"Short"` |
 | `Size` | string | signed size **after** this execution (`Trade`, `PerpLiquidation`); for spot, the base-token balance net of a fee charged in that token; empty on order and book events |
 | `SizeBefore` | string | size before this event |
-| `EntryPrice` | string | perp `Trade` / `PerpLiquidation`: the average entry price **after** this execution (below); empty once the position closed, when not known, and on other events |
+| `EntryPrice` | string | perp `Trade` / `PerpLiquidation`: the average entry price **after** this execution (below); empty once the position closed, when not known or not proven (below), and on other events |
 | `RealizedPnl` | string | realized PnL |
 | `Funding` | string | signed |
 | `Leverage` | optional uint32 | perp markets: the leverage the position trades at; null when not known — never 0 |
@@ -402,7 +402,9 @@ over opens the rest at its price; one that closes it leaves no position. `EntryP
 with the market's price decimals (6 − size decimals), as the snapshot prints it. Measured on 30 consecutive snapshots,
 every open position: none differs. An execution whose size before it (`SizeBefore`, the node's `startPosition`) is not
 the size held — an execution not seen, or a change no execution shows — leaves `EntryPrice` empty until the next
-snapshot.
+snapshot. A matching size does not prove that no execution was missed, so a price is written only once every execution
+from that snapshot up to its block is in, as the fills stream's message chain proves it in realtime (§8); a row that
+cannot be proven is empty.
 
 **`Fees`** — money charged/credited on an execution (reused by `Trade` and
 `PerpLiquidation`; only executions carry fees). `BuilderFee` and `DeployerFee` are
@@ -1208,7 +1210,7 @@ rising hourly. Both lists ride every snapshot (5 tokens, ~17,000 positions, ~2 M
 | `MaxRate` | string | yearly borrow rate at full utilization (`y.a`), `1.0` |
 | `ProtocolShare` | string | share of the borrow interest the protocol keeps as a liquidation buffer (`r.p`), `0.1` |
 
-The yearly rates are not in the row — they follow from it, so ClickHouse / GraphQL compute
+The yearly rates are not in the row — they follow from it, so ClickHouse / GraphQL can compute
 them (as an `ALIAS`), and a change of Hyperliquid's formula needs no reprocessing:
 
 ```
@@ -1279,7 +1281,8 @@ Depending on the node's write flags (`--batch-by-block` vs `--stream-with-block-
 one block of one stream is either a single line or **many consecutive lines** — each
 repeating the same envelope and carrying a slice of the block's events (*observed*: a
 single mainnet block spread over 3,782 order-status lines). The protobuf
-`HyperCoreBlock` always aggregates the whole block regardless of the node's write mode.
+`HyperCoreBlock` aggregates those lines regardless of the node's write mode; the message that holds
+the whole block is the `Closed` one (below).
 
 A block without an event of a stream gives that stream no line, and so no message: a
 consumer cannot tell a block with no fills from one whose fills have not come yet. Each
@@ -1687,16 +1690,18 @@ unknown fields; parse at read time instead.
 
 For consumers of the Kafka / archive representation of these messages:
 
-1. A message covers **one (stream, block)** and is always a **full snapshot** from the
-   start of the block — never an increment.
+1. A message covers **one (stream, block)** and is a **full snapshot** from the
+   start of the block — never an increment — except a `Closed` message of no events (§8),
+   which adds nothing and replaces nothing.
 2. Delivery is **at-least-once**; a redelivery is a superset of what was seen; the last
-   version wins. **Deduplicating by block number alone is therefore forbidden** — a later
+   version with events wins. **Deduplicating by block number alone is therefore forbidden** — a later
    message for the same block may contain more events.
-3. Assembling all streams of one block is the consumer's job; there is no
-   "block complete" signal.
+3. Assembling all streams of one block is the consumer's job; per stream, the `Closed`
+   message and the `PrevBlockNumber` chain (§8) tell when it has the whole block.
 4. Archive objects pack exactly 1000 consecutive blocks; blocks that are empty in the
-   event streams still appear (with the real `BlockTime`) so every bucket holds 1000
-   entries.
+   event streams still appear (with the real `BlockTime`, from the node's block-times
+   journals), so a bucket the journals cover holds 1000 entries. A bucket that lacks
+   heights is packed as `<pack>.blocks.lz4.incomplete`, without them.
 
 Snapshots (§7) are the exception to 1–2: a snapshot is the state at one block, cut into
 `Parts` messages that never change, so a redelivered part is identical and
@@ -1709,7 +1714,10 @@ have arrived.
 
 * Go: `messages/*.pb.go` (package `hyperliquid_messages`), one file per proto — the product
   in `hyperliquid_block_message.pb.go`, `candles.pb.go` and `hyperliquid_snapshot_message.pb.go`
-* Python: `python/hyperliquid/*_pb2.py`, likewise (`hyperliquid_snapshot_message_pb2.py`)
+* Python: `python/hyperliquid/*_pb2.py`, likewise (`hyperliquid_snapshot_message_pb2.py`).
+  `perpetual_block_message_pb2.py` is not one of them: its `perpetual_block_message.proto`
+  (`PerpTradesBlockMessage` and the other per-kind messages) is not in this directory, so nothing
+  regenerates it; the product is `hyperliquid_block_message_pb2.py`
 * The protos carry no `option go_package`: every proto needs its own
   `--go_opt="Mhyperliquid/<file>.proto=hyperliquid/messages;hyperliquid_messages"` line in
   the root `Makefile`.
