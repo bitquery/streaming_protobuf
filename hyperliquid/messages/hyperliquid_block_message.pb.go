@@ -165,7 +165,7 @@ type Trader struct {
 	Signer        string                 `protobuf:"bytes,2,opt,name=Signer,proto3" json:"Signer,omitempty"` // signing agent (ecrecover)
 	Vault         string                 `protobuf:"bytes,3,opt,name=Vault,proto3" json:"Vault,omitempty"`
 	Broadcaster   string                 `protobuf:"bytes,4,opt,name=Broadcaster,proto3" json:"Broadcaster,omitempty"`
-	SignedAt      int64                  `protobuf:"varint,5,opt,name=SignedAt,proto3" json:"SignedAt,omitempty"` // epoch ms
+	SignedAt      *int64                 `protobuf:"varint,5,opt,name=SignedAt,proto3,oneof" json:"SignedAt,omitempty"` // epoch ms, with the Signer; null when the signing action is not known
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -229,8 +229,8 @@ func (x *Trader) GetBroadcaster() string {
 }
 
 func (x *Trader) GetSignedAt() int64 {
-	if x != nil {
-		return x.SignedAt
+	if x != nil && x.SignedAt != nil {
+		return *x.SignedAt
 	}
 	return 0
 }
@@ -238,12 +238,12 @@ func (x *Trader) GetSignedAt() int64 {
 type Market struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Symbol        string                 `protobuf:"bytes,1,opt,name=Symbol,proto3" json:"Symbol,omitempty"`
-	Kind          string                 `protobuf:"bytes,2,opt,name=Kind,proto3" json:"Kind,omitempty"`                // "perp" | "hip3" | "spot" | "outcome"
-	Protocol      string                 `protobuf:"bytes,3,opt,name=Protocol,proto3" json:"Protocol,omitempty"`        // "hypercore" native, else HIP-3 dex
-	CoinRaw       string                 `protobuf:"bytes,4,opt,name=CoinRaw,proto3" json:"CoinRaw,omitempty"`          // "HYPE", "xyz:NFLX", "@107", "#1890"
-	IsPerp        bool                   `protobuf:"varint,5,opt,name=IsPerp,proto3" json:"IsPerp,omitempty"`           // true for perp+hip3 (full object set), false for spot/outcome — filter on this
-	MaxLeverage   uint32                 `protobuf:"varint,6,opt,name=MaxLeverage,proto3" json:"MaxLeverage,omitempty"` // max leverage for the perp market (info-API meta); 0 = unknown / spot/outcome
-	Outcome       *MarketOutcome         `protobuf:"bytes,7,opt,name=Outcome,proto3" json:"Outcome,omitempty"`          // outcome markets only: the side, its outcome and question as of the event or snapshot; empty when not known
+	Kind          string                 `protobuf:"bytes,2,opt,name=Kind,proto3" json:"Kind,omitempty"`                      // "perp" | "hip3" | "spot" | "outcome"
+	Protocol      string                 `protobuf:"bytes,3,opt,name=Protocol,proto3" json:"Protocol,omitempty"`              // "hypercore" native, else HIP-3 dex
+	CoinRaw       string                 `protobuf:"bytes,4,opt,name=CoinRaw,proto3" json:"CoinRaw,omitempty"`                // "HYPE", "xyz:NFLX", "@107", "#1890"
+	IsPerp        bool                   `protobuf:"varint,5,opt,name=IsPerp,proto3" json:"IsPerp,omitempty"`                 // true for perp+hip3 (full object set), false for spot/outcome — filter on this
+	MaxLeverage   *uint32                `protobuf:"varint,6,opt,name=MaxLeverage,proto3,oneof" json:"MaxLeverage,omitempty"` // perp markets: the market's maximum as of the event (node snapshots + events); null on spot and outcome, or when not known
+	Outcome       *MarketOutcome         `protobuf:"bytes,7,opt,name=Outcome,proto3" json:"Outcome,omitempty"`                // outcome markets only: the side, its outcome and question as of the event or snapshot; empty when not known
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,8 +314,8 @@ func (x *Market) GetIsPerp() bool {
 }
 
 func (x *Market) GetMaxLeverage() uint32 {
-	if x != nil {
-		return x.MaxLeverage
+	if x != nil && x.MaxLeverage != nil {
+		return *x.MaxLeverage
 	}
 	return 0
 }
@@ -540,17 +540,18 @@ func (x *OutcomeQuestion) GetTitle() string {
 
 // The trader's position AS OF this event — realtime fields come straight from the stream; the
 // snapshot fields (Collateral/LiquidationPx/UnrealizedPnl) are intentionally absent here because
-// HL only exposes them in a snapshot/API, not the realtime feed. Empty = source silent, NOT zero.
+// HL only exposes them in a snapshot/API, not the realtime feed. Empty = source silent, NOT zero; an
+// `optional` number or flag is null when not known, never 0.
 type PerpPosition struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Side          string                 `protobuf:"bytes,1,opt,name=Side,proto3" json:"Side,omitempty"` // "Long" | "Short"
 	Size          string                 `protobuf:"bytes,2,opt,name=Size,proto3" json:"Size,omitempty"` // signed, AFTER this execution (Trade, PerpLiquidation); spot: base-token balance net of a fee charged in that token; empty on order and book events
 	SizeBefore    string                 `protobuf:"bytes,3,opt,name=SizeBefore,proto3" json:"SizeBefore,omitempty"`
-	EntryPrice    string                 `protobuf:"bytes,4,opt,name=EntryPrice,proto3" json:"EntryPrice,omitempty"` // empty if opened pre-window
+	EntryPrice    string                 `protobuf:"bytes,4,opt,name=EntryPrice,proto3" json:"EntryPrice,omitempty"` // perp Trade, PerpLiquidation: the average entry price AFTER this execution, from the latest node snapshot carried through every execution since; empty when the position closed, is not known, or the processor could not prove every execution before it in (realtime: the ingesters' message chains)
 	RealizedPnl   string                 `protobuf:"bytes,5,opt,name=RealizedPnl,proto3" json:"RealizedPnl,omitempty"`
-	Funding       string                 `protobuf:"bytes,6,opt,name=Funding,proto3" json:"Funding,omitempty"`    // signed
-	Leverage      uint32                 `protobuf:"varint,7,opt,name=Leverage,proto3" json:"Leverage,omitempty"` // 0 = not yet in map, NOT 1x
-	IsCross       bool                   `protobuf:"varint,8,opt,name=IsCross,proto3" json:"IsCross,omitempty"`
+	Funding       string                 `protobuf:"bytes,6,opt,name=Funding,proto3" json:"Funding,omitempty"`          // signed
+	Leverage      *uint32                `protobuf:"varint,7,opt,name=Leverage,proto3,oneof" json:"Leverage,omitempty"` // perp markets: the leverage the position trades at; null when not known, never 0
+	IsCross       *bool                  `protobuf:"varint,8,opt,name=IsCross,proto3,oneof" json:"IsCross,omitempty"`   // null when not known (NOT isolated)
 	Closed        bool                   `protobuf:"varint,9,opt,name=Closed,proto3" json:"Closed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -629,15 +630,15 @@ func (x *PerpPosition) GetFunding() string {
 }
 
 func (x *PerpPosition) GetLeverage() uint32 {
-	if x != nil {
-		return x.Leverage
+	if x != nil && x.Leverage != nil {
+		return *x.Leverage
 	}
 	return 0
 }
 
 func (x *PerpPosition) GetIsCross() bool {
-	if x != nil {
-		return x.IsCross
+	if x != nil && x.IsCross != nil {
+		return *x.IsCross
 	}
 	return false
 }
@@ -864,7 +865,6 @@ type Trade struct {
 	Execution     *Execution             `protobuf:"bytes,3,opt,name=Execution,proto3" json:"Execution,omitempty"`
 	Fees          *Fees                  `protobuf:"bytes,4,opt,name=Fees,proto3" json:"Fees,omitempty"`
 	Position      *PerpPosition          `protobuf:"bytes,5,opt,name=Position,proto3" json:"Position,omitempty"`
-	MarkPx        string                 `protobuf:"bytes,6,opt,name=MarkPx,proto3" json:"MarkPx,omitempty"`   // empty if no oracle republish this block
 	Builder       string                 `protobuf:"bytes,7,opt,name=Builder,proto3" json:"Builder,omitempty"` // builder address (usually empty)
 	IsTwap        bool                   `protobuf:"varint,8,opt,name=IsTwap,proto3" json:"IsTwap,omitempty"`
 	TwapId        uint64                 `protobuf:"varint,9,opt,name=TwapId,proto3" json:"TwapId,omitempty"` // 0 when not a TWAP
@@ -935,13 +935,6 @@ func (x *Trade) GetPosition() *PerpPosition {
 		return x.Position
 	}
 	return nil
-}
-
-func (x *Trade) GetMarkPx() string {
-	if x != nil {
-		return x.MarkPx
-	}
-	return ""
 }
 
 func (x *Trade) GetBuilder() string {
@@ -2313,21 +2306,23 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\x06Prices\x18\t \x03(\v2!.hyperliquid_messages.PriceUpdateR\x06Prices\x12T\n" +
 	"\x0fLeverageChanges\x18\n" +
 	" \x03(\v2*.hyperliquid_messages.TraderLeverageUpdateR\x0fLeverageChanges\x12M\n" +
-	"\rSignedActions\x18\v \x03(\v2'.hyperliquid_messages.SignedActionEventR\rSignedActions\"\x8e\x01\n" +
+	"\rSignedActions\x18\v \x03(\v2'.hyperliquid_messages.SignedActionEventR\rSignedActions\"\xa0\x01\n" +
 	"\x06Trader\x12\x18\n" +
 	"\aAddress\x18\x01 \x01(\tR\aAddress\x12\x16\n" +
 	"\x06Signer\x18\x02 \x01(\tR\x06Signer\x12\x14\n" +
 	"\x05Vault\x18\x03 \x01(\tR\x05Vault\x12 \n" +
-	"\vBroadcaster\x18\x04 \x01(\tR\vBroadcaster\x12\x1a\n" +
-	"\bSignedAt\x18\x05 \x01(\x03R\bSignedAt\"\xe3\x01\n" +
+	"\vBroadcaster\x18\x04 \x01(\tR\vBroadcaster\x12\x1f\n" +
+	"\bSignedAt\x18\x05 \x01(\x03H\x00R\bSignedAt\x88\x01\x01B\v\n" +
+	"\t_SignedAt\"\xf8\x01\n" +
 	"\x06Market\x12\x16\n" +
 	"\x06Symbol\x18\x01 \x01(\tR\x06Symbol\x12\x12\n" +
 	"\x04Kind\x18\x02 \x01(\tR\x04Kind\x12\x1a\n" +
 	"\bProtocol\x18\x03 \x01(\tR\bProtocol\x12\x18\n" +
 	"\aCoinRaw\x18\x04 \x01(\tR\aCoinRaw\x12\x16\n" +
-	"\x06IsPerp\x18\x05 \x01(\bR\x06IsPerp\x12 \n" +
-	"\vMaxLeverage\x18\x06 \x01(\rR\vMaxLeverage\x12=\n" +
-	"\aOutcome\x18\a \x01(\v2#.hyperliquid_messages.MarketOutcomeR\aOutcome\"\xc8\x02\n" +
+	"\x06IsPerp\x18\x05 \x01(\bR\x06IsPerp\x12%\n" +
+	"\vMaxLeverage\x18\x06 \x01(\rH\x00R\vMaxLeverage\x88\x01\x01\x12=\n" +
+	"\aOutcome\x18\a \x01(\v2#.hyperliquid_messages.MarketOutcomeR\aOutcomeB\x0e\n" +
+	"\f_MaxLeverage\"\xc8\x02\n" +
 	"\rMarketOutcome\x12\x1c\n" +
 	"\tOutcomeId\x18\x01 \x01(\rR\tOutcomeId\x12\x12\n" +
 	"\x04Side\x18\x02 \x01(\rR\x04Side\x12\x1a\n" +
@@ -2350,7 +2345,7 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"IsFallback\x18\x04 \x01(\bR\n" +
 	"IsFallback\x12\x1c\n" +
 	"\tIsSettled\x18\x05 \x01(\bR\tIsSettled\x12\x14\n" +
-	"\x05Title\x18\x06 \x01(\tR\x05Title\"\x80\x02\n" +
+	"\x05Title\x18\x06 \x01(\tR\x05Title\"\xa3\x02\n" +
 	"\fPerpPosition\x12\x12\n" +
 	"\x04Side\x18\x01 \x01(\tR\x04Side\x12\x12\n" +
 	"\x04Size\x18\x02 \x01(\tR\x04Size\x12\x1e\n" +
@@ -2361,10 +2356,13 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"EntryPrice\x18\x04 \x01(\tR\n" +
 	"EntryPrice\x12 \n" +
 	"\vRealizedPnl\x18\x05 \x01(\tR\vRealizedPnl\x12\x18\n" +
-	"\aFunding\x18\x06 \x01(\tR\aFunding\x12\x1a\n" +
-	"\bLeverage\x18\a \x01(\rR\bLeverage\x12\x18\n" +
-	"\aIsCross\x18\b \x01(\bR\aIsCross\x12\x16\n" +
-	"\x06Closed\x18\t \x01(\bR\x06Closed\"\x98\x01\n" +
+	"\aFunding\x18\x06 \x01(\tR\aFunding\x12\x1f\n" +
+	"\bLeverage\x18\a \x01(\rH\x00R\bLeverage\x88\x01\x01\x12\x1d\n" +
+	"\aIsCross\x18\b \x01(\bH\x01R\aIsCross\x88\x01\x01\x12\x16\n" +
+	"\x06Closed\x18\t \x01(\bR\x06ClosedB\v\n" +
+	"\t_LeverageB\n" +
+	"\n" +
+	"\b_IsCross\"\x98\x01\n" +
 	"\x04Fees\x12\x10\n" +
 	"\x03Fee\x18\x01 \x01(\tR\x03Fee\x12\x1a\n" +
 	"\bFeeToken\x18\x02 \x01(\tR\bFeeToken\x12\x1e\n" +
@@ -2385,17 +2383,16 @@ const file_hyperliquid_hyperliquid_block_message_proto_rawDesc = "" +
 	"\x04Hash\x18\t \x01(\tR\x04Hash\x12\x1c\n" +
 	"\tEventTime\x18\n" +
 	" \x01(\x03R\tEventTime\x12\x14\n" +
-	"\x05Index\x18\v \x01(\rR\x05Index\"\x84\x03\n" +
+	"\x05Index\x18\v \x01(\rR\x05Index\"\xfa\x02\n" +
 	"\x05Trade\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x124\n" +
 	"\x06Market\x18\x02 \x01(\v2\x1c.hyperliquid_messages.MarketR\x06Market\x12=\n" +
 	"\tExecution\x18\x03 \x01(\v2\x1f.hyperliquid_messages.ExecutionR\tExecution\x12.\n" +
 	"\x04Fees\x18\x04 \x01(\v2\x1a.hyperliquid_messages.FeesR\x04Fees\x12>\n" +
-	"\bPosition\x18\x05 \x01(\v2\".hyperliquid_messages.PerpPositionR\bPosition\x12\x16\n" +
-	"\x06MarkPx\x18\x06 \x01(\tR\x06MarkPx\x12\x18\n" +
+	"\bPosition\x18\x05 \x01(\v2\".hyperliquid_messages.PerpPositionR\bPosition\x12\x18\n" +
 	"\aBuilder\x18\a \x01(\tR\aBuilder\x12\x16\n" +
 	"\x06IsTwap\x18\b \x01(\bR\x06IsTwap\x12\x16\n" +
-	"\x06TwapId\x18\t \x01(\x04R\x06TwapId\"\xa4\x03\n" +
+	"\x06TwapId\x18\t \x01(\x04R\x06TwapIdJ\x04\b\x06\x10\aR\x06MarkPx\"\xa4\x03\n" +
 	"\x0fPerpLiquidation\x124\n" +
 	"\x06Trader\x18\x01 \x01(\v2\x1c.hyperliquid_messages.TraderR\x06Trader\x124\n" +
 	"\x06Market\x18\x02 \x01(\v2\x1c.hyperliquid_messages.MarketR\x06Market\x12=\n" +
@@ -2623,6 +2620,9 @@ func file_hyperliquid_hyperliquid_block_message_proto_init() {
 	if File_hyperliquid_hyperliquid_block_message_proto != nil {
 		return
 	}
+	file_hyperliquid_hyperliquid_block_message_proto_msgTypes[1].OneofWrappers = []any{}
+	file_hyperliquid_hyperliquid_block_message_proto_msgTypes[2].OneofWrappers = []any{}
+	file_hyperliquid_hyperliquid_block_message_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -32,8 +32,24 @@ type HyperCoreBlock struct {
 	OracleUpdates     []*OracleUpdate        `protobuf:"bytes,7,rep,name=OracleUpdates,proto3" json:"OracleUpdates,omitempty"`
 	MiscEvents        []*MiscEvent           `protobuf:"bytes,8,rep,name=MiscEvents,proto3" json:"MiscEvents,omitempty"`
 	CoreWriterActions []*SystemAction        `protobuf:"bytes,9,rep,name=CoreWriterActions,proto3" json:"CoreWriterActions,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// How the ingester sent this message, so that a consumer can tell it has every message of a stream up to a block. A
+	// block without an event of a stream has no message of it; each message therefore names the stream's block before
+	// it. The two ingesters send the same messages, so that the input deduplication keeps one: there is no sender field.
+	// Unset in the archive's packs and in messages of an ingester before these.
+	Stream string `protobuf:"bytes,10,opt,name=Stream,proto3" json:"Stream,omitempty"` // the node stream the message carries: fills, order_statuses, book_diffs, …
+	// The stream's block before this one: set only when the node's block-times journals hold every height in between,
+	// so that a jump of the node (a bootstrap after a panic) does not pass for blocks without events. 0: not known (a
+	// gap in the node's files, a line that does not decode, a start without a checkpoint, no journal).
+	PrevBlockNumber uint64 `protobuf:"varint,12,opt,name=PrevBlockNumber,proto3" json:"PrevBlockNumber,omitempty"`
+	// The message holds the whole block of its stream: the stream's next block came. False on a snapshot sent while the
+	// block was open; the stream's next block closes it with the whole block, or, when the snapshot held all of it, with
+	// a message of no events.
+	Closed bool `protobuf:"varint,13,opt,name=Closed,proto3" json:"Closed,omitempty"`
+	// With Closed: the stream's events in the whole block. A closing message of no events vouches only for a snapshot
+	// of this many: messages of one block are converted apart, and the snapshot may not be in yet.
+	BlockEvents   uint32 `protobuf:"varint,14,opt,name=BlockEvents,proto3" json:"BlockEvents,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HyperCoreBlock) Reset() {
@@ -129,6 +145,34 @@ func (x *HyperCoreBlock) GetCoreWriterActions() []*SystemAction {
 	return nil
 }
 
+func (x *HyperCoreBlock) GetStream() string {
+	if x != nil {
+		return x.Stream
+	}
+	return ""
+}
+
+func (x *HyperCoreBlock) GetPrevBlockNumber() uint64 {
+	if x != nil {
+		return x.PrevBlockNumber
+	}
+	return 0
+}
+
+func (x *HyperCoreBlock) GetClosed() bool {
+	if x != nil {
+		return x.Closed
+	}
+	return false
+}
+
+func (x *HyperCoreBlock) GetBlockEvents() uint32 {
+	if x != nil {
+		return x.BlockEvents
+	}
+	return 0
+}
+
 type HyperCoreBlocks struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Blocks        []*HyperCoreBlock      `protobuf:"bytes,1,rep,name=Blocks,proto3" json:"Blocks,omitempty"`
@@ -177,7 +221,7 @@ var File_hyperliquid_hypercore_proto protoreflect.FileDescriptor
 
 const file_hyperliquid_hypercore_proto_rawDesc = "" +
 	"\n" +
-	"\x1bhyperliquid/hypercore.proto\x12\x14hyperliquid_messages\x1a\x17hyperliquid/fills.proto\x1a hyperliquid/order_statuses.proto\x1a hyperliquid/raw_book_diffs.proto\x1a\x1fhyperliquid/twap_statuses.proto\x1a hyperliquid/oracle_updates.proto\x1a\x1dhyperliquid/misc_events.proto\x1a%hyperliquid/core_writer_actions.proto\"\xac\x04\n" +
+	"\x1bhyperliquid/hypercore.proto\x12\x14hyperliquid_messages\x1a\x17hyperliquid/fills.proto\x1a hyperliquid/order_statuses.proto\x1a hyperliquid/raw_book_diffs.proto\x1a\x1fhyperliquid/twap_statuses.proto\x1a hyperliquid/oracle_updates.proto\x1a\x1dhyperliquid/misc_events.proto\x1a%hyperliquid/core_writer_actions.proto\"\xae\x05\n" +
 	"\x0eHyperCoreBlock\x12 \n" +
 	"\vBlockNumber\x18\x01 \x01(\x04R\vBlockNumber\x12\x1c\n" +
 	"\tBlockTime\x18\x02 \x01(\x03R\tBlockTime\x120\n" +
@@ -189,7 +233,12 @@ const file_hyperliquid_hypercore_proto_rawDesc = "" +
 	"\n" +
 	"MiscEvents\x18\b \x03(\v2\x1f.hyperliquid_messages.MiscEventR\n" +
 	"MiscEvents\x12P\n" +
-	"\x11CoreWriterActions\x18\t \x03(\v2\".hyperliquid_messages.SystemActionR\x11CoreWriterActions\"O\n" +
+	"\x11CoreWriterActions\x18\t \x03(\v2\".hyperliquid_messages.SystemActionR\x11CoreWriterActions\x12\x16\n" +
+	"\x06Stream\x18\n" +
+	" \x01(\tR\x06Stream\x12(\n" +
+	"\x0fPrevBlockNumber\x18\f \x01(\x04R\x0fPrevBlockNumber\x12\x16\n" +
+	"\x06Closed\x18\r \x01(\bR\x06Closed\x12 \n" +
+	"\vBlockEvents\x18\x0e \x01(\rR\vBlockEventsJ\x04\b\v\x10\f\"O\n" +
 	"\x0fHyperCoreBlocks\x12<\n" +
 	"\x06Blocks\x18\x01 \x03(\v2$.hyperliquid_messages.HyperCoreBlockR\x06Blocksb\x06proto3"
 
