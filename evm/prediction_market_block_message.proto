@@ -64,6 +64,9 @@ message PredictionSettlementEvent {
   OutcomeSettlement Amounts = 7; // for split: amount of received outcome tokens and paid collateral, for merge: amount of paid outcome tokens and received collateral, for redemption: amount of paid outcome tokens and received collateral
 
   uint64 TransactionIndex = 8;
+
+  bytes Beneficiary = 9; // the wallet the cash or positions belong to, the same kind of address as Buyer and Seller of a trade: Holder itself unless Holder is a contract acting for it, and empty on a split or merge of an exchange match, whose several owners are the sides of its fills
+  bool IsRepeat = 10; // true on the conditional-tokens row of a redemption the NegRisk adapter reports as well: it is the same money as the adapter's own row, so leave it out of a sum
 }
 
 message OutcomeSettlement {
