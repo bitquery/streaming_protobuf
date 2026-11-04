@@ -90,6 +90,25 @@ func TestOneCorrId(t *testing.T) {
 
 }
 
+func TestSlotStatusDescriptorsShareOneCorrelationId(t *testing.T) {
+
+	t.Parallel()
+
+	rooted := &SlotStatusDescriptor{
+		BlockDescriptor: blockchain_messages.BlockDescriptor{BlockNumber: 465204968},
+		Status:          SlotStatusType_SlotStatusRooted.String(),
+	}
+	dropped := &SlotStatusDescriptor{
+		BlockDescriptor: blockchain_messages.BlockDescriptor{BlockNumber: 465204967},
+		Status:          SlotStatusType_SlotStatusDropped.String(),
+	}
+
+	assert.Equal(t, []byte(SlotStatusCorrelationId), rooted.CorrelationId())
+	assert.Equal(t, rooted.CorrelationId(), dropped.CorrelationId())
+	assert.Equal(t, "SlotStatusRooted", rooted.Status)
+
+}
+
 func TestManyCorrId(t *testing.T) {
 	t.Parallel()
 

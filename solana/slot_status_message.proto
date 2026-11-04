@@ -1,0 +1,38 @@
+syntax = "proto3";
+package solana_messages;
+
+// What a Solana producer reports about a slot once the cluster has decided on it.
+// A slot is ROOTED when the cluster roots it, and DROPPED when a root skips it: a
+// block of that slot reached the streams and is not on the chain. Every slot
+// strictly between a ROOTED slot and its ParentSlot was skipped, so the ROOTED
+// sequence alone names every dropped slot; DROPPED is sent for the slots this
+// producer streamed data of.
+enum SlotStatusType {
+    SlotStatusUnspecified = 0;
+    SlotStatusRooted = 1;
+    SlotStatusDropped = 2;
+}
+
+message SlotStatusMessage {
+    uint64 Slot = 1;
+    SlotStatusType Status = 2;
+
+    // ROOTED: the previous slot of the rooted chain, when the validator gave one.
+    bool HasParent = 3;
+    uint64 ParentSlot = 4;
+
+    // DROPPED: the root that skipped the slot. ROOTED: the slot itself.
+    uint64 RootSlot = 5;
+
+    // Set when this producer had frozen the block of the slot by the time the
+    // status was decided. A root can arrive before its own block's notification,
+    // so a ROOTED slot may come without them; a block the producer streamed
+    // transactions of but never froze has none.
+    bool Frozen = 6;
+    bytes BlockHash = 7;
+    uint64 BlockHeight = 8;
+
+    // The producer that sent it, and when, in Unix nanoseconds.
+    string Producer = 9;
+    uint64 Timestamp = 10;
+}

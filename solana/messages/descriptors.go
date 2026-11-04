@@ -63,3 +63,20 @@ func (descriptor *ExtendedBlockMessageDescriptor) CorrelationId() []byte {
 
 	return []byte(fmt.Sprintf("%d-%d-%04X", descriptor.BlockNumber, txIndex, h.Sum32()))
 }
+
+// SlotStatusCorrelationId keys every SlotStatusMessage, so that the broker sends all of them to one
+// partition and a consumer reads them in the order the producer sent them.
+const SlotStatusCorrelationId = "slot_status"
+
+// SlotStatusDescriptor is the descriptor of a SlotStatusMessage. BlockNumber is the slot the status is
+// about, so that path generators and stale-message gates read it as they read a block's; Status is the
+// name of the message's SlotStatusType.
+type SlotStatusDescriptor struct {
+	blockchain_messages.BlockDescriptor `mapstructure:",squash"`
+	ChainId                             string
+	Status                              string
+}
+
+func (descriptor *SlotStatusDescriptor) CorrelationId() []byte {
+	return []byte(SlotStatusCorrelationId)
+}

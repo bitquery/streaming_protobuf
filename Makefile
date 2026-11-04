@@ -80,6 +80,7 @@ generate_solana:
 	--go_opt="Msolana/token_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
 	--go_opt="Msolana/prediction_market_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
 	--go_opt="Msolana/perpetual_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go_opt="Msolana/slot_status_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
 	--go_opt="Msolana/corecast/corecast.proto=solana/corecast/stream;solana_corecast" \
 	--go_opt="Msolana/corecast/request.proto=solana/corecast/stream;solana_corecast" \
 	--go_opt="Msolana/corecast/stream_message.proto=solana/corecast/stream;solana_corecast" \
@@ -89,6 +90,7 @@ generate_solana:
 	--go-grpc_opt="Msolana/token_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
 	--go-grpc_opt="Msolana/prediction_market_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
 	--go-grpc_opt="Msolana/perpetual_block_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
+	--go-grpc_opt="Msolana/slot_status_message.proto=github.com/bitquery/streaming_protobuf/v2/solana/messages;solana_messages" \
 	--go-grpc_opt="Msolana/corecast/corecast.proto=solana/corecast/stream;solana_corecast" \
 	--go-grpc_opt="Msolana/corecast/request.proto=solana/corecast/stream;solana_corecast" \
 	--go-grpc_opt="Msolana/corecast/stream_message.proto=solana/corecast/stream;solana_corecast" \
@@ -99,7 +101,7 @@ generate_solana:
     	$(shell find ./solana -type f -name '*.proto' ! -name 'dex_stream.proto' ! -name 'transactions_stream.proto')
 	@echo "-- reorganizing generated files into target folders --"
 	@mkdir -p solana/messages solana/corecast/stream
-	@for f in block_message dex_block_message parsed_idl_block_message token_block_message prediction_market_block_message perpetual_block_message; do \
+	@for f in block_message dex_block_message parsed_idl_block_message token_block_message prediction_market_block_message perpetual_block_message slot_status_message; do \
 	  if [ -f solana/$$f.pb.go ]; then mv -f solana/$$f.pb.go solana/messages/; fi; \
 	  if [ -f solana/$$f_grpc.pb.go ]; then mv -f solana/$$f_grpc.pb.go solana/messages/; fi; \
 	done
