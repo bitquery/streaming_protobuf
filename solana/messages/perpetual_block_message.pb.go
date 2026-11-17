@@ -299,6 +299,11 @@ type PerpetualAsset struct {
 	// PhUsd, the token the exchange itself names as canonical — not the USDC it is backed 1:1 by
 	// and which funds enter and leave as.
 	QuoteCurrency *PerpetualCurrency `protobuf:"bytes,5,opt,name=QuoteCurrency,proto3" json:"QuoteCurrency,omitempty"`
+	// The market's on-chain address, for a venue whose markets are keyed by a pubkey rather than a small
+	// Id. A GMX market is its `market_token` mint — Id is a uint64 and cannot hold it, and Symbol is not
+	// unique across the 103 markets. Empty on a venue like Phoenix Eternal that numbers its markets with
+	// Id. Mirrors solana/dex_block_message.proto DexMarket.MarketAddress.
+	MarketAddress []byte `protobuf:"bytes,7,opt,name=MarketAddress,proto3" json:"MarketAddress,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -371,6 +376,13 @@ func (x *PerpetualAsset) GetLotSize() float64 {
 func (x *PerpetualAsset) GetQuoteCurrency() *PerpetualCurrency {
 	if x != nil {
 		return x.QuoteCurrency
+	}
+	return nil
+}
+
+func (x *PerpetualAsset) GetMarketAddress() []byte {
+	if x != nil {
+		return x.MarketAddress
 	}
 	return nil
 }
@@ -461,17 +473,14 @@ type PerpetualOrderEvent struct {
 	// "OrderRejected"   see Order.RejectReason
 	// "TriggerPlaced" / "TriggerCancelled" / "TriggerExecuted"      conditional orders
 	// "StopLossPlaced" / "TakeProfitPlaced"    a protective order, and which kind it is: the chain
-	//
-	//	states the side and the price condition on the placement, and those two together say
-	//	whether it protects a loss or a gain.
-	//
+	//     states the side and the price condition on the placement, and those two together say
+	//     whether it protects a loss or a gain.
 	// "ConditionalCancelled" / "ConditionalExecuted"   the same mechanism ending. Deliberately NOT
-	//
-	//	named after a kind: the raw cancellation and execution do not restate the side, so which
-	//	of the two ended cannot be known from the event, and a StopLoss* name there would be the
-	//	wrong name for every take-profit. Order.ConditionalId identifies the order that ended —
-	//	join it back to its placement on (Trader, Asset.Id, ConditionalId) to learn the kind. An
-	//	execution also carries Order.Id, the book order the trigger created.
+	//     named after a kind: the raw cancellation and execution do not restate the side, so which
+	//     of the two ended cannot be known from the event, and a StopLoss* name there would be the
+	//     wrong name for every take-profit. Order.ConditionalId identifies the order that ended —
+	//     join it back to its placement on (Trader, Asset.Id, ConditionalId) to learn the kind. An
+	//     execution also carries Order.Id, the book order the trigger created.
 	Type string `protobuf:"bytes,3,opt,name=Type,proto3" json:"Type,omitempty"`
 	Side string `protobuf:"bytes,4,opt,name=Side,proto3" json:"Side,omitempty"` // "bid" / "ask"
 	// Position of the event in the transaction's log, counted over every logged event — including
@@ -679,10 +688,15 @@ type PerpetualFillEvent struct {
 	// source by a hash, a pool address or a string, not by a counter. Emptiness is absence, which a
 	// number could not express here — spline 0 is a real spline and order 0 is a real ask, and
 	// ClickHouse drops the `optional` that used to carry presence.
-	MakerOrderId  []byte `protobuf:"bytes,19,opt,name=MakerOrderId,proto3" json:"MakerOrderId,omitempty"`
-	SplineId      []byte `protobuf:"bytes,21,opt,name=SplineId,proto3" json:"SplineId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	MakerOrderId []byte `protobuf:"bytes,19,opt,name=MakerOrderId,proto3" json:"MakerOrderId,omitempty"`
+	SplineId     []byte `protobuf:"bytes,21,opt,name=SplineId,proto3" json:"SplineId,omitempty"`
+	// The token this fill's collateral, fee and funding are denominated in, when that is not the
+	// QuoteCurrency. A GMX position posts the market's long or short token as collateral (not always the
+	// quote), so Collateral and Amount.Fee are in this currency. Empty when the venue settles everything
+	// in the single QuoteCurrency (Phoenix Eternal).
+	CollateralCurrency *PerpetualCurrency `protobuf:"bytes,22,opt,name=CollateralCurrency,proto3" json:"CollateralCurrency,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *PerpetualFillEvent) Reset() {
@@ -848,6 +862,13 @@ func (x *PerpetualFillEvent) GetSplineId() []byte {
 	return nil
 }
 
+func (x *PerpetualFillEvent) GetCollateralCurrency() *PerpetualCurrency {
+	if x != nil {
+		return x.CollateralCurrency
+	}
+	return nil
+}
+
 // What happened to a position: realized PnL, funding, and liquidations.
 type PerpetualPositionEvent struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
@@ -890,10 +911,14 @@ type PerpetualPositionEvent struct {
 	//
 	// Empty on events that merely accompany one (the counterparty's own PnL, a spline's fill), since
 	// those are not that trader's position being closed.
-	Liquidation   bool   `protobuf:"varint,12,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
-	Liquidator    []byte `protobuf:"bytes,13,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Liquidation bool   `protobuf:"varint,12,opt,name=Liquidation,proto3" json:"Liquidation,omitempty"`
+	Liquidator  []byte `protobuf:"bytes,13,opt,name=Liquidator,proto3" json:"Liquidator,omitempty"`
+	// The token this position's collateral and funding are denominated in, when that is not the
+	// QuoteCurrency — see PerpetualFillEvent.CollateralCurrency. A GMX position's collateral can be the
+	// market's long token. Empty on a single-collateral venue.
+	CollateralCurrency *PerpetualCurrency `protobuf:"bytes,20,opt,name=CollateralCurrency,proto3" json:"CollateralCurrency,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *PerpetualPositionEvent) Reset() {
@@ -1041,6 +1066,13 @@ func (x *PerpetualPositionEvent) GetLiquidation() bool {
 func (x *PerpetualPositionEvent) GetLiquidator() []byte {
 	if x != nil {
 		return x.Liquidator
+	}
+	return nil
+}
+
+func (x *PerpetualPositionEvent) GetCollateralCurrency() *PerpetualCurrency {
+	if x != nil {
+		return x.CollateralCurrency
 	}
 	return nil
 }
@@ -1572,11 +1604,10 @@ func (x *PerpetualPosition) GetEntryPrice() float64 {
 }
 
 // Market / oracle state, republished on every price move. Type is one of:
-//
-//	"Prices"            best bid/ask, last trade, mark, spot and perp references
-//	"MarketSummary"     open interest and accumulated fees
-//	"FundingParameters" funding interval / cap changed
-//	"MarketStatus"      market opened, paused, closed
+//   "Prices"            best bid/ask, last trade, mark, spot and perp references
+//   "MarketSummary"     open interest and accumulated fees
+//   "FundingParameters" funding interval / cap changed
+//   "MarketStatus"      market opened, paused, closed
 //
 // PUBLISHED AS A SIDE EFFECT OF TRADING ONLY. The oracle (Hawkeye) republishes every market's
 // price on a timer — 97.5% of the program's instructions, and 12939 of 13434 price rows in a live
@@ -1861,14 +1892,15 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\aProgram\x18\x01 \x01(\fR\aProgram\x12\x12\n" +
 	"\x04Name\x18\x02 \x01(\tR\x04Name\x12\x16\n" +
 	"\x06Family\x18\x03 \x01(\tR\x06Family\x12\x18\n" +
-	"\aVersion\x18\x04 \x01(\tR\aVersion\"\xd0\x01\n" +
+	"\aVersion\x18\x04 \x01(\tR\aVersion\"\xf6\x01\n" +
 	"\x0ePerpetualAsset\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\x04R\x02Id\x12\x16\n" +
 	"\x06Symbol\x18\x02 \x01(\tR\x06Symbol\x12\x16\n" +
 	"\x06Oracle\x18\x06 \x01(\fR\x06Oracle\x12\x1a\n" +
 	"\bTickSize\x18\x03 \x01(\x01R\bTickSize\x12\x18\n" +
 	"\aLotSize\x18\x04 \x01(\x01R\aLotSize\x12H\n" +
-	"\rQuoteCurrency\x18\x05 \x01(\v2\".solana_messages.PerpetualCurrencyR\rQuoteCurrency\"\x91\x01\n" +
+	"\rQuoteCurrency\x18\x05 \x01(\v2\".solana_messages.PerpetualCurrencyR\rQuoteCurrency\x12$\n" +
+	"\rMarketAddress\x18\a \x01(\fR\rMarketAddress\"\x91\x01\n" +
 	"\x11PerpetualCurrency\x12 \n" +
 	"\vMintAddress\x18\x01 \x01(\fR\vMintAddress\x12\x16\n" +
 	"\x06Symbol\x18\x02 \x01(\tR\x06Symbol\x12\x1a\n" +
@@ -1892,7 +1924,7 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\vLiquidation\x18\r \x01(\bR\vLiquidation\x12\x1e\n" +
 	"\n" +
 	"Liquidator\x18\x0e \x01(\fR\n" +
-	"Liquidator\"\xf1\x05\n" +
+	"Liquidator\"\xc5\x06\n" +
 	"\x12PerpetualFillEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\"\n" +
@@ -1919,7 +1951,8 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"Liquidator\x18\x0f \x01(\fR\n" +
 	"Liquidator\x12\"\n" +
 	"\fMakerOrderId\x18\x13 \x01(\fR\fMakerOrderId\x12\x1a\n" +
-	"\bSplineId\x18\x15 \x01(\fR\bSplineId\"\x87\x05\n" +
+	"\bSplineId\x18\x15 \x01(\fR\bSplineId\x12R\n" +
+	"\x12CollateralCurrency\x18\x16 \x01(\v2\".solana_messages.PerpetualCurrencyR\x12CollateralCurrency\"\xdb\x05\n" +
 	"\x16PerpetualPositionEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\x12\n" +
@@ -1941,7 +1974,8 @@ const file_solana_perpetual_block_message_proto_rawDesc = "" +
 	"\vLiquidation\x18\f \x01(\bR\vLiquidation\x12\x1e\n" +
 	"\n" +
 	"Liquidator\x18\r \x01(\fR\n" +
-	"Liquidator\"\xdc\x02\n" +
+	"Liquidator\x12R\n" +
+	"\x12CollateralCurrency\x18\x14 \x01(\v2\".solana_messages.PerpetualCurrencyR\x12CollateralCurrency\"\xdc\x02\n" +
 	" PerpetualCollateralMovementEvent\x12\x16\n" +
 	"\x06Signer\x18\x01 \x01(\fR\x06Signer\x12\x16\n" +
 	"\x06Trader\x18\x02 \x01(\fR\x06Trader\x12\x12\n" +
@@ -2069,20 +2103,22 @@ var file_solana_perpetual_block_message_proto_depIdxs = []int32{
 	3,  // 17: solana_messages.PerpetualFillEvent.Asset:type_name -> solana_messages.PerpetualAsset
 	10, // 18: solana_messages.PerpetualFillEvent.Amount:type_name -> solana_messages.PerpetualAmount
 	12, // 19: solana_messages.PerpetualFillEvent.Position:type_name -> solana_messages.PerpetualPosition
-	2,  // 20: solana_messages.PerpetualPositionEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 21: solana_messages.PerpetualPositionEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	12, // 22: solana_messages.PerpetualPositionEvent.Position:type_name -> solana_messages.PerpetualPosition
-	2,  // 23: solana_messages.PerpetualCollateralMovementEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	4,  // 24: solana_messages.PerpetualCollateralMovementEvent.Currency:type_name -> solana_messages.PerpetualCurrency
-	2,  // 25: solana_messages.PerpetualPriceEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 26: solana_messages.PerpetualPriceEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	2,  // 27: solana_messages.PerpetualMarketSummaryEvent.Exchange:type_name -> solana_messages.PerpetualExchange
-	3,  // 28: solana_messages.PerpetualMarketSummaryEvent.Asset:type_name -> solana_messages.PerpetualAsset
-	29, // [29:29] is the sub-list for method output_type
-	29, // [29:29] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	4,  // 20: solana_messages.PerpetualFillEvent.CollateralCurrency:type_name -> solana_messages.PerpetualCurrency
+	2,  // 21: solana_messages.PerpetualPositionEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 22: solana_messages.PerpetualPositionEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	12, // 23: solana_messages.PerpetualPositionEvent.Position:type_name -> solana_messages.PerpetualPosition
+	4,  // 24: solana_messages.PerpetualPositionEvent.CollateralCurrency:type_name -> solana_messages.PerpetualCurrency
+	2,  // 25: solana_messages.PerpetualCollateralMovementEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	4,  // 26: solana_messages.PerpetualCollateralMovementEvent.Currency:type_name -> solana_messages.PerpetualCurrency
+	2,  // 27: solana_messages.PerpetualPriceEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 28: solana_messages.PerpetualPriceEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	2,  // 29: solana_messages.PerpetualMarketSummaryEvent.Exchange:type_name -> solana_messages.PerpetualExchange
+	3,  // 30: solana_messages.PerpetualMarketSummaryEvent.Asset:type_name -> solana_messages.PerpetualAsset
+	31, // [31:31] is the sub-list for method output_type
+	31, // [31:31] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_solana_perpetual_block_message_proto_init() }

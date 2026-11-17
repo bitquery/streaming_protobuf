@@ -99,6 +99,12 @@ message PerpetualAsset {
   // PhUsd, the token the exchange itself names as canonical — not the USDC it is backed 1:1 by
   // and which funds enter and leave as.
   PerpetualCurrency QuoteCurrency = 5;
+
+  // The market's on-chain address, for a venue whose markets are keyed by a pubkey rather than a small
+  // Id. A GMX market is its `market_token` mint — Id is a uint64 and cannot hold it, and Symbol is not
+  // unique across the 103 markets. Empty on a venue like Phoenix Eternal that numbers its markets with
+  // Id. Mirrors solana/dex_block_message.proto DexMarket.MarketAddress.
+  bytes MarketAddress = 7;
 }
 
 // The quote token, in the four fields that identify it. Deliberately not the shared Currency
@@ -253,6 +259,12 @@ message PerpetualFillEvent {
   // ClickHouse drops the `optional` that used to carry presence.
   bytes MakerOrderId = 19;
   bytes SplineId = 21;
+
+  // The token this fill's collateral, fee and funding are denominated in, when that is not the
+  // QuoteCurrency. A GMX position posts the market's long or short token as collateral (not always the
+  // quote), so Collateral and Amount.Fee are in this currency. Empty when the venue settles everything
+  // in the single QuoteCurrency (Phoenix Eternal).
+  PerpetualCurrency CollateralCurrency = 22;
 }
 
 // What happened to a position: realized PnL, funding, and liquidations.
@@ -307,6 +319,11 @@ message PerpetualPositionEvent {
   // those are not that trader's position being closed.
   bool Liquidation = 12;
   bytes Liquidator = 13;
+
+  // The token this position's collateral and funding are denominated in, when that is not the
+  // QuoteCurrency — see PerpetualFillEvent.CollateralCurrency. A GMX position's collateral can be the
+  // market's long token. Empty on a single-collateral venue.
+  PerpetualCurrency CollateralCurrency = 20;
 }
 
 // A trader's collateral entering or leaving the exchange. This is not a position in a market and
