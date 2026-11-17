@@ -1604,10 +1604,11 @@ func (x *PerpetualPosition) GetEntryPrice() float64 {
 }
 
 // Market / oracle state, republished on every price move. Type is one of:
-//   "Prices"            best bid/ask, last trade, mark, spot and perp references
-//   "MarketSummary"     open interest and accumulated fees
-//   "FundingParameters" funding interval / cap changed
-//   "MarketStatus"      market opened, paused, closed
+//
+//	"Prices"            best bid/ask, last trade, mark, spot and perp references
+//	"MarketSummary"     open interest and accumulated fees
+//	"FundingParameters" funding interval / cap changed
+//	"MarketStatus"      market opened, paused, closed
 //
 // PUBLISHED AS A SIDE EFFECT OF TRADING ONLY. The oracle (Hawkeye) republishes every market's
 // price on a timer — 97.5% of the program's instructions, and 12939 of 13434 price rows in a live
